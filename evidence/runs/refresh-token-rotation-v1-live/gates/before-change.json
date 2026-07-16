@@ -1,0 +1,30 @@
+{
+	"schema": "urn:graphrefly-stack:schema:gate-result:v1",
+	"gateVersion": "v1",
+	"inputDigest": {
+		"algorithm": "sha256",
+		"value": "13dbb2bbacae449c2da5a479757d8feb8f43da4270043407024b56ee2be37f3f"
+	},
+	"verdict": "pass",
+	"units": [
+		{
+			"workUnitId": "U1",
+			"verdict": "valid",
+			"reasonCodes": [],
+			"invalidDependencies": []
+		},
+		{
+			"workUnitId": "U2",
+			"verdict": "valid",
+			"reasonCodes": [],
+			"invalidDependencies": []
+		},
+		{
+			"workUnitId": "U3",
+			"verdict": "valid",
+			"reasonCodes": [],
+			"invalidDependencies": []
+		}
+	],
+	"checkIds": ["contracts", "refresh-runtime", "refresh-api"]
+}

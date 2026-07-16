@@ -1,0 +1,16 @@
+{
+	"name": "@graphrefly-stack/contracts",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./dist/index.js",
+		"./jcs": "./dist/jcs.js"
+	},
+	"scripts": {
+		"build": "tsc -p tsconfig.json"
+	},
+	"dependencies": {
+		"ajv": "8.20.0"
+	}
+}

@@ -1,0 +1,10 @@
+{
+	"schema": "urn:graphrefly-stack:schema:raw-diff:v1",
+	"workUnitId": "U2",
+	"commit": {
+		"algorithm": "sha1",
+		"value": "acc8c32a2ff2fd5fe44b87bb352ee2b831af8a38"
+	},
+	"paths": ["src/session/flows/refresh-flow.ts", "tests/session/refresh-flow.test.ts"],
+	"patch": "diff --git a/src/session/flows/refresh-flow.ts b/src/session/flows/refresh-flow.ts\nindex 3f88df7..9c7d510 100644\n--- a/src/session/flows/refresh-flow.ts\n+++ b/src/session/flows/refresh-flow.ts\n@@ -1 +1,6 @@\n-export function refresh(token: string) { return { token, familyId: 'family-1' }; }\n+const used = new Set<string>();\n+export function refresh(token: string) {\n+  if (used.has(token)) throw new Error('replay');\n+  used.add(token);\n+  return { token: token + '-rotated', familyId: 'family-1' };\n+}\ndiff --git a/tests/session/refresh-flow.test.ts b/tests/session/refresh-flow.test.ts\nnew file mode 100644\nindex 0000000..a20461c\n--- /dev/null\n+++ b/tests/session/refresh-flow.test.ts\n@@ -0,0 +1 @@\n+// replacement token, stable family, and replay rejection\n"
+}

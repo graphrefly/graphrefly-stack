@@ -1,0 +1,22 @@
+{
+	"schema": "urn:graphrefly-stack:schema:bundle-layout:v1",
+	"requiredPaths": [
+		"README.md",
+		"manifest.json",
+		"task.json",
+		"stack.json",
+		"blueprints/base.json",
+		"blueprints/current.json",
+		"blueprints/delta.json",
+		"plan/change-plan.json",
+		"semantic-changes/u1.json",
+		"semantic-changes/u2.json",
+		"semantic-changes/u3.json",
+		"gates/before-change.json",
+		"gates/after-change.json",
+		"replan/affected.json",
+		"checks/final.json",
+		"gates/final.json",
+		"review/decision.json"
+	]
+}

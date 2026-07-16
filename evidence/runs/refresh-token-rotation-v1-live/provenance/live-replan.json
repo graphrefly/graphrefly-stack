@@ -1,0 +1,112 @@
+{
+	"schema": "urn:graphrefly-stack:live-run:v1",
+	"kind": "replan",
+	"mode": "live",
+	"output": {
+		"schema": "urn:graphrefly-stack:schema:selective-replan:v1",
+		"planId": "plan.refresh-token-rotation.v1.replan.1",
+		"inputUnits": ["U2", "U3"],
+		"preservedUnits": ["U1"],
+		"replacements": [
+			{
+				"workUnitId": "U2",
+				"fromCommit": {
+					"algorithm": "sha1",
+					"value": "acc8c32a2ff2fd5fe44b87bb352ee2b831af8a38"
+				},
+				"toCommit": {
+					"algorithm": "sha1",
+					"value": "5e74a1713eef0ee1b57cc5c0efd1f29ba8ecb5b8"
+				}
+			},
+			{
+				"workUnitId": "U3",
+				"fromCommit": {
+					"algorithm": "sha1",
+					"value": "08a3f4403cbcf115aeee42890fe8da91fad58a75"
+				},
+				"toCommit": {
+					"algorithm": "sha1",
+					"value": "5bf6b8b5654f10819cbb4f015451c0c258600907"
+				}
+			}
+		],
+		"finalLineage": [
+			{
+				"algorithm": "sha1",
+				"value": "250005e73c04ddada45ba29b6ba458a86198e058"
+			},
+			{
+				"algorithm": "sha1",
+				"value": "3d8696c74e3bf1458079c0b69f63086e808c03f3"
+			},
+			{
+				"algorithm": "sha1",
+				"value": "5e74a1713eef0ee1b57cc5c0efd1f29ba8ecb5b8"
+			},
+			{
+				"algorithm": "sha1",
+				"value": "5bf6b8b5654f10819cbb4f015451c0c258600907"
+			}
+		],
+		"proposedWorkUnits": [
+			{
+				"id": "U2",
+				"title": "Implement the brokered GraphReFly refresh rotation flow",
+				"intent": "Rotate the refresh token and persist its replacement through sessionMutationBroker under session-writes.v2.",
+				"dependencies": ["U1"],
+				"allowedSourceScopes": [
+					"src/session/flows/refresh-flow.ts",
+					"tests/session/refresh-flow.test.ts"
+				],
+				"blueprintClaims": [
+					{
+						"id": "session-write-path",
+						"statement": "The online session mutation persists through sessionMutationBroker under session-writes.v2."
+					}
+				],
+				"requiredChecks": ["refresh-runtime"]
+			},
+			{
+				"id": "U3",
+				"title": "Expose the broker-backed refresh HTTP adapter",
+				"intent": "Return the replacement token from the broker-backed refresh runtime and reject replay.",
+				"dependencies": ["U2"],
+				"allowedSourceScopes": ["src/http/refresh-route.ts", "tests/http/refresh-route.test.ts"],
+				"blueprintClaims": [
+					{
+						"id": "refresh-runtime",
+						"statement": "The adapter depends on an accepted U2 runtime that routes session persistence through sessionMutationBroker."
+					}
+				],
+				"requiredChecks": ["refresh-api"]
+			}
+		]
+	},
+	"provenance": {
+		"provider": "codex-sdk",
+		"codexSdkVersion": "0.143.0",
+		"model": "gpt-5.6-sol",
+		"reasoningEffort": "high",
+		"promptVersion": "stack.replan.v1",
+		"threadId": "019f6bad-591b-7132-9874-5f796044d4a1",
+		"codexRuntime": {
+			"source": "override",
+			"version": "codex-cli 0.144.5"
+		},
+		"usage": {
+			"input_tokens": 14351,
+			"cached_input_tokens": 0,
+			"output_tokens": 360,
+			"reasoning_output_tokens": 105
+		},
+		"responseDigest": {
+			"algorithm": "sha256",
+			"value": "a9ff537748db9e0506aab3ac126d5b7a1b58f9fddf8045a4bacf283ec215e1f7"
+		},
+		"outputDigest": {
+			"algorithm": "sha256",
+			"value": "915b1fbe92286d16eee587f2cb6d96d0a8cd71d2edeba3ae095fd097c805dab2"
+		}
+	}
+}

@@ -1,0 +1,954 @@
+{
+	"schema": "urn:graphrefly-stack:schema:golden-suite:v1",
+	"task": {
+		"schema": "urn:graphrefly-stack:schema:task:v1",
+		"taskId": "rotate-refresh-token-on-use",
+		"text": "Rotate the refresh token after every successful /session/refresh request; reject replay of the previous token; preserve the token-family ID; return the replacement token; and do not change password-reset behavior."
+	},
+	"stack": {
+		"schema": "urn:graphrefly-stack:schema:git-stack:v1",
+		"linearity": "linear",
+		"base": { "algorithm": "sha1", "value": "0000000000000000000000000000000000000001" },
+		"head": { "algorithm": "sha1", "value": "3333333333333333333333333333333333333333" },
+		"commits": [
+			{
+				"oid": { "algorithm": "sha1", "value": "0000000000000000000000000000000000000001" },
+				"parent": null,
+				"role": "base",
+				"workUnitId": null
+			},
+			{
+				"oid": { "algorithm": "sha1", "value": "1111111111111111111111111111111111111111" },
+				"parent": {
+					"algorithm": "sha1",
+					"value": "0000000000000000000000000000000000000001"
+				},
+				"role": "work-unit",
+				"workUnitId": "U1"
+			},
+			{
+				"oid": { "algorithm": "sha1", "value": "2222222222222222222222222222222222222222" },
+				"parent": {
+					"algorithm": "sha1",
+					"value": "1111111111111111111111111111111111111111"
+				},
+				"role": "work-unit",
+				"workUnitId": "U2"
+			},
+			{
+				"oid": { "algorithm": "sha1", "value": "3333333333333333333333333333333333333333" },
+				"parent": {
+					"algorithm": "sha1",
+					"value": "2222222222222222222222222222222222222222"
+				},
+				"role": "work-unit",
+				"workUnitId": "U3"
+			}
+		]
+	},
+	"provider": {
+		"schema": "urn:graphrefly-stack:schema:blueprint-provider-capabilities:v1",
+		"providerId": "graphrefly",
+		"providerVersion": "0.1.1",
+		"blueprintVersion": "graphrefly.blueprint.v1",
+		"capabilities": {
+			"commitSnapshot": true,
+			"canonicalTopologyBytes": true,
+			"nodeMetadata": true,
+			"subgraphs": true,
+			"diagnostics": true,
+			"structuralDelta": true,
+			"mergeParentSelection": false,
+			"claimImpact": false
+		}
+	},
+	"manifest": {
+		"schema": "urn:graphrefly-stack:schema:bundle-manifest:v1",
+		"runId": "fixture-refresh-token-rotation-v1",
+		"recordedAt": "2026-07-16T00:00:00Z",
+		"sourceCommit": { "algorithm": "sha1", "value": "1111111111111111111111111111111111111111" },
+		"canonicalInputDigest": {
+			"algorithm": "sha256",
+			"value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+		},
+		"schemaVersion": "v1",
+		"promptVersion": "fixture.v1",
+		"model": { "source": "fixture", "id": "fixture", "reasoningEffort": "none" },
+		"provider": {
+			"schema": "urn:graphrefly-stack:schema:blueprint-provider-capabilities:v1",
+			"providerId": "graphrefly",
+			"providerVersion": "0.1.1",
+			"blueprintVersion": "graphrefly.blueprint.v1",
+			"capabilities": {
+				"commitSnapshot": true,
+				"canonicalTopologyBytes": true,
+				"nodeMetadata": true,
+				"subgraphs": true,
+				"diagnostics": true,
+				"structuralDelta": true,
+				"mergeParentSelection": false,
+				"claimImpact": false
+			}
+		},
+		"graphreflyVersion": "0.1.1",
+		"policyRevision": "session-writes.v2",
+		"artifacts": [
+			{
+				"path": "task.json",
+				"hash": {
+					"algorithm": "sha256",
+					"value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+				}
+			}
+		]
+	},
+	"changePlan": {
+		"schema": "urn:graphrefly-stack:schema:change-plan:v1",
+		"planId": "plan.refresh-token-rotation.v1",
+		"taskDigest": {
+			"algorithm": "sha256",
+			"value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+		},
+		"baseCommit": { "algorithm": "sha1", "value": "1111111111111111111111111111111111111111" },
+		"baseBlueprintHash": {
+			"algorithm": "sha256",
+			"value": "1111111111111111111111111111111111111111111111111111111111111111"
+		},
+		"policyRevision": "session-writes.v1",
+		"source": "fixture",
+		"workUnits": [
+			{
+				"id": "U1",
+				"title": "Define refresh rotation contracts",
+				"intent": "Define token-family and replay-rejection contracts.",
+				"dependencies": [],
+				"allowedSourceScopes": ["src/session/contracts.ts", "tests/session/contracts.test.ts"],
+				"blueprintClaims": [],
+				"requiredChecks": ["contracts"]
+			},
+			{
+				"id": "U2",
+				"title": "Implement the GraphReFly refresh rotation flow",
+				"intent": "Rotate and persist the replacement refresh token.",
+				"dependencies": ["U1"],
+				"allowedSourceScopes": [
+					"src/session/flows/refresh-flow.ts",
+					"tests/session/refresh-flow.test.ts"
+				],
+				"blueprintClaims": [
+					{
+						"id": "session-write-path",
+						"statement": "The online session mutation may persist directly under session-writes.v1."
+					}
+				],
+				"requiredChecks": ["refresh-runtime"]
+			},
+			{
+				"id": "U3",
+				"title": "Expose the refresh HTTP adapter",
+				"intent": "Return the replacement token and reject replay.",
+				"dependencies": ["U2"],
+				"allowedSourceScopes": ["src/http/refresh-route.ts", "tests/http/refresh-route.test.ts"],
+				"blueprintClaims": [
+					{ "id": "refresh-runtime", "statement": "The adapter depends on an accepted U2 runtime." }
+				],
+				"requiredChecks": ["refresh-api"]
+			}
+		]
+	},
+	"snapshots": [
+		{
+			"schema": "urn:graphrefly-stack:schema:blueprint-snapshot:v1",
+			"commit": { "algorithm": "sha1", "value": "3333333333333333333333333333333333333333" },
+			"semanticParent": {
+				"algorithm": "sha1",
+				"value": "2222222222222222222222222222222222222222"
+			},
+			"provider": {
+				"schema": "urn:graphrefly-stack:schema:blueprint-provider-capabilities:v1",
+				"providerId": "graphrefly",
+				"providerVersion": "0.1.1",
+				"blueprintVersion": "graphrefly.blueprint.v1",
+				"capabilities": {
+					"commitSnapshot": true,
+					"canonicalTopologyBytes": true,
+					"nodeMetadata": true,
+					"subgraphs": true,
+					"diagnostics": true,
+					"structuralDelta": true,
+					"mergeParentSelection": false,
+					"claimImpact": false
+				}
+			},
+			"blueprint": {
+				"version": "graphrefly.blueprint.v1",
+				"provenance": { "fixture": "refresh-token-rotation-v1", "ref": "S3" },
+				"topology": {
+					"name": "session",
+					"nodes": [
+						{ "id": "password-reset.intent", "factory": "state", "deps": [] },
+						{
+							"id": "session.persist.password-reset",
+							"factory": "effect",
+							"deps": ["password-reset.intent"],
+							"meta": { "capability": "session-mutation", "mode": "online" }
+						},
+						{ "id": "refresh.request", "factory": "state", "deps": [] },
+						{ "id": "refresh.validate", "factory": "derived", "deps": ["refresh.request"] },
+						{ "id": "refresh.rotate", "factory": "derived", "deps": ["refresh.validate"] },
+						{
+							"id": "session.persist.refresh",
+							"factory": "effect",
+							"deps": ["refresh.rotate"],
+							"meta": { "capability": "session-mutation", "mode": "online" }
+						}
+					],
+					"edges": [
+						{ "from": "password-reset.intent", "to": "session.persist.password-reset" },
+						{ "from": "refresh.request", "to": "refresh.validate" },
+						{ "from": "refresh.validate", "to": "refresh.rotate" },
+						{ "from": "refresh.rotate", "to": "session.persist.refresh" }
+					]
+				},
+				"diagnostics": { "ok": true, "issues": [] },
+				"hash": {
+					"kind": "topology",
+					"algorithm": "sha256",
+					"input": "strictCanonicalTopologyBytes",
+					"value": "1111111111111111111111111111111111111111111111111111111111111111"
+				}
+			},
+			"topologyHash": {
+				"algorithm": "sha256",
+				"value": "1111111111111111111111111111111111111111111111111111111111111111"
+			},
+			"policyRevision": "session-writes.v1"
+		},
+		{
+			"schema": "urn:graphrefly-stack:schema:blueprint-snapshot:v1",
+			"commit": { "algorithm": "sha1", "value": "6666666666666666666666666666666666666666" },
+			"semanticParent": {
+				"algorithm": "sha1",
+				"value": "5555555555555555555555555555555555555555"
+			},
+			"provider": {
+				"schema": "urn:graphrefly-stack:schema:blueprint-provider-capabilities:v1",
+				"providerId": "graphrefly",
+				"providerVersion": "0.1.1",
+				"blueprintVersion": "graphrefly.blueprint.v1",
+				"capabilities": {
+					"commitSnapshot": true,
+					"canonicalTopologyBytes": true,
+					"nodeMetadata": true,
+					"subgraphs": true,
+					"diagnostics": true,
+					"structuralDelta": true,
+					"mergeParentSelection": false,
+					"claimImpact": false
+				}
+			},
+			"blueprint": {
+				"version": "graphrefly.blueprint.v1",
+				"topology": {
+					"name": "session",
+					"nodes": [
+						{ "id": "password-reset.intent", "factory": "state", "deps": [] },
+						{
+							"id": "session.mutation-broker.password-reset",
+							"factory": "sessionMutationBroker",
+							"deps": ["password-reset.intent"],
+							"meta": { "capability": "session-mutation-broker" }
+						},
+						{
+							"id": "session.persist.password-reset",
+							"factory": "effect",
+							"deps": ["session.mutation-broker.password-reset"],
+							"meta": { "capability": "session-mutation", "mode": "online" }
+						},
+						{ "id": "refresh.request", "factory": "state", "deps": [] },
+						{ "id": "refresh.validate", "factory": "derived", "deps": ["refresh.request"] },
+						{ "id": "refresh.rotate", "factory": "derived", "deps": ["refresh.validate"] },
+						{
+							"id": "session.persist.refresh",
+							"factory": "effect",
+							"deps": ["refresh.rotate"],
+							"meta": { "capability": "session-mutation", "mode": "online" }
+						}
+					],
+					"edges": [
+						{ "from": "password-reset.intent", "to": "session.mutation-broker.password-reset" },
+						{
+							"from": "session.mutation-broker.password-reset",
+							"to": "session.persist.password-reset"
+						},
+						{ "from": "refresh.request", "to": "refresh.validate" },
+						{ "from": "refresh.validate", "to": "refresh.rotate" },
+						{ "from": "refresh.rotate", "to": "session.persist.refresh" }
+					]
+				},
+				"diagnostics": { "ok": true, "issues": [] },
+				"hash": {
+					"kind": "topology",
+					"algorithm": "sha256",
+					"input": "strictCanonicalTopologyBytes",
+					"value": "2222222222222222222222222222222222222222222222222222222222222222"
+				}
+			},
+			"topologyHash": {
+				"algorithm": "sha256",
+				"value": "2222222222222222222222222222222222222222222222222222222222222222"
+			},
+			"policyRevision": "session-writes.v2"
+		},
+		{
+			"schema": "urn:graphrefly-stack:schema:blueprint-snapshot:v1",
+			"commit": { "algorithm": "sha1", "value": "7777777777777777777777777777777777777777" },
+			"semanticParent": {
+				"algorithm": "sha1",
+				"value": "3333333333333333333333333333333333333333"
+			},
+			"provider": {
+				"schema": "urn:graphrefly-stack:schema:blueprint-provider-capabilities:v1",
+				"providerId": "graphrefly",
+				"providerVersion": "0.1.1",
+				"blueprintVersion": "graphrefly.blueprint.v1",
+				"capabilities": {
+					"commitSnapshot": true,
+					"canonicalTopologyBytes": true,
+					"nodeMetadata": true,
+					"subgraphs": true,
+					"diagnostics": true,
+					"structuralDelta": true,
+					"mergeParentSelection": false,
+					"claimImpact": false
+				}
+			},
+			"blueprint": {
+				"version": "graphrefly.blueprint.v1",
+				"topology": {
+					"name": "session",
+					"nodes": [
+						{ "id": "password-reset.intent", "factory": "state", "deps": [] },
+						{
+							"id": "session.persist.password-reset",
+							"factory": "effect",
+							"deps": ["password-reset.intent"]
+						},
+						{ "id": "refresh.request", "factory": "state", "deps": [] },
+						{ "id": "refresh.validate", "factory": "derived", "deps": ["refresh.request"] },
+						{ "id": "refresh.rotate", "factory": "derived", "deps": ["refresh.validate"] },
+						{ "id": "session.persist.refresh", "factory": "effect", "deps": ["refresh.rotate"] },
+						{ "id": "telemetry.session", "factory": "effect", "deps": ["refresh.rotate"] }
+					],
+					"edges": [
+						{ "from": "password-reset.intent", "to": "session.persist.password-reset" },
+						{ "from": "refresh.request", "to": "refresh.validate" },
+						{ "from": "refresh.validate", "to": "refresh.rotate" },
+						{ "from": "refresh.rotate", "to": "session.persist.refresh" },
+						{ "from": "refresh.rotate", "to": "telemetry.session" }
+					]
+				},
+				"diagnostics": { "ok": true, "issues": [] },
+				"hash": {
+					"kind": "topology",
+					"algorithm": "sha256",
+					"input": "strictCanonicalTopologyBytes",
+					"value": "3333333333333333333333333333333333333333333333333333333333333333"
+				}
+			},
+			"topologyHash": {
+				"algorithm": "sha256",
+				"value": "3333333333333333333333333333333333333333333333333333333333333333"
+			},
+			"policyRevision": "session-writes.v1"
+		},
+		{
+			"schema": "urn:graphrefly-stack:schema:blueprint-snapshot:v1",
+			"commit": { "algorithm": "sha1", "value": "9999999999999999999999999999999999999999" },
+			"semanticParent": {
+				"algorithm": "sha1",
+				"value": "8888888888888888888888888888888888888888"
+			},
+			"provider": {
+				"schema": "urn:graphrefly-stack:schema:blueprint-provider-capabilities:v1",
+				"providerId": "graphrefly",
+				"providerVersion": "0.1.1",
+				"blueprintVersion": "graphrefly.blueprint.v1",
+				"capabilities": {
+					"commitSnapshot": true,
+					"canonicalTopologyBytes": true,
+					"nodeMetadata": true,
+					"subgraphs": true,
+					"diagnostics": true,
+					"structuralDelta": true,
+					"mergeParentSelection": false,
+					"claimImpact": false
+				}
+			},
+			"blueprint": {
+				"version": "graphrefly.blueprint.v1",
+				"topology": {
+					"name": "session",
+					"nodes": [
+						{ "id": "password-reset.intent", "factory": "state", "deps": [] },
+						{
+							"id": "session.mutation-broker.password-reset",
+							"factory": "sessionMutationBroker",
+							"deps": ["password-reset.intent"]
+						},
+						{
+							"id": "session.persist.password-reset",
+							"factory": "effect",
+							"deps": ["session.mutation-broker.password-reset"]
+						},
+						{ "id": "refresh.request", "factory": "state", "deps": [] },
+						{ "id": "refresh.validate", "factory": "derived", "deps": ["refresh.request"] },
+						{ "id": "refresh.rotate", "factory": "derived", "deps": ["refresh.validate"] },
+						{
+							"id": "session.mutation-broker.refresh",
+							"factory": "sessionMutationBroker",
+							"deps": ["refresh.rotate"]
+						},
+						{
+							"id": "session.persist.refresh",
+							"factory": "effect",
+							"deps": ["session.mutation-broker.refresh"]
+						}
+					],
+					"edges": [
+						{ "from": "password-reset.intent", "to": "session.mutation-broker.password-reset" },
+						{
+							"from": "session.mutation-broker.password-reset",
+							"to": "session.persist.password-reset"
+						},
+						{ "from": "refresh.request", "to": "refresh.validate" },
+						{ "from": "refresh.validate", "to": "refresh.rotate" },
+						{ "from": "refresh.rotate", "to": "session.mutation-broker.refresh" },
+						{ "from": "session.mutation-broker.refresh", "to": "session.persist.refresh" }
+					]
+				},
+				"diagnostics": { "ok": true, "issues": [] },
+				"hash": {
+					"kind": "topology",
+					"algorithm": "sha256",
+					"input": "strictCanonicalTopologyBytes",
+					"value": "4444444444444444444444444444444444444444444444444444444444444444"
+				}
+			},
+			"topologyHash": {
+				"algorithm": "sha256",
+				"value": "4444444444444444444444444444444444444444444444444444444444444444"
+			},
+			"policyRevision": "session-writes.v2"
+		}
+	],
+	"deltas": [
+		{
+			"schema": "urn:graphrefly-stack:schema:blueprint-delta:v1",
+			"from": {
+				"algorithm": "sha256",
+				"value": "1111111111111111111111111111111111111111111111111111111111111111"
+			},
+			"to": {
+				"algorithm": "sha256",
+				"value": "1111111111111111111111111111111111111111111111111111111111111111"
+			},
+			"structural": {
+				"addedNodes": [],
+				"removedNodeIds": [],
+				"addedEdges": [],
+				"removedEdges": []
+			},
+			"claimImpacts": [
+				{ "workUnitId": "U1", "claimId": "contracts", "impact": "none" },
+				{ "workUnitId": "U2", "claimId": "session-write-path", "impact": "none" },
+				{ "workUnitId": "U3", "claimId": "refresh-runtime", "impact": "none" }
+			]
+		},
+		{
+			"schema": "urn:graphrefly-stack:schema:blueprint-delta:v1",
+			"from": {
+				"algorithm": "sha256",
+				"value": "1111111111111111111111111111111111111111111111111111111111111111"
+			},
+			"to": {
+				"algorithm": "sha256",
+				"value": "2222222222222222222222222222222222222222222222222222222222222222"
+			},
+			"structural": {
+				"addedNodes": [
+					{
+						"id": "session.mutation-broker.password-reset",
+						"factory": "sessionMutationBroker",
+						"deps": ["password-reset.intent"]
+					}
+				],
+				"removedNodeIds": [],
+				"addedEdges": [
+					{ "from": "password-reset.intent", "to": "session.mutation-broker.password-reset" },
+					{
+						"from": "session.mutation-broker.password-reset",
+						"to": "session.persist.password-reset"
+					}
+				],
+				"removedEdges": [
+					{ "from": "password-reset.intent", "to": "session.persist.password-reset" }
+				]
+			},
+			"claimImpacts": [
+				{ "workUnitId": "U1", "claimId": "contracts", "impact": "none" },
+				{ "workUnitId": "U2", "claimId": "session-write-path", "impact": "affected" },
+				{ "workUnitId": "U3", "claimId": "refresh-runtime", "impact": "none" }
+			]
+		},
+		{
+			"schema": "urn:graphrefly-stack:schema:blueprint-delta:v1",
+			"from": {
+				"algorithm": "sha256",
+				"value": "1111111111111111111111111111111111111111111111111111111111111111"
+			},
+			"to": {
+				"algorithm": "sha256",
+				"value": "3333333333333333333333333333333333333333333333333333333333333333"
+			},
+			"structural": {
+				"addedNodes": [
+					{ "id": "telemetry.session", "factory": "effect", "deps": ["refresh.rotate"] }
+				],
+				"removedNodeIds": [],
+				"addedEdges": [{ "from": "refresh.rotate", "to": "telemetry.session" }],
+				"removedEdges": []
+			},
+			"claimImpacts": [
+				{ "workUnitId": "U1", "claimId": "contracts", "impact": "none" },
+				{ "workUnitId": "U2", "claimId": "session-write-path", "impact": "none" },
+				{ "workUnitId": "U3", "claimId": "refresh-runtime", "impact": "none" }
+			]
+		},
+		{
+			"schema": "urn:graphrefly-stack:schema:blueprint-delta:v1",
+			"from": {
+				"algorithm": "sha256",
+				"value": "2222222222222222222222222222222222222222222222222222222222222222"
+			},
+			"to": {
+				"algorithm": "sha256",
+				"value": "4444444444444444444444444444444444444444444444444444444444444444"
+			},
+			"structural": {
+				"addedNodes": [
+					{
+						"id": "session.mutation-broker.refresh",
+						"factory": "sessionMutationBroker",
+						"deps": ["refresh.rotate"]
+					}
+				],
+				"removedNodeIds": [],
+				"addedEdges": [
+					{ "from": "refresh.rotate", "to": "session.mutation-broker.refresh" },
+					{ "from": "session.mutation-broker.refresh", "to": "session.persist.refresh" }
+				],
+				"removedEdges": [{ "from": "refresh.rotate", "to": "session.persist.refresh" }]
+			},
+			"claimImpacts": [
+				{ "workUnitId": "U1", "claimId": "contracts", "impact": "none" },
+				{ "workUnitId": "U2", "claimId": "session-write-path", "impact": "none" },
+				{ "workUnitId": "U3", "claimId": "refresh-runtime", "impact": "none" }
+			]
+		}
+	],
+	"semanticChanges": [
+		{
+			"schema": "urn:graphrefly-stack:schema:semantic-change-record:v1",
+			"recordId": "record.u1.s1",
+			"workUnitId": "U1",
+			"commit": { "algorithm": "sha1", "value": "1111111111111111111111111111111111111111" },
+			"stablePatchId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+			"diffDigest": {
+				"algorithm": "sha256",
+				"value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+			},
+			"semanticParentRecordId": null,
+			"semanticParentCommit": {
+				"algorithm": "sha1",
+				"value": "0000000000000000000000000000000000000001"
+			},
+			"allowedSourceScopes": ["src/session/contracts.ts", "tests/session/contracts.test.ts"],
+			"sourceScopeDigest": {
+				"algorithm": "sha256",
+				"value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+			},
+			"blueprintClaims": [],
+			"dependencies": [],
+			"requiredChecks": ["contracts"],
+			"blueprintHash": {
+				"algorithm": "sha256",
+				"value": "1111111111111111111111111111111111111111111111111111111111111111"
+			},
+			"policyRevision": "session-writes.v1",
+			"providerId": "graphrefly",
+			"providerVersion": "0.1.1",
+			"contractVersion": "v1",
+			"rebindFrom": null
+		},
+		{
+			"schema": "urn:graphrefly-stack:schema:semantic-change-record:v1",
+			"recordId": "record.u2.s2",
+			"workUnitId": "U2",
+			"commit": { "algorithm": "sha1", "value": "2222222222222222222222222222222222222222" },
+			"stablePatchId": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+			"diffDigest": {
+				"algorithm": "sha256",
+				"value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+			},
+			"semanticParentRecordId": "record.u1.s1",
+			"semanticParentCommit": {
+				"algorithm": "sha1",
+				"value": "1111111111111111111111111111111111111111"
+			},
+			"allowedSourceScopes": [
+				"src/session/flows/refresh-flow.ts",
+				"tests/session/refresh-flow.test.ts"
+			],
+			"sourceScopeDigest": {
+				"algorithm": "sha256",
+				"value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+			},
+			"blueprintClaims": ["session-write-path"],
+			"dependencies": ["U1"],
+			"requiredChecks": ["refresh-runtime"],
+			"blueprintHash": {
+				"algorithm": "sha256",
+				"value": "1111111111111111111111111111111111111111111111111111111111111111"
+			},
+			"policyRevision": "session-writes.v1",
+			"providerId": "graphrefly",
+			"providerVersion": "0.1.1",
+			"contractVersion": "v1",
+			"rebindFrom": null
+		},
+		{
+			"schema": "urn:graphrefly-stack:schema:semantic-change-record:v1",
+			"recordId": "record.u3.s3",
+			"workUnitId": "U3",
+			"commit": { "algorithm": "sha1", "value": "3333333333333333333333333333333333333333" },
+			"stablePatchId": "cccccccccccccccccccccccccccccccccccccccc",
+			"diffDigest": {
+				"algorithm": "sha256",
+				"value": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+			},
+			"semanticParentRecordId": "record.u2.s2",
+			"semanticParentCommit": {
+				"algorithm": "sha1",
+				"value": "2222222222222222222222222222222222222222"
+			},
+			"allowedSourceScopes": ["src/http/refresh-route.ts", "tests/http/refresh-route.test.ts"],
+			"sourceScopeDigest": {
+				"algorithm": "sha256",
+				"value": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+			},
+			"blueprintClaims": ["refresh-runtime"],
+			"dependencies": ["U2"],
+			"requiredChecks": ["refresh-api"],
+			"blueprintHash": {
+				"algorithm": "sha256",
+				"value": "1111111111111111111111111111111111111111111111111111111111111111"
+			},
+			"policyRevision": "session-writes.v1",
+			"providerId": "graphrefly",
+			"providerVersion": "0.1.1",
+			"contractVersion": "v1",
+			"rebindFrom": null
+		}
+	],
+	"checks": [
+		{
+			"schema": "urn:graphrefly-stack:schema:check-result:v1",
+			"checkId": "contracts",
+			"command": ["pnpm", "test:contracts"],
+			"exitCode": 0,
+			"stdoutDigest": {
+				"algorithm": "sha256",
+				"value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+			},
+			"stderrDigest": {
+				"algorithm": "sha256",
+				"value": "0000000000000000000000000000000000000000000000000000000000000000"
+			}
+		},
+		{
+			"schema": "urn:graphrefly-stack:schema:check-result:v1",
+			"checkId": "refresh-runtime",
+			"command": ["pnpm", "test:refresh-runtime"],
+			"exitCode": 0,
+			"stdoutDigest": {
+				"algorithm": "sha256",
+				"value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+			},
+			"stderrDigest": {
+				"algorithm": "sha256",
+				"value": "0000000000000000000000000000000000000000000000000000000000000000"
+			}
+		},
+		{
+			"schema": "urn:graphrefly-stack:schema:check-result:v1",
+			"checkId": "refresh-api",
+			"command": ["pnpm", "test:refresh-api"],
+			"exitCode": 0,
+			"stdoutDigest": {
+				"algorithm": "sha256",
+				"value": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+			},
+			"stderrDigest": {
+				"algorithm": "sha256",
+				"value": "0000000000000000000000000000000000000000000000000000000000000000"
+			}
+		}
+	],
+	"cases": [
+		{
+			"caseId": "current-valid",
+			"baseSnapshotIndex": 0,
+			"currentSnapshotIndex": 0,
+			"deltaIndex": 0,
+			"expectedGate": {
+				"schema": "urn:graphrefly-stack:schema:gate-result:v1",
+				"gateVersion": "v1",
+				"inputDigest": {
+					"algorithm": "sha256",
+					"value": "1111111111111111111111111111111111111111111111111111111111111111"
+				},
+				"verdict": "pass",
+				"units": [
+					{ "workUnitId": "U1", "verdict": "valid", "reasonCodes": [], "invalidDependencies": [] },
+					{ "workUnitId": "U2", "verdict": "valid", "reasonCodes": [], "invalidDependencies": [] },
+					{ "workUnitId": "U3", "verdict": "valid", "reasonCodes": [], "invalidDependencies": [] }
+				],
+				"checkIds": ["contracts", "refresh-runtime", "refresh-api"]
+			},
+			"selectiveReplan": null,
+			"reviewDecision": {
+				"schema": "urn:graphrefly-stack:schema:review-decision:v1",
+				"decision": "approve",
+				"reviewerLabel": "fixture-reviewer",
+				"recordIds": ["record.u1.s1", "record.u2.s2", "record.u3.s3"],
+				"recordedAt": "2026-07-16T00:00:00Z",
+				"identityVerified": false
+			}
+		},
+		{
+			"caseId": "clean-rebase-semantic-stale",
+			"baseSnapshotIndex": 0,
+			"currentSnapshotIndex": 1,
+			"deltaIndex": 1,
+			"expectedGate": {
+				"schema": "urn:graphrefly-stack:schema:gate-result:v1",
+				"gateVersion": "v1",
+				"inputDigest": {
+					"algorithm": "sha256",
+					"value": "2222222222222222222222222222222222222222222222222222222222222222"
+				},
+				"verdict": "blocked",
+				"units": [
+					{ "workUnitId": "U1", "verdict": "valid", "reasonCodes": [], "invalidDependencies": [] },
+					{
+						"workUnitId": "U2",
+						"verdict": "invalid",
+						"reasonCodes": ["BLUEPRINT_WITNESS_STALE", "POLICY_SESSION_WRITE_REQUIRES_BROKER"],
+						"invalidDependencies": []
+					},
+					{
+						"workUnitId": "U3",
+						"verdict": "invalid",
+						"reasonCodes": ["DEPENDENCY_INVALID"],
+						"invalidDependencies": ["U2"]
+					}
+				],
+				"checkIds": ["contracts", "refresh-runtime", "refresh-api"]
+			},
+			"selectiveReplan": null,
+			"reviewDecision": {
+				"schema": "urn:graphrefly-stack:schema:review-decision:v1",
+				"decision": "defer",
+				"reviewerLabel": "fixture-reviewer",
+				"recordIds": ["record.u1.s1"],
+				"recordedAt": "2026-07-16T00:00:00Z",
+				"identityVerified": false
+			}
+		},
+		{
+			"caseId": "unrelated-change-still-valid",
+			"baseSnapshotIndex": 0,
+			"currentSnapshotIndex": 2,
+			"deltaIndex": 2,
+			"expectedGate": {
+				"schema": "urn:graphrefly-stack:schema:gate-result:v1",
+				"gateVersion": "v1",
+				"inputDigest": {
+					"algorithm": "sha256",
+					"value": "3333333333333333333333333333333333333333333333333333333333333333"
+				},
+				"verdict": "pass",
+				"units": [
+					{ "workUnitId": "U1", "verdict": "valid", "reasonCodes": [], "invalidDependencies": [] },
+					{ "workUnitId": "U2", "verdict": "valid", "reasonCodes": [], "invalidDependencies": [] },
+					{ "workUnitId": "U3", "verdict": "valid", "reasonCodes": [], "invalidDependencies": [] }
+				],
+				"checkIds": ["contracts", "refresh-runtime", "refresh-api"]
+			},
+			"selectiveReplan": null,
+			"reviewDecision": {
+				"schema": "urn:graphrefly-stack:schema:review-decision:v1",
+				"decision": "approve",
+				"reviewerLabel": "fixture-reviewer",
+				"recordIds": ["record.u1.s1", "record.u2.s2", "record.u3.s3"],
+				"recordedAt": "2026-07-16T00:00:00Z",
+				"identityVerified": false
+			}
+		},
+		{
+			"caseId": "stale-parent",
+			"baseSnapshotIndex": 0,
+			"currentSnapshotIndex": 0,
+			"deltaIndex": 0,
+			"expectedGate": {
+				"schema": "urn:graphrefly-stack:schema:gate-result:v1",
+				"gateVersion": "v1",
+				"inputDigest": {
+					"algorithm": "sha256",
+					"value": "4444444444444444444444444444444444444444444444444444444444444444"
+				},
+				"verdict": "blocked",
+				"units": [
+					{ "workUnitId": "U1", "verdict": "valid", "reasonCodes": [], "invalidDependencies": [] },
+					{
+						"workUnitId": "U2",
+						"verdict": "invalid",
+						"reasonCodes": ["SEMANTIC_PARENT_STALE"],
+						"invalidDependencies": []
+					},
+					{
+						"workUnitId": "U3",
+						"verdict": "invalid",
+						"reasonCodes": ["DEPENDENCY_INVALID"],
+						"invalidDependencies": ["U2"]
+					}
+				],
+				"checkIds": ["contracts", "refresh-runtime", "refresh-api"]
+			},
+			"selectiveReplan": null,
+			"reviewDecision": {
+				"schema": "urn:graphrefly-stack:schema:review-decision:v1",
+				"decision": "defer",
+				"reviewerLabel": "fixture-reviewer",
+				"recordIds": ["record.u1.s1"],
+				"recordedAt": "2026-07-16T00:00:00Z",
+				"identityVerified": false
+			}
+		},
+		{
+			"caseId": "forged-or-wrong-scope",
+			"baseSnapshotIndex": 0,
+			"currentSnapshotIndex": 0,
+			"deltaIndex": 0,
+			"expectedGate": {
+				"schema": "urn:graphrefly-stack:schema:gate-result:v1",
+				"gateVersion": "v1",
+				"inputDigest": {
+					"algorithm": "sha256",
+					"value": "5555555555555555555555555555555555555555555555555555555555555555"
+				},
+				"verdict": "blocked",
+				"units": [
+					{
+						"workUnitId": "U1",
+						"verdict": "invalid",
+						"reasonCodes": ["COMMIT_BINDING_MISMATCH"],
+						"invalidDependencies": []
+					},
+					{
+						"workUnitId": "U2",
+						"verdict": "invalid",
+						"reasonCodes": ["SOURCE_SCOPE_VIOLATION", "DEPENDENCY_INVALID"],
+						"invalidDependencies": ["U1"]
+					},
+					{
+						"workUnitId": "U3",
+						"verdict": "invalid",
+						"reasonCodes": ["DEPENDENCY_INVALID"],
+						"invalidDependencies": ["U2"]
+					}
+				],
+				"checkIds": ["contracts", "refresh-runtime", "refresh-api"]
+			},
+			"selectiveReplan": null,
+			"reviewDecision": {
+				"schema": "urn:graphrefly-stack:schema:review-decision:v1",
+				"decision": "reject",
+				"reviewerLabel": "fixture-reviewer",
+				"recordIds": [],
+				"recordedAt": "2026-07-16T00:00:00Z",
+				"identityVerified": false
+			}
+		},
+		{
+			"caseId": "fresh-selective-replan",
+			"baseSnapshotIndex": 1,
+			"currentSnapshotIndex": 3,
+			"deltaIndex": 3,
+			"expectedGate": {
+				"schema": "urn:graphrefly-stack:schema:gate-result:v1",
+				"gateVersion": "v1",
+				"inputDigest": {
+					"algorithm": "sha256",
+					"value": "6666666666666666666666666666666666666666666666666666666666666666"
+				},
+				"verdict": "pass",
+				"units": [
+					{ "workUnitId": "U1", "verdict": "valid", "reasonCodes": [], "invalidDependencies": [] },
+					{ "workUnitId": "U2", "verdict": "valid", "reasonCodes": [], "invalidDependencies": [] },
+					{ "workUnitId": "U3", "verdict": "valid", "reasonCodes": [], "invalidDependencies": [] }
+				],
+				"checkIds": ["contracts", "refresh-runtime", "refresh-api"]
+			},
+			"selectiveReplan": {
+				"schema": "urn:graphrefly-stack:schema:selective-replan:v1",
+				"planId": "plan.refresh-token-rotation.v1.replan.1",
+				"inputUnits": ["U2", "U3"],
+				"preservedUnits": ["U1"],
+				"replacements": [
+					{
+						"workUnitId": "U2",
+						"fromCommit": {
+							"algorithm": "sha1",
+							"value": "5555555555555555555555555555555555555555"
+						},
+						"toCommit": { "algorithm": "sha1", "value": "8888888888888888888888888888888888888888" }
+					},
+					{
+						"workUnitId": "U3",
+						"fromCommit": {
+							"algorithm": "sha1",
+							"value": "6666666666666666666666666666666666666666"
+						},
+						"toCommit": { "algorithm": "sha1", "value": "9999999999999999999999999999999999999999" }
+					}
+				],
+				"finalLineage": [
+					{ "algorithm": "sha1", "value": "4444444444444444444444444444444444444444" },
+					{ "algorithm": "sha1", "value": "3333333333333333333333333333333333333333" },
+					{ "algorithm": "sha1", "value": "8888888888888888888888888888888888888888" },
+					{ "algorithm": "sha1", "value": "9999999999999999999999999999999999999999" }
+				]
+			},
+			"reviewDecision": {
+				"schema": "urn:graphrefly-stack:schema:review-decision:v1",
+				"decision": "approve",
+				"reviewerLabel": "fixture-reviewer",
+				"recordIds": ["record.u1.s1", "record.u2.s2", "record.u3.s3"],
+				"recordedAt": "2026-07-16T00:00:00Z",
+				"identityVerified": false
+			}
+		}
+	]
+}

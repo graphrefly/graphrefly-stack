@@ -1,0 +1,10 @@
+{
+	"schema": "urn:graphrefly-stack:schema:raw-diff:v1",
+	"workUnitId": "U3",
+	"commit": {
+		"algorithm": "sha1",
+		"value": "08a3f4403cbcf115aeee42890fe8da91fad58a75"
+	},
+	"paths": ["src/http/refresh-route.ts", "tests/http/refresh-route.test.ts"],
+	"patch": "diff --git a/src/http/refresh-route.ts b/src/http/refresh-route.ts\nindex 4fcf305..9b37dd7 100644\n--- a/src/http/refresh-route.ts\n+++ b/src/http/refresh-route.ts\n@@ -1,2 +1,2 @@\n import { refresh } from '../session/flows/refresh-flow.js';\n-export const postRefresh = refresh;\n+export function postRefresh(token: string) { return { status: 200, body: refresh(token) }; }\ndiff --git a/tests/http/refresh-route.test.ts b/tests/http/refresh-route.test.ts\nnew file mode 100644\nindex 0000000..6003740\n--- /dev/null\n+++ b/tests/http/refresh-route.test.ts\n@@ -0,0 +1 @@\n+// HTTP adapter returns replacement token\n"
+}

@@ -1,0 +1,30 @@
+{
+	"schema": "urn:graphrefly-stack:schema:gate-result:v1",
+	"gateVersion": "v1",
+	"inputDigest": {
+		"algorithm": "sha256",
+		"value": "3f6f30adbe2e188c020c8670fa8827081059d58f0c09552e5cb07532ca2750f6"
+	},
+	"verdict": "blocked",
+	"units": [
+		{
+			"workUnitId": "U1",
+			"verdict": "valid",
+			"reasonCodes": [],
+			"invalidDependencies": []
+		},
+		{
+			"workUnitId": "U2",
+			"verdict": "invalid",
+			"reasonCodes": ["BLUEPRINT_WITNESS_STALE", "POLICY_SESSION_WRITE_REQUIRES_BROKER"],
+			"invalidDependencies": []
+		},
+		{
+			"workUnitId": "U3",
+			"verdict": "invalid",
+			"reasonCodes": ["DEPENDENCY_INVALID"],
+			"invalidDependencies": ["U2"]
+		}
+	],
+	"checkIds": ["contracts", "refresh-runtime", "refresh-api"]
+}

@@ -1,0 +1,16 @@
+{
+	"name": "@graphrefly-stack/core",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./dist/index.js"
+	},
+	"scripts": {
+		"build": "tsc -p tsconfig.json"
+	},
+	"dependencies": {
+		"@graphrefly-stack/contracts": "workspace:*",
+		"@graphrefly/ts": "0.1.1"
+	}
+}

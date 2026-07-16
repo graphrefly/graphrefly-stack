@@ -1,0 +1,71 @@
+{
+	"schema": "urn:graphrefly-stack:schema:git-stack:v1",
+	"linearity": "linear",
+	"base": {
+		"algorithm": "sha1",
+		"value": "7a91c600853db1e6a8762d8434da2a3f6037070f"
+	},
+	"head": {
+		"algorithm": "sha1",
+		"value": "08a3f4403cbcf115aeee42890fe8da91fad58a75"
+	},
+	"commits": [
+		{
+			"oid": {
+				"algorithm": "sha1",
+				"value": "7a91c600853db1e6a8762d8434da2a3f6037070f"
+			},
+			"parent": null,
+			"role": "base",
+			"workUnitId": null
+		},
+		{
+			"oid": {
+				"algorithm": "sha1",
+				"value": "250005e73c04ddada45ba29b6ba458a86198e058"
+			},
+			"parent": {
+				"algorithm": "sha1",
+				"value": "7a91c600853db1e6a8762d8434da2a3f6037070f"
+			},
+			"role": "concurrent",
+			"workUnitId": null
+		},
+		{
+			"oid": {
+				"algorithm": "sha1",
+				"value": "3d8696c74e3bf1458079c0b69f63086e808c03f3"
+			},
+			"parent": {
+				"algorithm": "sha1",
+				"value": "250005e73c04ddada45ba29b6ba458a86198e058"
+			},
+			"role": "work-unit",
+			"workUnitId": "U1"
+		},
+		{
+			"oid": {
+				"algorithm": "sha1",
+				"value": "acc8c32a2ff2fd5fe44b87bb352ee2b831af8a38"
+			},
+			"parent": {
+				"algorithm": "sha1",
+				"value": "3d8696c74e3bf1458079c0b69f63086e808c03f3"
+			},
+			"role": "work-unit",
+			"workUnitId": "U2"
+		},
+		{
+			"oid": {
+				"algorithm": "sha1",
+				"value": "08a3f4403cbcf115aeee42890fe8da91fad58a75"
+			},
+			"parent": {
+				"algorithm": "sha1",
+				"value": "acc8c32a2ff2fd5fe44b87bb352ee2b831af8a38"
+			},
+			"role": "work-unit",
+			"workUnitId": "U3"
+		}
+	]
+}

@@ -1,0 +1,25 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "urn:graphrefly-stack:schema:replan-proposal:v1",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["schema", "inputUnits", "preservedUnits", "workUnits"],
+	"properties": {
+		"schema": { "const": "urn:graphrefly-stack:schema:replan-proposal:v1" },
+		"inputUnits": {
+			"type": "array",
+			"items": { "type": "string" },
+			"uniqueItems": true
+		},
+		"preservedUnits": {
+			"type": "array",
+			"items": { "type": "string" },
+			"uniqueItems": true
+		},
+		"workUnits": {
+			"type": "array",
+			"minItems": 1,
+			"items": { "$ref": "urn:graphrefly-stack:schema:artifacts:v1#/definitions/WorkUnit" }
+		}
+	}
+}

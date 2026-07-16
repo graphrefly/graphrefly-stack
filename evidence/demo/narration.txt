@@ -1,0 +1,15 @@
+Git says this stack rebased cleanly. Zero conflicts. But clean is not the same as still valid. An agent can write correct code against an architectural assumption that expires before review. GraphReFly Stack makes that invisible risk reviewable.
+
+Here, G P T five point six turns one refresh-token task into three dependent work units: contracts, runtime, and the H T T P adapter. The real Git commits carry locked source scopes, Blueprint claims, dependencies, and required checks. The model can improve intent and claim wording, but it cannot widen those anchors.
+
+The review starts with the stack, not a wall of raw code. Select a real commit and the same view focuses its intent, architecture delta, claim impact, checks, and deterministic gate. Raw patches stay one click away. This is architecture-level review with implementation evidence on demand.
+
+Now main changes without touching the feature files. Session writes must pass through session Mutation Broker, and policy advances to version two. Git still rebases all three commits with zero text conflicts. Ordinary fixture checks still pass. But the Blueprint witness that shaped the runtime work is stale.
+
+The gate computes the difference. U one remains valid. U two needs replan because the Blueprint and policy changed. U three is blocked only because it depends on U two. The reason order is fixed. The checks are real. And Gate Result is read only. Neither G P T five point six nor a reviewer action can edit this verdict.
+
+So we replan selectively. U one stays untouched. G P T five point six proposes corrected U two and U three language against session Mutation Broker and policy version two. Strict schemas and post-validation reject any changed scope, dependency, claim, or check. Fresh witnesses bind the replacements, deterministic checks rerun, and the final gate returns pass.
+
+Codex built the majority of this project in one long-lived task: contracts, real Git fixtures, deterministic semantics, the server-side model seam, adversarial tests, and this synchronized React review. In the finished product, G P T five point six provides semantic planning and selective replan proposals. Deterministic code remains the authority.
+
+Every material claim resolves to evidence. The portable bundle contains twenty four canonical, hashed artifacts: exact model and effort, commits, Blueprints, policies, checks, reasons, token usage, and redacted provenance. Judges can inspect the full path locally without credentials. GraphReFly Stack: semantic stacked diffs that know when their architectural assumptions expire.

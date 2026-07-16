@@ -1,0 +1,855 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <script src="transcript-data.js"></script>
+    <style>
+      :root {
+        --canvas: #dfe9ef;
+        --ink: #173044;
+        --paper: #f7fafb;
+        --blueprint: #246482;
+        --blueprint-soft: #d9edf4;
+        --valid: #39765f;
+        --valid-soft: #dcece5;
+        --blocked: #963e68;
+        --blocked-soft: #f2dce7;
+        --line: #b6c8d1;
+        --focus: #f0a45d;
+      }
+
+      @font-face {
+        font-family: "GraphReFly Avenir";
+        src: local("Avenir Next");
+      }
+
+      @font-face {
+        font-family: "GraphReFly Mono";
+        src: local("SFMono-Regular"), local("SF Mono");
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        color: var(--ink);
+        background: var(--canvas);
+      }
+
+      body {
+        font-family: "GraphReFly Avenir", sans-serif;
+        font-weight: 350;
+      }
+
+      .mono,
+      .eyebrow,
+      .meta,
+      .reason,
+      .chip,
+      .caption {
+        font-family: "GraphReFly Mono", monospace;
+        font-variant-ligatures: none;
+      }
+
+      #root {
+        position: relative;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background-color: var(--canvas);
+        background-image:
+          linear-gradient(rgba(36, 100, 130, 0.11) 2px, rgba(36, 100, 130, 0) 2px),
+          linear-gradient(90deg, rgba(36, 100, 130, 0.11) 2px, rgba(36, 100, 130, 0) 2px);
+        background-size: 48px 48px;
+      }
+
+      .scene {
+        position: absolute;
+        inset: 0;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background-color: var(--canvas);
+      }
+
+      #scene-2,
+      #scene-3,
+      #scene-4,
+      #scene-5,
+      #scene-6,
+      #scene-7 {
+        opacity: 0;
+      }
+
+      .scene-content {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        height: 100%;
+        padding: 62px 92px 170px;
+        gap: 28px;
+      }
+
+      .topline {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        padding-bottom: 18px;
+        border-bottom: 3px solid var(--ink);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        font-size: 26px;
+        font-weight: 900;
+        letter-spacing: -0.03em;
+      }
+
+      .brand-mark {
+        display: grid;
+        place-items: center;
+        width: 44px;
+        height: 44px;
+        color: var(--paper);
+        background: var(--ink);
+        border: 3px solid var(--ink);
+      }
+
+      .eyebrow,
+      .meta,
+      .chip {
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .eyebrow {
+        color: var(--blueprint);
+      }
+
+      .meta {
+        color: #4e6675;
+      }
+
+      h1,
+      h2 {
+        max-width: 1520px;
+        font-weight: 900;
+        letter-spacing: -0.055em;
+        line-height: 0.96;
+      }
+
+      h1 {
+        font-size: 124px;
+      }
+
+      h2 {
+        font-size: 78px;
+      }
+
+      .lede {
+        max-width: 1250px;
+        font-size: 33px;
+        line-height: 1.42;
+        color: #395467;
+      }
+
+      .ghost {
+        position: absolute;
+        right: -34px;
+        top: 160px;
+        font-family: "GraphReFly Mono", monospace;
+        font-size: 170px;
+        font-weight: 700;
+        color: rgba(36, 100, 130, 0.14);
+        letter-spacing: -0.08em;
+        pointer-events: none;
+      }
+
+      .rule {
+        width: 100%;
+        height: 4px;
+        transform-origin: left center;
+        background: var(--blueprint);
+      }
+
+      .status-row,
+      .work-unit-row,
+      .trust-flow,
+      .rebind-row {
+        display: grid;
+        gap: 20px;
+        width: 100%;
+      }
+
+      .status-row {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .status-card,
+      .unit-card,
+      .trust-card,
+      .rebind-card,
+      .delta-card,
+      .gate-card {
+        min-width: 0;
+        padding: 28px 32px;
+        background: rgba(247, 250, 251, 0.95);
+        border: 3px solid var(--line);
+      }
+
+      .status-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 132px;
+        font-size: 38px;
+        font-weight: 900;
+      }
+
+      .status-card.valid {
+        color: var(--valid);
+        background: var(--valid-soft);
+        border-color: var(--valid);
+      }
+
+      .status-card.blocked {
+        color: var(--blocked);
+        background: var(--blocked-soft);
+        border-color: var(--blocked);
+      }
+
+      .work-unit-row {
+        grid-template-columns: repeat(3, 1fr);
+        align-items: stretch;
+      }
+
+      .unit-card {
+        display: flex;
+        flex-direction: column;
+        min-height: 360px;
+        gap: 22px;
+      }
+
+      .unit-card .unit-id {
+        font-size: 70px;
+        font-weight: 900;
+        line-height: 1;
+      }
+
+      .unit-card h3 {
+        font-size: 34px;
+        line-height: 1.12;
+      }
+
+      .unit-card p {
+        font-size: 24px;
+        line-height: 1.45;
+        color: #4e6675;
+      }
+
+      .unit-card .meta {
+        margin-top: auto;
+      }
+
+      .dependency-line {
+        position: absolute;
+        left: 235px;
+        right: 235px;
+        bottom: 282px;
+        height: 5px;
+        transform-origin: left center;
+        background: var(--blueprint);
+      }
+
+      .chip-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .chip {
+        padding: 10px 14px;
+        color: var(--ink);
+        background: var(--paper);
+        border: 2px solid var(--ink);
+      }
+
+      .chip.model {
+        color: var(--paper);
+        background: var(--blueprint);
+        border-color: var(--blueprint);
+      }
+
+      .product-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) 390px;
+        gap: 32px;
+        min-height: 0;
+      }
+
+      .device-wrap {
+        min-width: 0;
+        padding: 14px;
+        overflow: hidden;
+        background: var(--ink);
+        box-shadow: 24px 28px 0 rgba(23, 48, 68, 0.12);
+      }
+
+      .device-wrap img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: top left;
+      }
+
+      .callouts {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .callout {
+        display: grid;
+        grid-template-columns: 46px 1fr;
+        gap: 18px;
+        align-items: start;
+        padding: 22px;
+        background: var(--paper);
+        border: 3px solid var(--line);
+      }
+
+      .callout b {
+        display: grid;
+        place-items: center;
+        width: 46px;
+        height: 46px;
+        color: var(--paper);
+        font-size: 22px;
+        background: var(--blueprint);
+      }
+
+      .callout span {
+        font-size: 25px;
+        line-height: 1.3;
+      }
+
+      .split-proof {
+        display: grid;
+        grid-template-columns: minmax(0, 1.35fr) 0.65fr;
+        gap: 28px;
+        min-height: 0;
+      }
+
+      .delta-card {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .broker-node {
+        padding: 28px;
+        color: var(--paper);
+        font-family: "GraphReFly Mono", monospace;
+        font-size: 29px;
+        font-weight: 700;
+        line-height: 1.35;
+        background: var(--blueprint);
+        border: 3px solid var(--ink);
+      }
+
+      .reason-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .reason {
+        padding: 18px 20px;
+        color: var(--blocked);
+        font-size: 23px;
+        font-weight: 700;
+        background: var(--blocked-soft);
+        border: 3px solid var(--blocked);
+      }
+
+      .gate-grid {
+        display: grid;
+        grid-template-columns: 0.82fr 1.18fr;
+        gap: 28px;
+        min-height: 0;
+      }
+
+      .verdict-rail {
+        display: grid;
+        gap: 14px;
+      }
+
+      .verdict {
+        display: grid;
+        grid-template-columns: 92px 1fr auto;
+        gap: 18px;
+        align-items: center;
+        padding: 22px 26px;
+        background: var(--paper);
+        border: 3px solid var(--line);
+      }
+
+      .verdict .unit-id {
+        font-size: 42px;
+        font-weight: 900;
+      }
+
+      .verdict strong {
+        font-size: 30px;
+      }
+
+      .verdict.valid {
+        color: var(--valid);
+        background: var(--valid-soft);
+        border-color: var(--valid);
+      }
+
+      .verdict.blocked {
+        color: var(--blocked);
+        background: var(--blocked-soft);
+        border-color: var(--blocked);
+      }
+
+      .gate-card {
+        display: flex;
+        flex-direction: column;
+        gap: 22px;
+        color: var(--paper);
+        background: var(--ink);
+        border-color: var(--ink);
+      }
+
+      .gate-card h2 {
+        font-size: 68px;
+        color: var(--paper);
+      }
+
+      .gate-card .meta {
+        color: #b9ccd6;
+      }
+
+      .read-only {
+        margin-top: auto;
+        padding-top: 18px;
+        color: #86c5d8;
+        font-size: 24px;
+        border-top: 3px solid #7693a3;
+      }
+
+      .rebind-row {
+        grid-template-columns: 0.72fr 1fr 1fr;
+      }
+
+      .rebind-card {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        min-height: 330px;
+      }
+
+      .rebind-card.preserved {
+        color: var(--valid);
+        background: var(--valid-soft);
+        border-color: var(--valid);
+      }
+
+      .rebind-card h3 {
+        font-size: 42px;
+      }
+
+      .binding {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px;
+        font-family: "GraphReFly Mono", monospace;
+        font-size: 22px;
+        background: rgba(247, 250, 251, 0.75);
+        border: 2px solid var(--line);
+      }
+
+      .binding.fresh {
+        color: var(--valid);
+        border-color: var(--valid);
+      }
+
+      .pass-stamp {
+        position: absolute;
+        right: 104px;
+        bottom: 184px;
+        padding: 20px 32px;
+        color: var(--paper);
+        font-size: 46px;
+        font-weight: 900;
+        transform: rotate(-2deg);
+        background: var(--valid);
+        border: 4px solid var(--ink);
+      }
+
+      .trust-flow {
+        grid-template-columns: 1fr auto 1fr auto 1fr;
+        align-items: center;
+      }
+
+      .trust-card {
+        min-height: 170px;
+        font-size: 34px;
+        font-weight: 900;
+      }
+
+      .trust-arrow {
+        color: var(--blueprint);
+        font-size: 64px;
+        font-weight: 900;
+      }
+
+      .bundle-line {
+        display: flex;
+        align-items: baseline;
+        gap: 24px;
+      }
+
+      .bundle-count {
+        color: var(--blueprint);
+        font-size: 120px;
+        font-weight: 900;
+        line-height: 0.9;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .tagline {
+        max-width: 1500px;
+        font-size: 66px;
+        font-weight: 900;
+        letter-spacing: -0.045em;
+        line-height: 1.05;
+      }
+
+      #caption-rail {
+        position: absolute;
+        left: 92px;
+        right: 92px;
+        bottom: 50px;
+        z-index: 100;
+        height: 94px;
+        overflow: visible;
+        background: rgba(247, 250, 251, 0.97);
+        border: 3px solid var(--ink);
+        box-shadow: 12px 12px 0 rgba(23, 48, 68, 0.12);
+      }
+
+      #caption-rail::before {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: 12px;
+        content: "";
+        background: var(--focus);
+      }
+
+      .caption {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 14px 50px 14px 62px;
+        overflow: visible;
+        color: var(--ink);
+        font-size: 34px;
+        font-weight: 700;
+        line-height: 1.2;
+        text-align: center;
+        visibility: hidden;
+        opacity: 0;
+      }
+
+      #transition-block {
+        position: absolute;
+        inset: 0;
+        z-index: 90;
+        pointer-events: none;
+        background: var(--blocked);
+        opacity: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="165"
+      data-width="1920"
+      data-height="1080"
+    >
+      <section id="scene-1" class="scene">
+        <div class="ghost" id="s1-ghost" data-layout-ignore aria-hidden="true">0 CONFLICTS</div>
+        <div class="scene-content">
+          <div class="topline" id="s1-top">
+            <div class="brand"><span class="brand-mark">G</span> GraphReFly Stack</div>
+            <span class="meta">REAL GIT · SEMANTIC VALIDITY</span>
+          </div>
+          <p class="eyebrow" id="s1-eye">GIT'S BLIND SPOT</p>
+          <h1 id="s1-title">A clean rebase can still be wrong.</h1>
+          <p class="lede" id="s1-lede">Textual success does not prove the architecture that shaped a plan is still current.</p>
+          <div class="status-row">
+            <div class="status-card valid" id="s1-valid"><span>Git rebase</span><span>✓ CLEAN</span></div>
+            <div class="status-card blocked" id="s1-blocked"><span>Architecture witness</span><span>! STALE</span></div>
+          </div>
+          <div class="rule" id="s1-rule"></div>
+        </div>
+      </section>
+
+      <section id="scene-2" class="scene">
+        <div class="ghost" id="s2-ghost" data-layout-ignore aria-hidden="true">CHANGEPLAN</div>
+        <div class="scene-content">
+          <div class="topline" id="s2-top">
+            <div class="brand"><span class="brand-mark">G</span> One task · three work units</div>
+            <div class="chip-row"><span class="chip model">gpt-5.6-sol · high</span><span class="chip">strict schema</span></div>
+          </div>
+          <p class="eyebrow" id="s2-eye">DEPENDENCY-AWARE REAL STACK</p>
+          <div class="work-unit-row">
+            <article class="unit-card" id="s2-u1"><span class="unit-id">U1</span><h3>Contracts</h3><p>Define rotation inputs, outputs, and invariants.</p><span class="meta">3d8696c · contracts</span></article>
+            <article class="unit-card" id="s2-u2"><span class="unit-id">U2</span><h3>GraphReFly runtime</h3><p>Persist replacement tokens through the approved session path.</p><span class="meta">acc8c32 · refresh-runtime</span></article>
+            <article class="unit-card" id="s2-u3"><span class="unit-id">U3</span><h3>HTTP adapter</h3><p>Expose the broker-backed refresh result and reject replay.</p><span class="meta">08a3f44 · refresh-api</span></article>
+          </div>
+          <div class="dependency-line" id="s2-deps"></div>
+        </div>
+      </section>
+
+      <section id="scene-3" class="scene">
+        <div class="scene-content">
+          <div class="topline" id="s3-top"><div class="brand"><span class="brand-mark">G</span> High-level semantic review</div><span class="meta">REAL GIT · READ ONLY</span></div>
+          <div class="product-layout">
+            <div class="device-wrap" id="s3-device"><img id="s3-image" data-layout-allow-overflow src="assets/review-u1.png" alt="GraphReFly Stack review UI with U1 selected" /></div>
+            <div class="callouts">
+              <div class="callout" id="s3-c1"><b>1</b><span>Select the real commit stack.</span></div>
+              <div class="callout" id="s3-c2"><b>2</b><span>Read structure and claim impact.</span></div>
+              <div class="callout" id="s3-c3"><b>3</b><span>Verify gate and exact checks.</span></div>
+              <div class="callout" id="s3-c4"><b>4</b><span>Open raw code only on demand.</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="scene-4" class="scene">
+        <div class="ghost" id="s4-ghost" data-layout-ignore aria-hidden="true">session-writes.v2</div>
+        <div class="scene-content">
+          <div class="topline" id="s4-top"><div class="brand"><span class="brand-mark">G</span> Clean rebase · stale architecture</div><span class="meta">FILES DISJOINT · CHECKS GREEN</span></div>
+          <div class="split-proof">
+            <div class="device-wrap" id="s4-device"><img id="s4-image" src="assets/review-u2.png" alt="GraphReFly Stack review UI with U2 selected" /></div>
+            <article class="delta-card" id="s4-delta">
+              <p class="eyebrow">FOCUSED BLUEPRINT DELTA</p>
+              <h2>One new broker changes the write path.</h2>
+              <div class="broker-node" id="s4-broker">password-reset.intent<br />↓<br />sessionMutationBroker<br />↓<br />session.persist</div>
+              <div class="reason-stack"><div class="reason" id="s4-r1">BLUEPRINT_CHANGED</div><div class="reason" id="s4-r2">POLICY_CHANGED</div></div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="scene-5" class="scene">
+        <div class="ghost" id="s5-ghost" data-layout-ignore aria-hidden="true">GATE v1</div>
+        <div class="scene-content">
+          <div class="topline" id="s5-top"><div class="brand"><span class="brand-mark">G</span> Deterministic selective invalidation</div><span class="meta">CLAIM ≠ EVIDENCE ≠ VERDICT</span></div>
+          <div class="gate-grid">
+            <div class="verdict-rail">
+              <div class="verdict valid" id="s5-u1"><span class="unit-id">U1</span><strong>VALID</strong><span>✓</span></div>
+              <div class="verdict blocked" id="s5-u2"><span class="unit-id">U2</span><strong>NEEDS REPLAN</strong><span>!</span></div>
+              <div class="verdict blocked" id="s5-u3"><span class="unit-id">U3</span><strong>DEPENDENCY INVALID</strong><span>!</span></div>
+            </div>
+            <article class="gate-card" id="s5-gate">
+              <p class="eyebrow">EXACT CANONICAL REASONS</p>
+              <h2>Only affected work turns red.</h2>
+              <div class="reason-stack"><div class="reason" id="s5-r1">01 · BLUEPRINT_CHANGED</div><div class="reason" id="s5-r2">02 · POLICY_CHANGED</div><div class="reason" id="s5-r3">U3 · DEPENDENCY_INVALID</div></div>
+              <p class="read-only mono" id="s5-readonly">GateResult · read only · model cannot self-grade</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="scene-6" class="scene">
+        <div class="ghost" id="s6-ghost" data-layout-ignore aria-hidden="true">SELECTIVE REPLAN</div>
+        <div class="scene-content">
+          <div class="topline" id="s6-top"><div class="brand"><span class="brand-mark">G</span> Rebind only what expired</div><div class="chip-row"><span class="chip model">gpt-5.6-sol · high</span><span class="chip">codex-sdk</span></div></div>
+          <p class="eyebrow" id="s6-eye">FRESH WITNESSES · SAME DETERMINISTIC GATE</p>
+          <div class="rebind-row">
+            <article class="rebind-card preserved" id="s6-u1"><h3>U1 · preserved</h3><p class="lede">Contracts remain valid and are not regenerated.</p><div class="binding fresh">3d8696c <span>✓ current</span></div></article>
+            <article class="rebind-card" id="s6-u2"><h3>U2 · rebound</h3><div class="binding">session-writes.v1 <span>stale</span></div><div class="binding fresh">session-writes.v2 <span>fresh</span></div><div class="binding fresh">refresh-runtime <span>exit 0</span></div></article>
+            <article class="rebind-card" id="s6-u3"><h3>U3 · recovered</h3><div class="binding">depends U2 <span>blocked</span></div><div class="binding fresh">depends U2 <span>valid</span></div><div class="binding fresh">refresh-api <span>exit 0</span></div></article>
+          </div>
+          <div class="pass-stamp" id="s6-pass">FINAL GATE · PASS</div>
+        </div>
+      </section>
+
+      <section id="scene-7" class="scene">
+        <div class="ghost" id="s7-ghost" data-layout-ignore aria-hidden="true">24 HASHED ARTIFACTS</div>
+        <div class="scene-content">
+          <div class="topline" id="s7-top"><div class="brand"><span class="brand-mark">G</span> GraphReFly Stack</div><span class="meta">NO CREDENTIALS · PORTABLE EVIDENCE</span></div>
+          <p class="eyebrow" id="s7-eye">REVIEW COMPRESSION, NOT BLIND TRUST</p>
+          <div class="trust-flow">
+            <div class="trust-card" id="s7-claim">Editable claim</div><span class="trust-arrow" id="s7-a1">→</span><div class="trust-card" id="s7-evidence">Validated evidence</div><span class="trust-arrow" id="s7-a2">→</span><div class="trust-card" id="s7-verdict">Deterministic verdict</div>
+          </div>
+          <div class="bundle-line" id="s7-bundle"><span class="bundle-count">24</span><h2>canonical, redacted artifacts</h2></div>
+          <p class="tagline" id="s7-tagline">Semantic stacked diffs that know when their architectural assumptions expire.</p>
+          <div class="rule" id="s7-rule"></div>
+        </div>
+      </section>
+
+      <div id="transition-block"></div>
+      <div id="caption-rail" aria-label="English captions"></div>
+      <audio id="narration" class="clip" data-start="0" data-duration="158.912" data-track-index="20" src="assets/narration.wav"></audio>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      var tl = gsap.timeline({ paused: true });
+
+      function enter(selector, from, to, at) {
+        tl.fromTo(selector, from, { ...to, immediateRender: false }, at);
+      }
+
+      function blurTransition(oldScene, newScene, at, duration) {
+        tl.to(oldScene, { filter: "blur(10px)", scale: 1.03, opacity: 0, duration, ease: "power2.inOut" }, at);
+        tl.fromTo(newScene, { filter: "blur(10px)", scale: 0.97, opacity: 0 }, { filter: "blur(0px)", scale: 1, opacity: 1, duration, ease: "power2.inOut", immediateRender: false }, at + 0.1);
+        tl.set(oldScene, { visibility: "hidden" }, at + duration + 0.12);
+      }
+
+      enter("#s1-top", { y: -36, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7, ease: "expo.out" }, 0.2);
+      enter("#s1-eye", { x: -80, opacity: 0 }, { x: 0, opacity: 1, duration: 0.52, ease: "power3.out" }, 0.42);
+      enter("#s1-title", { x: -120, opacity: 0 }, { x: 0, opacity: 1, duration: 0.9, ease: "quart.out" }, 0.56);
+      enter("#s1-lede", { y: 46, opacity: 0 }, { y: 0, opacity: 1, duration: 0.62, ease: "back.out(1.2)" }, 0.82);
+      enter("#s1-valid", { x: -90, opacity: 0 }, { x: 0, opacity: 1, duration: 0.48, ease: "power4.out" }, 1.06);
+      enter("#s1-blocked", { x: 90, opacity: 0 }, { x: 0, opacity: 1, duration: 0.58, ease: "circ.out" }, 1.18);
+      enter("#s1-rule", { scaleX: 0 }, { scaleX: 1, duration: 0.82, ease: "expo.out" }, 1.38);
+      enter("#s1-ghost", { opacity: 0 }, { opacity: 1, duration: 1.1, ease: "sine.out" }, 0.35);
+      tl.to("#s1-ghost", { x: 32, duration: 4, repeat: 3, yoyo: true, ease: "sine.inOut" }, 1.5);
+      enter("#caption-rail", { y: 120, opacity: 0 }, { y: 0, opacity: 1, duration: 0.65, ease: "power3.out" }, 0.3);
+
+      blurTransition("#scene-1", "#scene-2", 17.5, 0.5);
+      enter("#s2-top", { y: -34, opacity: 0 }, { y: 0, opacity: 1, duration: 0.64, ease: "expo.out" }, 18.18);
+      enter("#s2-eye", { x: -70, opacity: 0 }, { x: 0, opacity: 1, duration: 0.42, ease: "power4.out" }, 18.36);
+      enter("#s2-u1", { x: -100, opacity: 0 }, { x: 0, opacity: 1, duration: 0.55, ease: "circ.out" }, 18.52);
+      enter("#s2-u2", { y: 90, opacity: 0 }, { y: 0, opacity: 1, duration: 0.68, ease: "back.out(1.2)" }, 18.68);
+      enter("#s2-u3", { x: 100, opacity: 0 }, { x: 0, opacity: 1, duration: 0.48, ease: "power3.out" }, 18.84);
+      enter("#s2-deps", { scaleX: 0 }, { scaleX: 1, duration: 0.9, ease: "expo.out" }, 19.12);
+      enter("#s2-ghost", { opacity: 0 }, { opacity: 1, duration: 1.2, ease: "sine.out" }, 18.28);
+      tl.to("#s2-ghost", { y: 20, duration: 4.6, repeat: 4, yoyo: true, ease: "sine.inOut" }, 19.3);
+
+      blurTransition("#scene-2", "#scene-3", 41.5, 0.5);
+      enter("#s3-top", { y: -32, opacity: 0 }, { y: 0, opacity: 1, duration: 0.58, ease: "expo.out" }, 42.16);
+      enter("#s3-device", { x: -80, y: 34, opacity: 0, scale: 0.96 }, { x: 0, y: 0, opacity: 1, scale: 1, duration: 0.82, ease: "power4.out" }, 42.3);
+      enter("#s3-c1", { x: 72, opacity: 0 }, { x: 0, opacity: 1, duration: 0.42, ease: "circ.out" }, 42.55);
+      enter("#s3-c2", { x: 96, opacity: 0 }, { x: 0, opacity: 1, duration: 0.5, ease: "power3.out" }, 42.68);
+      enter("#s3-c3", { x: 120, opacity: 0 }, { x: 0, opacity: 1, duration: 0.58, ease: "back.out(1.1)" }, 42.81);
+      enter("#s3-c4", { x: 144, opacity: 0 }, { x: 0, opacity: 1, duration: 0.46, ease: "expo.out" }, 42.94);
+      tl.to("#s3-image", { scale: 1.025, duration: 10.5, ease: "sine.inOut" }, 43.1);
+
+      blurTransition("#scene-3", "#scene-4", 64.5, 0.5);
+      enter("#s4-top", { y: -34, opacity: 0 }, { y: 0, opacity: 1, duration: 0.61, ease: "expo.out" }, 65.16);
+      enter("#s4-device", { x: -86, opacity: 0 }, { x: 0, opacity: 1, duration: 0.76, ease: "power4.out" }, 65.32);
+      enter("#s4-delta", { x: 92, opacity: 0 }, { x: 0, opacity: 1, duration: 0.68, ease: "circ.out" }, 65.48);
+      enter("#s4-broker", { y: -48, scale: 0.93, opacity: 0 }, { y: 0, scale: 1, opacity: 1, duration: 0.72, ease: "back.out(1.35)" }, 65.74);
+      enter("#s4-r1", { x: 68, opacity: 0 }, { x: 0, opacity: 1, duration: 0.38, ease: "power3.out" }, 66.08);
+      enter("#s4-r2", { x: 92, opacity: 0 }, { x: 0, opacity: 1, duration: 0.46, ease: "expo.out" }, 66.24);
+      enter("#s4-ghost", { opacity: 0 }, { opacity: 1, duration: 1.1, ease: "sine.out" }, 65.2);
+      tl.to("#s4-image", { scale: 1.022, duration: 12, ease: "none" }, 66.4);
+
+      tl.to("#scene-4", { opacity: 0, duration: 0.2, ease: "power2.in" }, 91.78);
+      tl.fromTo("#transition-block", { opacity: 0 }, { opacity: 1, duration: 0.16, ease: "power4.in", immediateRender: false }, 91.72);
+      tl.to("#transition-block", { opacity: 0, duration: 0.22, ease: "power4.out" }, 91.98);
+      tl.fromTo("#scene-5", { opacity: 0 }, { opacity: 1, duration: 0.22, ease: "power3.out", immediateRender: false }, 91.98);
+      tl.set("#scene-4", { visibility: "hidden" }, 92.12);
+      enter("#s5-top", { y: -38, opacity: 0 }, { y: 0, opacity: 1, duration: 0.58, ease: "expo.out" }, 92.24);
+      enter("#s5-u1", { x: -110, opacity: 0 }, { x: 0, opacity: 1, duration: 0.45, ease: "circ.out" }, 92.42);
+      enter("#s5-u2", { x: -140, opacity: 0 }, { x: 0, opacity: 1, duration: 0.53, ease: "power4.out" }, 92.58);
+      enter("#s5-u3", { x: -170, opacity: 0 }, { x: 0, opacity: 1, duration: 0.61, ease: "back.out(1.15)" }, 92.74);
+      enter("#s5-gate", { x: 105, opacity: 0 }, { x: 0, opacity: 1, duration: 0.74, ease: "expo.out" }, 92.5);
+      enter("#s5-r1", { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.38, ease: "power3.out" }, 93.02);
+      enter("#s5-r2", { y: 38, opacity: 0 }, { y: 0, opacity: 1, duration: 0.46, ease: "circ.out" }, 93.18);
+      enter("#s5-r3", { y: 46, opacity: 0 }, { y: 0, opacity: 1, duration: 0.54, ease: "back.out(1.1)" }, 93.34);
+      enter("#s5-readonly", { scaleX: 0, opacity: 0 }, { scaleX: 1, opacity: 1, duration: 0.7, ease: "expo.out" }, 93.58);
+      enter("#s5-ghost", { opacity: 0 }, { opacity: 1, duration: 1.0, ease: "sine.out" }, 92.3);
+      tl.to("#s5-ghost", { x: -24, duration: 4.2, repeat: 5, yoyo: true, ease: "sine.inOut" }, 93.8);
+
+      blurTransition("#scene-5", "#scene-6", 117.5, 0.5);
+      enter("#s6-top", { y: -36, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, ease: "expo.out" }, 118.18);
+      enter("#s6-eye", { x: -82, opacity: 0 }, { x: 0, opacity: 1, duration: 0.43, ease: "power4.out" }, 118.34);
+      enter("#s6-u1", { x: -90, opacity: 0 }, { x: 0, opacity: 1, duration: 0.52, ease: "circ.out" }, 118.52);
+      enter("#s6-u2", { y: 86, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7, ease: "back.out(1.2)" }, 118.68);
+      enter("#s6-u3", { x: 100, opacity: 0 }, { x: 0, opacity: 1, duration: 0.61, ease: "power3.out" }, 118.84);
+      enter("#s6-pass", { scale: 1.35, rotation: 4, opacity: 0 }, { scale: 1, rotation: -2, opacity: 1, duration: 0.54, ease: "back.out(1.6)" }, 119.5);
+      enter("#s6-ghost", { opacity: 0 }, { opacity: 1, duration: 1.0, ease: "sine.out" }, 118.3);
+      tl.to("#s6-ghost", { y: -20, duration: 4.8, repeat: 4, yoyo: true, ease: "sine.inOut" }, 119.8);
+
+      blurTransition("#scene-6", "#scene-7", 144.4, 0.6);
+      enter("#s7-top", { y: -34, opacity: 0 }, { y: 0, opacity: 1, duration: 0.62, ease: "expo.out" }, 145.18);
+      enter("#s7-eye", { x: -74, opacity: 0 }, { x: 0, opacity: 1, duration: 0.44, ease: "power4.out" }, 145.34);
+      enter("#s7-claim", { x: -92, opacity: 0 }, { x: 0, opacity: 1, duration: 0.52, ease: "circ.out" }, 145.5);
+      enter("#s7-a1", { scale: 0.5, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.36, ease: "back.out(1.5)" }, 145.72);
+      enter("#s7-evidence", { y: 68, opacity: 0 }, { y: 0, opacity: 1, duration: 0.64, ease: "power3.out" }, 145.84);
+      enter("#s7-a2", { scale: 0.5, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.42, ease: "expo.out" }, 146.04);
+      enter("#s7-verdict", { x: 92, opacity: 0 }, { x: 0, opacity: 1, duration: 0.58, ease: "circ.out" }, 146.16);
+      enter("#s7-bundle", { y: 54, opacity: 0 }, { y: 0, opacity: 1, duration: 0.62, ease: "back.out(1.15)" }, 146.5);
+      enter("#s7-tagline", { filter: "blur(12px)", opacity: 0 }, { filter: "blur(0px)", opacity: 1, duration: 0.86, ease: "power2.out" }, 146.8);
+      enter("#s7-rule", { scaleX: 0 }, { scaleX: 1, duration: 0.8, ease: "expo.out" }, 147.2);
+      enter("#s7-ghost", { opacity: 0 }, { opacity: 1, duration: 1.1, ease: "sine.out" }, 145.24);
+      tl.to("#s7-ghost", { x: 22, duration: 4.2, repeat: 3, yoyo: true, ease: "sine.inOut" }, 147.4);
+
+      var words = (window.__GRAPHREFLY_TRANSCRIPT__ || []).filter(function (word) {
+        return word.text && word.text.trim().length > 0 && !/^[♪�]+$/.test(word.text);
+      });
+      var groups = [];
+      var current = [];
+      words.forEach(function (word, index) {
+        current.push(word);
+        var next = words[index + 1];
+        var sentenceEnd = /[.!?]$/.test(word.text);
+        var longGap = next && next.start - word.end > 0.32;
+        if (current.length >= 6 || sentenceEnd || longGap || !next) {
+          groups.push({ words: current, start: current[0].start, end: current[current.length - 1].end + 0.08 });
+          current = [];
+        }
+      });
+      groups.forEach(function (group, index) {
+        var next = groups[index + 1];
+        if (next) group.end = Math.min(group.end, next.start - 0.025);
+        var el = document.createElement("div");
+        el.id = "caption-" + index;
+        el.className = "caption";
+        el.textContent = group.words.map(function (word) { return word.text; }).join(" ");
+        document.getElementById("caption-rail").appendChild(el);
+        tl.fromTo(el, { opacity: 0, y: 18, visibility: "visible" }, { opacity: 1, y: 0, visibility: "visible", duration: 0.16, ease: "power3.out", immediateRender: false }, Math.max(0, group.start - 0.03));
+        tl.to(el, { opacity: 0, scale: 0.98, duration: 0.12, ease: "power2.in" }, Math.max(group.start + 0.18, group.end - 0.12));
+        tl.set(el, { opacity: 0, visibility: "hidden" }, group.end);
+      });
+
+      tl.to(["#scene-7", "#caption-rail"], { opacity: 0, duration: 0.8, ease: "power1.in" }, 164.0);
+      tl.set(["#scene-7", "#caption-rail"], { opacity: 0, visibility: "hidden" }, 164.82);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

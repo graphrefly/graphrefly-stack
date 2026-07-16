@@ -1,0 +1,208 @@
+{
+	"schema": "urn:graphrefly-stack:schema:bundle-manifest:v1",
+	"runId": "fixture-refresh-token-rotation-v1-real-git",
+	"recordedAt": "2026-07-16T00:00:00Z",
+	"sourceCommit": {
+		"algorithm": "sha1",
+		"value": "3d8696c74e3bf1458079c0b69f63086e808c03f3"
+	},
+	"canonicalInputDigest": {
+		"algorithm": "sha256",
+		"value": "72f073c6ef14c508b4f89b3d1624b51c0ce9610318d89f87c9cdcfb600c63e44"
+	},
+	"schemaVersion": "v1",
+	"promptVersion": "stack.plan.v1",
+	"model": {
+		"source": "codex",
+		"id": "gpt-5.6-sol",
+		"reasoningEffort": "high"
+	},
+	"provider": {
+		"schema": "urn:graphrefly-stack:schema:blueprint-provider-capabilities:v1",
+		"providerId": "graphrefly",
+		"providerVersion": "0.1.1",
+		"blueprintVersion": "graphrefly.blueprint.v1",
+		"capabilities": {
+			"commitSnapshot": true,
+			"canonicalTopologyBytes": true,
+			"nodeMetadata": true,
+			"subgraphs": true,
+			"diagnostics": true,
+			"structuralDelta": true,
+			"mergeParentSelection": false,
+			"claimImpact": false
+		}
+	},
+	"graphreflyVersion": "0.1.1",
+	"policyRevision": "session-writes.v2",
+	"artifacts": [
+		{
+			"path": "task.json",
+			"hash": {
+				"algorithm": "sha256",
+				"value": "855ffba11e3f67f092e5cfc128bb133d584901ddf81b9d4a94763e64c17df2c3"
+			}
+		},
+		{
+			"path": "stack.json",
+			"hash": {
+				"algorithm": "sha256",
+				"value": "407ca624e2e61fa732e60dea2c8f5a1499e37a46a072c8cc4ce5d0e19dc1bc53"
+			}
+		},
+		{
+			"path": "blueprints/base.json",
+			"hash": {
+				"algorithm": "sha256",
+				"value": "52c8883699da7851e3cb2ccae91a41f1815b184669f93d6825dcec4d14912760"
+			}
+		},
+		{
+			"path": "blueprints/current.json",
+			"hash": {
+				"algorithm": "sha256",
+				"value": "14611f4937ded262e8ee99fa7a672c50f6533f529baf3eda333ff1c09d35cea2"
+			}
+		},
+		{
+			"path": "blueprints/delta.json",
+			"hash": {
+				"algorithm": "sha256",
+				"value": "e6c1844fa66b5a24fd16b595e1e18a0f9504f4b8f63a0e172cc5df2ba491f3bb"
+			}
+		},
+		{
+			"path": "plan/change-plan.json",
+			"hash": {
+				"algorithm": "sha256",
+				"value": "7c9b131a15f81399d8358410458b0fbff7d02ac80e60af044f96d7d071ee8dd5"
+			}
+		},
+		{
+			"path": "semantic-changes/u1.json",
+			"hash": {
+				"algorithm": "sha256",
+				"value": "a9a36fdcbd09f11655fabc9a0788a95a68ebca6e6a3db54bb1454c72286b2794"
+			}
+		},
+		{
+			"path": "semantic-changes/u2.json",
+			"hash": {
+				"algorithm": "sha256",
+				"value": "d2aea80e2cdf201494303a16c5a45126f2fb2f9df2435c5f58af5bc35be20fa3"
+			}
+		},
+		{
+			"path": "semantic-changes/u3.json",
+			"hash": {
+				"algorithm": "sha256",
+				"value": "56a8d7e99dc2278bd99495260502de6629bb1fa8b4c297825369fd7accbb8b6c"
+			}
+		},
+		{
+			"path": "semantic-changes/final/u1.json",
+			"hash": {
+				"algorithm": "sha256",
+				"value": "b4fa991c54fcc307ad6aaedffdfcf1553ad7c0ea33ec50a57833c89ad944e44f"
+			}
+		},
+		{
+			"path": "semantic-changes/final/u2.json",
+			"hash": {
+				"algorithm": "sha256",
+				"value": "0a55379ef2342257c7e8c8848a0be86346d036942350c032d5974c138e2dd07b"
+			}
+		},
+		{
+			"path": "semantic-changes/final/u3.json",
+			"hash": {
+				"algorithm": "sha256",
+				"value": "5c45013ee32bcd6830620add74254576f3c024c0b6fab2a9b9aa3669c36812b7"
+			}
+		},
+		{
+			"path": "gates/before-change.json",
+			"hash": {
+				"algorithm": "sha256",
+				"value": "707fb13365d1ed4d76f845cdbf95aaa066c28016b7cdd0697fa07e53c95ab32f"
+			}
+		},
+		{
+			"path": "gates/after-change.json",
+			"hash": {
+				"algorithm": "sha256",
+				"value": "6bd4c2e97ce4ff5ad7c8210843f3d4103549de431377b982357c52fee73a9964"
+			}
+		},
+		{
+			"path": "replan/affected.json",
+			"hash": {
+				"algorithm": "sha256",
+				"value": "fcbedf7fb9a86c74fb8c1b82656be876eca5fe7043c27710526ef083fe235a02"
+			}
+		},
+		{
+			"path": "checks/final.json",
+			"hash": {
+				"algorithm": "sha256",
+				"value": "17ca7f2db00747f9453aade1ae8ad1f0f9f2ead02a0d608c179763112cfc9a4f"
+			}
+		},
+		{
+			"path": "checks/after-rebase.json",
+			"hash": {
+				"algorithm": "sha256",
+				"value": "17ca7f2db00747f9453aade1ae8ad1f0f9f2ead02a0d608c179763112cfc9a4f"
+			}
+		},
+		{
+			"path": "gates/final.json",
+			"hash": {
+				"algorithm": "sha256",
+				"value": "287c5fcbe6ac4aec9d82a1fb4c59a28cb58055bb717a99cc6124b786334227f3"
+			}
+		},
+		{
+			"path": "review/decision.json",
+			"hash": {
+				"algorithm": "sha256",
+				"value": "33f0edd166a6c17a7770fb84ac64cbcd43e861f2357a81838dffc95c96251e7f"
+			}
+		},
+		{
+			"path": "diffs/u1.json",
+			"hash": {
+				"algorithm": "sha256",
+				"value": "076abeb7507b54ec3db8a12fa4ec40cc9f6c0cc8f58776a9ec132bbdc35622f6"
+			}
+		},
+		{
+			"path": "diffs/u2.json",
+			"hash": {
+				"algorithm": "sha256",
+				"value": "7d450fcbca0dfb25b6aa61f96a799e770d9ee16654903822c83e75484e5581a6"
+			}
+		},
+		{
+			"path": "diffs/u3.json",
+			"hash": {
+				"algorithm": "sha256",
+				"value": "c5d08cf6aab45a49634f5fa73693001adc2232515bb1dd9bb0db6e3adb7d1574"
+			}
+		},
+		{
+			"path": "provenance/live-plan.json",
+			"hash": {
+				"algorithm": "sha256",
+				"value": "953fafc29fec0a6e9ad37d98ef27a6b58dcb7710792796b630589ab1b4dcc20a"
+			}
+		},
+		{
+			"path": "provenance/live-replan.json",
+			"hash": {
+				"algorithm": "sha256",
+				"value": "550faab10768e91fedddb1f7a4e33ea0342390841be9566013d151574648e34e"
+			}
+		}
+	]
+}

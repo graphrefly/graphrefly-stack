@@ -1,0 +1,47 @@
+{
+	"schema": "urn:graphrefly-stack:fixture-repository-template:v1",
+	"scenario": "refresh-token-rotation-v1",
+	"stages": {
+		"B0": {
+			".gitignore": ".graphrefly-stack-fixture\n.graphrefly-stack/\n",
+			"fixture-check.mjs": "import assert from 'node:assert/strict';\nimport { readFileSync } from 'node:fs';\nconst checkId = process.argv[2];\nconst read = (path) => readFileSync(new URL(path, import.meta.url), 'utf8');\nif (checkId === 'contracts') {\n  assert.match(read('./src/session/contracts.ts'), /RefreshResult/);\n} else if (checkId === 'refresh-runtime') {\n  const source = read('./src/session/flows/refresh-flow.ts');\n  assert.match(source, /replay/);\n  assert.match(source, /-rotated/);\n  assert.match(source, /family-1/);\n} else if (checkId === 'refresh-api') {\n  const source = read('./src/http/refresh-route.ts');\n  assert.match(source, /status: 200/);\n  assert.match(source, /body: refresh/);\n} else {\n  throw new Error('unknown fixture check: ' + checkId);\n}\nprocess.stdout.write('ok ' + checkId + '\\n');\n",
+			"graphrefly-fixture.mjs": "import { existsSync, readFileSync } from 'node:fs';\nconst policy = JSON.parse(readFileSync(new URL('./src/session/policy.json', import.meta.url), 'utf8'));\nconst refreshSource = readFileSync(new URL('./src/session/flows/refresh-flow.ts', import.meta.url), 'utf8');\nconst passwordBroker = policy.brokerRequired === true;\nconst refreshPresent = refreshSource.includes('const used');\nconst refreshBroker = refreshSource.includes('persistViaBroker');\nconst nodes = [{ id: 'password-reset.intent', factory: 'state', deps: [] }];\nif (passwordBroker) nodes.push({ id: 'session.mutation-broker.password-reset', factory: 'sessionMutationBroker', deps: ['password-reset.intent'], meta: { capability: 'session-mutation-broker' } });\nnodes.push({ id: 'session.persist.password-reset', factory: 'effect', deps: [passwordBroker ? 'session.mutation-broker.password-reset' : 'password-reset.intent'], meta: { capability: 'session-mutation', mode: 'online' } });\nif (refreshPresent) {\n  nodes.push({ id: 'refresh.request', factory: 'state', deps: [] });\n  nodes.push({ id: 'refresh.validate', factory: 'derived', deps: ['refresh.request'] });\n  nodes.push({ id: 'refresh.rotate', factory: 'derived', deps: ['refresh.validate'] });\n  if (refreshBroker) nodes.push({ id: 'session.mutation-broker.refresh', factory: 'sessionMutationBroker', deps: ['refresh.rotate'], meta: { capability: 'session-mutation-broker' } });\n  nodes.push({ id: 'session.persist.refresh', factory: 'effect', deps: [refreshBroker ? 'session.mutation-broker.refresh' : 'refresh.rotate'], meta: { capability: 'session-mutation', mode: 'online' } });\n}\nif (existsSync(new URL('./src/telemetry/session.ts', import.meta.url))) nodes.push({ id: 'telemetry.session', factory: 'effect', deps: ['refresh.rotate'] });\nconst edges = nodes.flatMap((node) => node.deps.map((from) => ({ from, to: node.id })));\nprocess.stdout.write(JSON.stringify({ policyRevision: policy.revision, topology: { name: 'session', nodes, edges } }));\n",
+			"src/session/flows/refresh-flow.ts": "export function refresh(token: string) { return { token, familyId: 'family-1' }; }\n",
+			"src/http/refresh-route.ts": "import { refresh } from '../session/flows/refresh-flow.js';\nexport const postRefresh = refresh;\n",
+			"src/session/flows/password-reset-flow.ts": "export const resetPassword = () => 'persist-direct';\n",
+			"src/session/policy.json": "{\"revision\":\"session-writes.v1\",\"brokerRequired\":false}\n",
+			"tests/session/password-reset-flow.test.ts": "// baseline password-reset behavior\n"
+		},
+		"U1": {
+			"src/session/contracts.ts": "export interface RefreshResult { token: string; familyId: string }\n",
+			"tests/session/contracts.test.ts": "// token-family and replay-rejection contract\n"
+		},
+		"U2": {
+			"src/session/flows/refresh-flow.ts": "const used = new Set<string>();\nexport function refresh(token: string) {\n  if (used.has(token)) throw new Error('replay');\n  used.add(token);\n  return { token: token + '-rotated', familyId: 'family-1' };\n}\n",
+			"tests/session/refresh-flow.test.ts": "// replacement token, stable family, and replay rejection\n"
+		},
+		"U3": {
+			"src/http/refresh-route.ts": "import { refresh } from '../session/flows/refresh-flow.js';\nexport function postRefresh(token: string) { return { status: 200, body: refresh(token) }; }\n",
+			"tests/http/refresh-route.test.ts": "// HTTP adapter returns replacement token\n"
+		},
+		"A1": {
+			"src/session/flows/password-reset-flow.ts": "export const resetPassword = () => 'persist-via-session-mutation-broker';\n",
+			"src/session/policy.json": "{\"revision\":\"session-writes.v2\",\"brokerRequired\":true}\n",
+			"tests/session/password-reset-flow.test.ts": "// online session writes require the broker\n"
+		},
+		"U2_PRIME": {
+			"src/session/flows/refresh-flow.ts": "const used = new Set<string>();\nconst persistViaBroker = (token: string) => token;\nexport function refresh(token: string) {\n  if (used.has(token)) throw new Error('replay');\n  used.add(token);\n  const replacement = token + '-rotated';\n  persistViaBroker(replacement);\n  return { token: replacement, familyId: 'family-1' };\n}\n",
+			"tests/session/refresh-flow.test.ts": "// replacement persists through session-mutation-broker\n"
+		},
+		"U3_PRIME": {
+			"src/http/refresh-route.ts": "import { refresh } from '../session/flows/refresh-flow.js';\n// rebound after the broker-aware runtime change\nexport function postRefresh(token: string) { return { status: 200, body: refresh(token) }; }\n",
+			"tests/http/refresh-route.test.ts": "// HTTP adapter rebound to accepted broker-aware runtime\n"
+		},
+		"TELEMETRY": {
+			"src/telemetry/session.ts": "export const recordSessionMetric = () => undefined;\n"
+		},
+		"WRONG_SCOPE": {
+			"docs/unauthorized-session-note.md": "This path is deliberately outside U2's allowed source scope.\n"
+		}
+	}
+}

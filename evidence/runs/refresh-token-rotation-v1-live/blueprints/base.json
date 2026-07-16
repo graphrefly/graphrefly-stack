@@ -1,0 +1,112 @@
+{
+	"schema": "urn:graphrefly-stack:schema:blueprint-snapshot:v1",
+	"commit": {
+		"algorithm": "sha1",
+		"value": "ff5297fca08f731825cf85a7f3b5db12f2e1bc28"
+	},
+	"semanticParent": {
+		"algorithm": "sha1",
+		"value": "ea9de0043e54097cbf5464e1e1c0abfaec1719f3"
+	},
+	"provider": {
+		"schema": "urn:graphrefly-stack:schema:blueprint-provider-capabilities:v1",
+		"providerId": "graphrefly",
+		"providerVersion": "0.1.1",
+		"blueprintVersion": "graphrefly.blueprint.v1",
+		"capabilities": {
+			"commitSnapshot": true,
+			"canonicalTopologyBytes": true,
+			"nodeMetadata": true,
+			"subgraphs": true,
+			"diagnostics": true,
+			"structuralDelta": true,
+			"mergeParentSelection": false,
+			"claimImpact": false
+		}
+	},
+	"blueprint": {
+		"version": "graphrefly.blueprint.v1",
+		"provenance": {
+			"revision": "S3",
+			"entrypoint": "graphrefly-fixture.mjs",
+			"isolation": "detached-worktree-node-permission-read-only",
+			"timeoutMs": 5000
+		},
+		"topology": {
+			"name": "session",
+			"nodes": [
+				{
+					"id": "password-reset.intent",
+					"factory": "state",
+					"deps": []
+				},
+				{
+					"id": "session.persist.password-reset",
+					"factory": "effect",
+					"deps": ["password-reset.intent"],
+					"meta": {
+						"capability": "session-mutation",
+						"mode": "online"
+					}
+				},
+				{
+					"id": "refresh.request",
+					"factory": "state",
+					"deps": []
+				},
+				{
+					"id": "refresh.validate",
+					"factory": "derived",
+					"deps": ["refresh.request"]
+				},
+				{
+					"id": "refresh.rotate",
+					"factory": "derived",
+					"deps": ["refresh.validate"]
+				},
+				{
+					"id": "session.persist.refresh",
+					"factory": "effect",
+					"deps": ["refresh.rotate"],
+					"meta": {
+						"capability": "session-mutation",
+						"mode": "online"
+					}
+				}
+			],
+			"edges": [
+				{
+					"from": "password-reset.intent",
+					"to": "session.persist.password-reset"
+				},
+				{
+					"from": "refresh.request",
+					"to": "refresh.validate"
+				},
+				{
+					"from": "refresh.validate",
+					"to": "refresh.rotate"
+				},
+				{
+					"from": "refresh.rotate",
+					"to": "session.persist.refresh"
+				}
+			]
+		},
+		"diagnostics": {
+			"ok": true,
+			"issues": []
+		},
+		"hash": {
+			"kind": "topology",
+			"algorithm": "sha256",
+			"input": "strictCanonicalTopologyBytes",
+			"value": "3a0ba3f92aa16f569b286722da86af052ec891b789cf8477a231d1e18abb53fb"
+		}
+	},
+	"topologyHash": {
+		"algorithm": "sha256",
+		"value": "3a0ba3f92aa16f569b286722da86af052ec891b789cf8477a231d1e18abb53fb"
+	},
+	"policyRevision": "session-writes.v1"
+}

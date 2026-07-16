@@ -1,0 +1,91 @@
+{
+	"schema": "urn:graphrefly-stack:live-run:v1",
+	"kind": "plan",
+	"mode": "live",
+	"output": {
+		"schema": "urn:graphrefly-stack:schema:change-plan:v1",
+		"planId": "plan.refresh-token-rotation.v1",
+		"taskDigest": {
+			"algorithm": "sha256",
+			"value": "855ffba11e3f67f092e5cfc128bb133d584901ddf81b9d4a94763e64c17df2c3"
+		},
+		"baseCommit": {
+			"algorithm": "sha1",
+			"value": "7a91c600853db1e6a8762d8434da2a3f6037070f"
+		},
+		"baseBlueprintHash": {
+			"algorithm": "sha256",
+			"value": "3a0ba3f92aa16f569b286722da86af052ec891b789cf8477a231d1e18abb53fb"
+		},
+		"policyRevision": "session-writes.v1",
+		"source": "codex",
+		"workUnits": [
+			{
+				"id": "U1",
+				"title": "Define refresh-token rotation contracts",
+				"intent": "Define contracts for preserving token-family identity, returning replacement tokens, and rejecting replayed tokens without affecting password-reset behavior.",
+				"dependencies": [],
+				"allowedSourceScopes": ["src/session/contracts.ts", "tests/session/contracts.test.ts"],
+				"blueprintClaims": [],
+				"requiredChecks": ["contracts"]
+			},
+			{
+				"id": "U2",
+				"title": "Implement refresh-token rotation in the GraphReFly flow",
+				"intent": "After each successful refresh, preserve the token-family ID, invalidate the previous token, and persist its replacement without changing password-reset behavior.",
+				"dependencies": ["U1"],
+				"allowedSourceScopes": [
+					"src/session/flows/refresh-flow.ts",
+					"tests/session/refresh-flow.test.ts"
+				],
+				"blueprintClaims": [
+					{
+						"id": "session-write-path",
+						"statement": "Under session-writes.v1, the online session mutation may directly persist the replacement refresh token and invalidate its predecessor."
+					}
+				],
+				"requiredChecks": ["refresh-runtime"]
+			},
+			{
+				"id": "U3",
+				"title": "Expose refresh-token rotation through the HTTP adapter",
+				"intent": "Return the replacement refresh token after a successful request and reject replay of the preceding token.",
+				"dependencies": ["U2"],
+				"allowedSourceScopes": ["src/http/refresh-route.ts", "tests/http/refresh-route.test.ts"],
+				"blueprintClaims": [
+					{
+						"id": "refresh-runtime",
+						"statement": "The HTTP adapter depends on the accepted U2 refresh-rotation runtime."
+					}
+				],
+				"requiredChecks": ["refresh-api"]
+			}
+		]
+	},
+	"provenance": {
+		"provider": "codex-sdk",
+		"codexSdkVersion": "0.143.0",
+		"model": "gpt-5.6-sol",
+		"reasoningEffort": "high",
+		"promptVersion": "stack.plan.v1",
+		"threadId": "019f6bab-cf3b-7283-8033-7dae0da12706",
+		"codexRuntime": {
+			"source": "override",
+			"version": "codex-cli 0.144.5"
+		},
+		"usage": {
+			"input_tokens": 14030,
+			"cached_input_tokens": 0,
+			"output_tokens": 370,
+			"reasoning_output_tokens": 52
+		},
+		"responseDigest": {
+			"algorithm": "sha256",
+			"value": "fcc40a517c0483e91a7de72e39ae564696e42b65b5d9210ca5112a6abbb4910d"
+		},
+		"outputDigest": {
+			"algorithm": "sha256",
+			"value": "7c9b131a15f81399d8358410458b0fbff7d02ac80e60af044f96d7d071ee8dd5"
+		}
+	}
+}

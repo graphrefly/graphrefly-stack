@@ -1,0 +1,13 @@
+{
+	"schema": "urn:graphrefly-stack:schema:golden-digests:v1",
+	"algorithm": "sha256",
+	"suite": "90cc4d5f041572bdc15632c6b867e170d20578bbfaea539ac6480d6c5b29ca8a",
+	"cases": {
+		"current-valid": "ff87d8b63c3243b33f626f3a30d8a2b3c5ed9b334e85214760a1d44db001b48e",
+		"clean-rebase-semantic-stale": "36bc28b841e57bada1347a36ea7af64e6d9cea20b4578f6fcaa4734a82046742",
+		"unrelated-change-still-valid": "6deb7371645b0bc08c3724df0b2cbd3caf794a88f5ab612102546a75259c3ce0",
+		"stale-parent": "ba9158ff13fc6a9f4d5292c65adcfe76d3f289b2898c39cc6aa1359de240c4ba",
+		"forged-or-wrong-scope": "bbd0ddb6a473b396d3bfd4f5fdfb024d7e55af3c415a9ca8156314e5da9464bb",
+		"fresh-selective-replan": "81922c74e64582278dac23e926d1ea71d3ef5605f41d2ebc7c346f73117c9546"
+	}
+}

@@ -1,0 +1,21 @@
+{
+	"name": "@graphrefly-stack/cli",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"bin": {
+		"graphrefly-stack": "./dist/cli.js"
+	},
+	"exports": {
+		".": "./dist/cli.js",
+		"./review-server": "./dist/review-server.js"
+	},
+	"scripts": {
+		"build": "tsc -p tsconfig.json"
+	},
+	"dependencies": {
+		"@graphrefly-stack/contracts": "workspace:*",
+		"@graphrefly-stack/core": "workspace:*",
+		"@openai/codex-sdk": "0.143.0"
+	}
+}

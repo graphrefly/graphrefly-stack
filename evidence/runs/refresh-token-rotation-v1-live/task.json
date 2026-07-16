@@ -1,0 +1,5 @@
+{
+	"schema": "urn:graphrefly-stack:schema:task:v1",
+	"taskId": "rotate-refresh-token-on-use",
+	"text": "Rotate the refresh token after every successful /session/refresh request; reject replay of the previous token; preserve the token-family ID; return the replacement token; and do not change password-reset behavior."
+}

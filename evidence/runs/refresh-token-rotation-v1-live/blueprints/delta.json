@@ -1,0 +1,54 @@
+{
+	"schema": "urn:graphrefly-stack:schema:blueprint-delta:v1",
+	"from": {
+		"algorithm": "sha256",
+		"value": "3a0ba3f92aa16f569b286722da86af052ec891b789cf8477a231d1e18abb53fb"
+	},
+	"to": {
+		"algorithm": "sha256",
+		"value": "1c6fc861bddebcb328bb7af25cbba707f1eb51c62b0482b3dfe30dfc5501c594"
+	},
+	"structural": {
+		"addedNodes": [
+			{
+				"id": "session.mutation-broker.password-reset",
+				"factory": "sessionMutationBroker",
+				"deps": ["password-reset.intent"]
+			}
+		],
+		"removedNodeIds": [],
+		"addedEdges": [
+			{
+				"from": "password-reset.intent",
+				"to": "session.mutation-broker.password-reset"
+			},
+			{
+				"from": "session.mutation-broker.password-reset",
+				"to": "session.persist.password-reset"
+			}
+		],
+		"removedEdges": [
+			{
+				"from": "password-reset.intent",
+				"to": "session.persist.password-reset"
+			}
+		]
+	},
+	"claimImpacts": [
+		{
+			"workUnitId": "U1",
+			"claimId": "contracts",
+			"impact": "none"
+		},
+		{
+			"workUnitId": "U2",
+			"claimId": "session-write-path",
+			"impact": "affected"
+		},
+		{
+			"workUnitId": "U3",
+			"claimId": "refresh-runtime",
+			"impact": "none"
+		}
+	]
+}

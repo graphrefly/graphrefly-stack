@@ -6,7 +6,7 @@
 		"useIgnoreFile": true
 	},
 	"files": {
-		"includes": ["**", "!node_modules", "!.private"]
+		"includes": ["**", "!node_modules", "!.private", "!evidence/demo"]
 	},
 	"formatter": {
 		"enabled": true,

@@ -1,0 +1,39 @@
+{
+	"schema": "urn:graphrefly-stack:schema:semantic-change-record:v1",
+	"recordId": "fresh.u2.5e74a1713eef",
+	"workUnitId": "U2",
+	"commit": {
+		"algorithm": "sha1",
+		"value": "5e74a1713eef0ee1b57cc5c0efd1f29ba8ecb5b8"
+	},
+	"stablePatchId": "dfb655af7d51b0db23d32faf9a29ae29bfa17f92",
+	"diffDigest": {
+		"algorithm": "sha256",
+		"value": "efbaf1d317f609db8a890cf481c20c8d435d4a4b594425737f08bb5fdc4d01a0"
+	},
+	"semanticParentRecordId": "fresh.u1.3d8696c74e3b",
+	"semanticParentCommit": {
+		"algorithm": "sha1",
+		"value": "3d8696c74e3bf1458079c0b69f63086e808c03f3"
+	},
+	"allowedSourceScopes": [
+		"src/session/flows/refresh-flow.ts",
+		"tests/session/refresh-flow.test.ts"
+	],
+	"sourceScopeDigest": {
+		"algorithm": "sha256",
+		"value": "41660ab92da7538eb86587e14d29f1c6c9c908cdb2859df040e2fe78313f1cf6"
+	},
+	"blueprintClaims": ["session-write-path"],
+	"dependencies": ["U1"],
+	"requiredChecks": ["refresh-runtime"],
+	"blueprintHash": {
+		"algorithm": "sha256",
+		"value": "9b81eabbb143fae9bea3380ac3c457244a31bdb124fa13eecd687a3a7b83fd64"
+	},
+	"policyRevision": "session-writes.v2",
+	"providerId": "graphrefly",
+	"providerVersion": "0.1.1",
+	"contractVersion": "v1",
+	"rebindFrom": "record.u2.s2"
+}
