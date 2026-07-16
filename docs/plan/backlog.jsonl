@@ -1,0 +1,5 @@
+{"id":"B1","title":"authentication, teams, and collaboration","state":"deferred","trigger":"a post-MVP multi-user requirement is approved","refs":["N1"]}
+{"id":"B2","title":"general-purpose workflow or agent builder","state":"deferred","trigger":"the flagship vertical slice is submitted and a separate product decision approves expansion","refs":["N2"]}
+{"id":"B3","title":"RAG, vector search, or long-term knowledge management","state":"deferred","trigger":"a measured retrieval requirement cannot be satisfied by scoped procedural-memory records","refs":["N3"]}
+{"id":"B4","title":"production database","state":"deferred","trigger":"fixture and file-backed storage no longer satisfy an approved product requirement","refs":["N4"]}
+{"id":"B5","title":"additional unrelated demo scenarios","state":"deferred","trigger":"the flagship scenario is complete, judgeable, and submission-ready","refs":["N5"]}

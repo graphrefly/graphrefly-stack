@@ -1,0 +1,31 @@
+{
+	"name": "graphrefly-agent-observatory",
+	"version": "0.0.0",
+	"private": true,
+	"description": "An evidence-first observatory for deterministic agent memory reruns.",
+	"license": "MIT",
+	"type": "module",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/graphrefly/graphrefly-agent-observatory.git"
+	},
+	"engines": {
+		"node": ">=24 <25",
+		"pnpm": ">=11.7 <12"
+	},
+	"packageManager": "pnpm@11.7.0+sha512.19cc852c120c7125760f2443ee6be0ca5b40f9f50598de1a09a1f177503e010e57c23c77646e01e761de59bf874fb22a3398c33ab9691fc13eb946b6f0f4d620",
+	"scripts": {
+		"check": "pnpm docs:check && pnpm skills:check && biome check .",
+		"docs:check": "node scripts/check-docs.mjs",
+		"skills:check": "node scripts/check-skills.mjs",
+		"lint": "biome lint .",
+		"format": "biome format --write .",
+		"format:check": "biome format ."
+	},
+	"dependencies": {
+		"@graphrefly/ts": "0.1.1"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.4.6"
+	}
+}

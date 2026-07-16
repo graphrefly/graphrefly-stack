@@ -1,0 +1,14 @@
+{"id":"P1","kind":"identity","statement":"Observatory demonstrates whether procedural memory derived from a verified failure changes a warm rerun for the right, attributable reason.","status":"locked","since":"D2","refs":["OBS-2"]}
+{"id":"P2","kind":"flow","statement":"The flagship slice is WorkItem to cold failure to GPT-5.6 memory proposal to deterministic admission and GraphReFly application to warm rerun to replay UI and evidence bundle.","status":"locked","since":"D2,D3","refs":["OBS-4","OBS-5","OBS-6","OBS-7"]}
+{"id":"P3","kind":"boundary","statement":"GPT-5.6 performs semantic interpretation and structured proposal generation; an independent deterministic verifier owns pass or fail.","status":"locked","since":"D3","refs":["E4"]}
+{"id":"P4","kind":"success","statement":"Cold and warm executions use the same canonical WorkItem input; relevant admitted memory makes the warm run avoid the prior failure route and pass verification.","status":"locked","since":"D2,D3","refs":["E2","E3"]}
+{"id":"P5","kind":"success","statement":"Proposal-only, admission-rejected, irrelevant-applied, and wrong-scope-applied controls cannot manufacture success.","status":"locked","since":"D3","refs":["E3"]}
+{"id":"P6","kind":"success","statement":"Every applied or rejected memory record has exact trace attribution and a reason code.","status":"locked","since":"D3","refs":["E3"]}
+{"id":"P7","kind":"success","statement":"A fixture-backed replay works without an API key and a live GPT-5.6 path demonstrates actual model use.","status":"locked","since":"D5","refs":["E5"]}
+{"id":"P8","kind":"success","statement":"A first-time judge can understand the problem, changed decision, verifier result, and proof within the under-three-minute demo.","status":"active","since":"D2","refs":["DEMO-1","BW-R4"]}
+{"id":"N1","kind":"non-goal","statement":"Authentication, teams, and collaboration are outside the MVP.","status":"locked","since":"D2","refs":["B1"]}
+{"id":"N2","kind":"non-goal","statement":"A general-purpose workflow or agent builder is outside the MVP.","status":"locked","since":"D2","refs":["B2"]}
+{"id":"N3","kind":"non-goal","statement":"RAG, vector search, and long-term knowledge management are outside the MVP.","status":"locked","since":"D2","refs":["B3"]}
+{"id":"N4","kind":"non-goal","statement":"A production database is outside the MVP until a concrete persistence requirement appears.","status":"locked","since":"D2","refs":["B4"]}
+{"id":"N5","kind":"non-goal","statement":"Multiple unrelated demo scenarios are outside the MVP.","status":"locked","since":"D2","refs":["B5"]}
+{"id":"N6","kind":"non-goal","statement":"Reimplementing or vendoring GraphReFly is prohibited.","status":"locked","since":"D1,D4","refs":["AP3"]}

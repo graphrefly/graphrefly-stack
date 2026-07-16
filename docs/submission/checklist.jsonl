@@ -1,0 +1,10 @@
+{"id":"SUB-1","area":"project","item":"Fresh-clone setup and all gates succeed.","status":"todo","phase":"OBS-8","evidence":[]}
+{"id":"SUB-2","area":"project","item":"Live GPT-5.6 path works with a server-side key and fixture replay works without one.","status":"todo","phase":"OBS-8","evidence":[]}
+{"id":"SUB-3","area":"project","item":"Developer Tool installation, supported platforms, and a direct judging path are documented.","status":"todo","phase":"OBS-8","evidence":[]}
+{"id":"SUB-4","area":"evidence","item":"Git history distinguishes substantive work after 2026-07-13 and the README distinguishes pre-existing GraphReFly from Build Week work.","status":"todo","phase":"OBS-8","evidence":[]}
+{"id":"SUB-5","area":"evidence","item":"Final bundle records exact model ID, commit SHA, schema and prompt versions, artifact hashes, and all five case verdicts.","status":"todo","phase":"OBS-8","evidence":[]}
+{"id":"SUB-6","area":"evidence","item":"Primary implementation task has a /feedback Session ID.","status":"todo","phase":"OBS-8","evidence":[]}
+{"id":"SUB-7","area":"devpost","item":"Category and project description are final.","status":"todo","phase":"OBS-8","evidence":[]}
+{"id":"SUB-8","area":"devpost","item":"Public YouTube demo is under three minutes, includes voiceover, and explains Codex and GPT-5.6 usage.","status":"todo","phase":"OBS-8","evidence":[]}
+{"id":"SUB-9","area":"devpost","item":"Repository URL, setup, sample-data, and judging-path instructions are complete without asking judges for credentials.","status":"todo","phase":"OBS-8","evidence":[]}
+{"id":"SUB-10","area":"devpost","item":"Official rules are rechecked and the Devpost entry is final before BW-D1.","status":"todo","phase":"OBS-8","evidence":[]}

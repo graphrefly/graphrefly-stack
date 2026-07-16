@@ -1,0 +1,10 @@
+[tools]
+node = "24"
+
+[tasks.bootstrap]
+description = "Enable Corepack and install the pinned pnpm workspace"
+run = "corepack enable && pnpm install"
+
+[tasks.check]
+description = "Run the repository's local quality gate"
+run = "pnpm check"

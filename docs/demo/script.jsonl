@@ -1,0 +1,7 @@
+{"id":"DEMO-1","sequence":1,"start_seconds":0,"end_seconds":20,"title":"problem","purpose":"Explain that agents repeat failed paths and that a claim of learning is difficult to verify.","status":"draft","lock_phase":"OBS-7"}
+{"id":"DEMO-2","sequence":2,"start_seconds":20,"end_seconds":50,"title":"cold run","purpose":"Run the flagship WorkItem and show the unsafe choice plus independent failure result.","status":"draft","lock_phase":"OBS-7"}
+{"id":"DEMO-3","sequence":3,"start_seconds":50,"end_seconds":75,"title":"GPT-5.6 memory","purpose":"Show the grounded structured proposal and deterministic admission decision.","status":"draft","lock_phase":"OBS-7"}
+{"id":"DEMO-4","sequence":4,"start_seconds":75,"end_seconds":110,"title":"warm rerun","purpose":"Replay identical input and show exact memory attribution, avoided route, and passing verifier.","status":"draft","lock_phase":"OBS-7"}
+{"id":"DEMO-5","sequence":5,"start_seconds":110,"end_seconds":130,"title":"negative control","purpose":"Apply irrelevant or wrong-scope memory and show that it cannot manufacture success.","status":"draft","lock_phase":"OBS-7"}
+{"id":"DEMO-6","sequence":6,"start_seconds":130,"end_seconds":155,"title":"evidence and implementation","purpose":"Export the bundle and explain Codex, GPT-5.6, GraphReFly, and the independent verifier boundary.","status":"draft","lock_phase":"OBS-7"}
+{"id":"DEMO-7","sequence":7,"start_seconds":155,"end_seconds":160,"title":"close","purpose":"Deliver one sentence on developer impact.","status":"draft","lock_phase":"OBS-7"}

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Observatory QA"
+  short_description: "Run adversarial review and the complete evidence gate"
+  default_prompt: "Use $observatory-qa to review the current Observatory milestone and fix in-scope issues."
