@@ -1,4 +1,0 @@
-interface:
-  display_name: "Observatory Decision Guard"
-  short_description: "Check proposals against canonical project authorities"
-  default_prompt: "Use $observatory-decision-guard to check this proposal against the project's locked scope and decisions."

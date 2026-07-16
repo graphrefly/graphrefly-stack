@@ -1,5 +1,6 @@
 {"id":"B1","title":"authentication, teams, and collaboration","state":"deferred","trigger":"a post-MVP multi-user requirement is approved","refs":["N1"]}
-{"id":"B2","title":"general-purpose workflow or agent builder","state":"deferred","trigger":"the flagship vertical slice is submitted and a separate product decision approves expansion","refs":["N2"]}
-{"id":"B3","title":"RAG, vector search, or long-term knowledge management","state":"deferred","trigger":"a measured retrieval requirement cannot be satisfied by scoped procedural-memory records","refs":["N3"]}
-{"id":"B4","title":"production database","state":"deferred","trigger":"fixture and file-backed storage no longer satisfy an approved product requirement","refs":["N4"]}
-{"id":"B5","title":"additional unrelated demo scenarios","state":"deferred","trigger":"the flagship scenario is complete, judgeable, and submission-ready","refs":["N5"]}
+{"id":"B2","title":"Git, GitHub, or Graphite transport and review replacement","state":"deferred","trigger":"the submitted semantic layer proves a transport limitation that cannot be handled by an adapter","refs":["N2"]}
+{"id":"B3","title":"Nx, Turborepo, TypeScript, and other BlueprintProvider adapters","state":"deferred","trigger":"the GraphReFly flagship is submission-ready and one external provider has a concrete fixture and fidelity contract","refs":["N3","C1"]}
+{"id":"B4","title":"MCP server, GitHub App, hosted CI, and required-check adapters","state":"deferred","trigger":"the canonical CLI gate is stable and an approved integration can execute the same deterministic contract","refs":["N4","E10"]}
+{"id":"B5","title":"automatic semantic approval and merge","state":"deferred","trigger":"post-MVP evidence defines policy, identity, authorization, rollback, and audit requirements","refs":["N5"]}
+{"id":"B6","title":"additional demo scenarios and production persistence","state":"deferred","trigger":"the flagship scenario is complete, judgeable, and submission-ready","refs":["N7"]}

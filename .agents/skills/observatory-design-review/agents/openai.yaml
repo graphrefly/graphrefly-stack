@@ -1,4 +1,0 @@
-interface:
-  display_name: "Observatory Design Review"
-  short_description: "Review scenario, contracts, architecture, and UI boundaries"
-  default_prompt: "Use $observatory-design-review to review this Observatory design before implementation."

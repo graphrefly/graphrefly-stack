@@ -1,0 +1,4 @@
+interface:
+  display_name: "Stack QA"
+  short_description: "Run adversarial review and the complete evidence gate"
+  default_prompt: "Use $stack-qa to review the current GraphReFly Stack milestone and fix in-scope issues."

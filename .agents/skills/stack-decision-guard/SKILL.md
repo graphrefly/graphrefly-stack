@@ -1,13 +1,14 @@
 ---
-name: observatory-decision-guard
-description: Check an Observatory proposal against canonical scope, locked decisions, the sequencer, backlog, and antipatterns before answering scope or architecture choices. Use for "should we", A/B choices, scope checks, decision consistency, proposed dependencies, feature expansion, or requests to change a locked boundary.
+name: stack-decision-guard
+description: Check a GraphReFly Stack proposal against canonical scope, locked decisions, contracts, the sequencer, backlog, and antipatterns. Use for "should we", A/B choices, scope checks, model or provider changes, CLI or UI expansion, dependencies, feature expansion, or requests to change a locked boundary.
 ---
 
-# Observatory decision guard
+# GraphReFly Stack decision guard
 
 1. Read `docs/sources.jsonl`; treat its paths as the authority map.
 2. Read `docs/decisions/decisions.jsonl`, `docs/product/scope.jsonl`,
-   `docs/plan/phases.jsonl`, and `docs/plan/antipatterns.jsonl` completely.
+   `docs/product/contracts.jsonl`, `docs/plan/phases.jsonl`, and
+   `docs/plan/antipatterns.jsonl` completely.
 3. Verify any code or dependency premise directly when the proposal relies on current implementation
    state.
 4. Classify the proposal as:

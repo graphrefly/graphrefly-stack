@@ -1,0 +1,4 @@
+interface:
+  display_name: "Stack Decision Guard"
+  short_description: "Check proposals against canonical project authorities"
+  default_prompt: "Use $stack-decision-guard to check this proposal against GraphReFly Stack's locked scope, contracts, and decisions."

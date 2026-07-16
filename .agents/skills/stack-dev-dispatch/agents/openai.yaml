@@ -1,0 +1,4 @@
+interface:
+  display_name: "Stack Dev Dispatch"
+  short_description: "Implement the next canonical sequencer slice safely"
+  default_prompt: "Use $stack-dev-dispatch to implement the next ready GraphReFly Stack phase."

@@ -1,4 +1,4 @@
-# GraphReFly Agent Observatory — agent index
+# GraphReFly Stack — agent index
 
 > This file points; it does not host project truth. Canonical records are JSONL under `docs/`.
 
@@ -14,10 +14,10 @@ the owning JSONL record and keep references pointing to it.
 
 ## Workflow routing
 
-- Decision or scope question: `.agents/skills/observatory-decision-guard/SKILL.md`
-- Scenario, contract, architecture, or UI review: `.agents/skills/observatory-design-review/SKILL.md`
-- Implementation from the canonical sequencer: `.agents/skills/observatory-dev-dispatch/SKILL.md`
-- Code, evidence, security, privacy, and demo review: `.agents/skills/observatory-qa/SKILL.md` (`D8`)
+- Decision or scope question: `.agents/skills/stack-decision-guard/SKILL.md`
+- Scenario, contract, architecture, or UI review: `.agents/skills/stack-design-review/SKILL.md`
+- Implementation from the canonical sequencer: `.agents/skills/stack-dev-dispatch/SKILL.md`
+- Code, evidence, security, privacy, and demo review: `.agents/skills/stack-qa/SKILL.md` (`D13`)
 
 ## Commands
 

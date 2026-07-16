@@ -1,4 +1,0 @@
-interface:
-  display_name: "Observatory Dev Dispatch"
-  short_description: "Implement the next canonical sequencer slice safely"
-  default_prompt: "Use $observatory-dev-dispatch to implement the next ready Observatory phase."

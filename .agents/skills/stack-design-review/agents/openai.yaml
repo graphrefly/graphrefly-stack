@@ -1,0 +1,4 @@
+interface:
+  display_name: "Stack Design Review"
+  short_description: "Review scenario, contracts, architecture, and UI boundaries"
+  default_prompt: "Use $stack-design-review to review this GraphReFly Stack design before implementation."
