@@ -1,0 +1,4 @@
+interface:
+  display_name: "Stack Goal Dispatch"
+  short_description: "Advance Stack across design, build, QA, and submission"
+  default_prompt: "Use $stack-goal-dispatch to create or resume the long-lived GraphReFly Stack Build Week goal, advancing canonical STACK phases automatically and stopping only for a genuine new decision, external blocker, or submission-ready completion."

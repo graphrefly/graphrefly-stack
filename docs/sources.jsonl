@@ -1,13 +1,13 @@
-{"id":"A-sources","concern":"authority map","path":"docs/sources.jsonl","authority":"canonical","writers":["stack-decision-guard","stack-design-review","stack-dev-dispatch","stack-qa"]}
-{"id":"A-decisions","concern":"architectural and delivery decisions","path":"docs/decisions/decisions.jsonl","authority":"canonical","writers":["stack-decision-guard","stack-design-review"]}
-{"id":"A-sequencer","concern":"ordered implementation sequence and current next work","path":"docs/plan/phases.jsonl","authority":"canonical","writers":["stack-dev-dispatch","stack-qa"]}
+{"id":"A-sources","concern":"authority map","path":"docs/sources.jsonl","authority":"canonical","writers":["stack-goal-dispatch","stack-decision-guard","stack-design-review","stack-dev-dispatch","stack-qa"]}
+{"id":"A-decisions","concern":"architectural and delivery decisions","path":"docs/decisions/decisions.jsonl","authority":"canonical","writers":["stack-goal-dispatch","stack-decision-guard","stack-design-review"]}
+{"id":"A-sequencer","concern":"ordered implementation sequence and current next work","path":"docs/plan/phases.jsonl","authority":"canonical","writers":["stack-goal-dispatch","stack-dev-dispatch","stack-qa"]}
 {"id":"A-backlog","concern":"deferred or trigger-gated work","path":"docs/plan/backlog.jsonl","authority":"canonical","writers":["stack-decision-guard","stack-design-review","stack-dev-dispatch","stack-qa"]}
 {"id":"A-antipatterns","concern":"reusable failure lessons","path":"docs/plan/antipatterns.jsonl","authority":"canonical","writers":["stack-qa"]}
 {"id":"A-scope","concern":"product identity, boundaries, and success criteria","path":"docs/product/scope.jsonl","authority":"canonical","writers":["stack-decision-guard","stack-design-review"]}
 {"id":"A-contracts","concern":"commit, blueprint, semantic change, model, UI, and gate contracts","path":"docs/product/contracts.jsonl","authority":"canonical","writers":["stack-design-review","stack-dev-dispatch","stack-qa"]}
 {"id":"A-build-week","concern":"OpenAI Build Week requirements and deadlines","path":"docs/build-week/rules.jsonl","authority":"canonical","writers":["stack-qa"]}
 {"id":"A-evidence","concern":"public evidence policy and stack-bundle contract","path":"docs/evidence/requirements.jsonl","authority":"canonical","writers":["stack-design-review","stack-qa"]}
-{"id":"A-milestones","concern":"milestone claims, gate output, provenance, and limitations","path":"docs/evidence/milestones.jsonl","authority":"canonical","writers":["stack-dev-dispatch","stack-qa"]}
+{"id":"A-milestones","concern":"milestone claims, gate output, provenance, and limitations","path":"docs/evidence/milestones.jsonl","authority":"canonical","writers":["stack-goal-dispatch","stack-dev-dispatch","stack-qa"]}
 {"id":"A-demo","concern":"under-three-minute demo sequence","path":"docs/demo/script.jsonl","authority":"canonical","writers":["stack-design-review","stack-qa"]}
 {"id":"A-submission","concern":"submission readiness state","path":"docs/submission/checklist.jsonl","authority":"canonical","writers":["stack-qa"]}
 {"id":"A-sessions","concern":"primary Codex task and feedback-session evidence","path":"docs/sessions/sessions.jsonl","authority":"canonical","writers":["stack-dev-dispatch","stack-qa"]}

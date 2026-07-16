@@ -14,6 +14,7 @@ the owning JSONL record and keep references pointing to it.
 
 ## Workflow routing
 
+- Long-lived Build Week sequencer: `.agents/skills/stack-goal-dispatch/SKILL.md` (`D14`)
 - Decision or scope question: `.agents/skills/stack-decision-guard/SKILL.md`
 - Scenario, contract, architecture, or UI review: `.agents/skills/stack-design-review/SKILL.md`
 - Implementation from the canonical sequencer: `.agents/skills/stack-dev-dispatch/SKILL.md`
