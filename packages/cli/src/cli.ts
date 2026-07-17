@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { realpathSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -433,7 +434,12 @@ export async function runCli(argv = process.argv.slice(2)): Promise<number> {
 	return 0;
 }
 
-const entry = process.argv[1] ? pathToFileURL(process.argv[1]).href : "";
+let entry = "";
+try {
+	entry = process.argv[1] ? pathToFileURL(realpathSync(process.argv[1])).href : "";
+} catch {
+	// A missing executable path cannot be the current module.
+}
 if (import.meta.url === entry) {
 	runCli().then(
 		(code) => {

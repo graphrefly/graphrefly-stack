@@ -310,6 +310,16 @@ test("grfs init generates a reviewable config and Blueprint adapter", async (con
 		write(repository, "src/application-graph.mjs", flatGraph),
 		symlink(workspaceNodeModules, resolve(repository, "node_modules"), "dir"),
 	]);
+	const base = commit(repository, "create existing GraphReFly repository");
+	await write(
+		repository,
+		"src/application-graph.mjs",
+		flatGraph.replace(
+			'application.state(1, { name: "source" });',
+			'const source = application.state(1, { name: "source" });\n  application.derived([source], (value) => value + 1, { name: "projection" });',
+		),
+	);
+	const head = commit(repository, "derive projected value before Stack onboarding");
 	const initialized = spawnSync(
 		process.execPath,
 		[cli, "init", "--repo", repository, "--graph-module", "src/application-graph.mjs", "--json"],
@@ -337,20 +347,16 @@ test("grfs init generates a reviewable config and Blueprint adapter", async (con
 	);
 	assert.equal(escapingInit.status, 1);
 	assert.equal(JSON.parse(escapingInit.stdout).error.code, "INIT_PATH_INVALID");
-	const base = commit(repository, "initialize GraphReFly Stack");
-	await write(
-		repository,
-		"src/application-graph.mjs",
-		flatGraph.replace(
-			'application.state(1, { name: "source" });',
-			'const source = application.state(1, { name: "source" });\n  application.derived([source], (value) => value + 1, { name: "projection" });',
-		),
-	);
-	const head = commit(repository, "derive projected value");
 	assert.deepEqual(
 		review(repository, base, head).commits[0].delta.events.map((event) => event.type),
 		["node-added", "edge-added"],
 	);
+	assert.equal(run(repository, "git", ["rev-parse", "HEAD"]), head);
+	const status = run(repository, "git", ["status", "--short"]);
+	assert.match(status, /\.graphrefly-stack\.json/u);
+	assert.match(status, /graphrefly-stack\.blueprint\.mjs/u);
+	await rm(resolve(repository, "graphrefly-stack.blueprint.mjs"));
+	assert.equal(failedReview(repository, base, head), "ENTRYPOINT_MISSING");
 });
 
 test("generic review permits ordinary dependency changes and rejects incompatible runtime ranges", async (context) => {

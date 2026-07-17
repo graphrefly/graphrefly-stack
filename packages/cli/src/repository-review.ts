@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { access, mkdir, readFile, realpath, rm, symlink } from "node:fs/promises";
+import { access, mkdir, readFile, realpath, rm, symlink, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { basename, dirname, parse, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -25,6 +25,7 @@ const reviewSchemaPath = runtimeAssetPath("contracts/repository/v1/review.schema
 const configName = ".graphrefly-stack.json";
 const lockCandidates = ["pnpm-lock.yaml", "package-lock.json", "yarn.lock"] as const;
 const maxReviewCommits = 64;
+const maxEntrypointBytes = 64 * 1024;
 
 interface TargetGraphReFlyRuntime {
 	version: string;
@@ -148,6 +149,32 @@ function ensureInside(root: string, candidate: string): void {
 	}
 }
 
+async function readConfiguredEntrypoint(
+	repository: string,
+	entrypointPath: string,
+): Promise<Uint8Array> {
+	const entrypoint = resolve(repository, entrypointPath);
+	ensureInside(repository, entrypoint);
+	let canonicalEntrypoint: string;
+	try {
+		canonicalEntrypoint = await realpath(entrypoint);
+	} catch {
+		throw new RepositoryReviewError(
+			"ENTRYPOINT_MISSING",
+			"Configured Blueprint entrypoint is missing",
+		);
+	}
+	ensureInside(repository, canonicalEntrypoint);
+	const source = await readFile(canonicalEntrypoint);
+	if (source.byteLength > maxEntrypointBytes) {
+		throw new RepositoryReviewError(
+			"ENTRYPOINT_TOO_LARGE",
+			`Configured Blueprint entrypoint exceeds ${maxEntrypointBytes} bytes`,
+		);
+	}
+	return source;
+}
+
 function containsAbsolutePath(value: unknown): boolean {
 	if (typeof value === "string") return value.startsWith("/") || /^[A-Za-z]:[\\/]/u.test(value);
 	if (Array.isArray(value)) return value.some(containsAbsolutePath);
@@ -222,6 +249,7 @@ async function executeBlueprint(
 	repository: string,
 	revision: string,
 	entrypointPath: string,
+	entrypointSource: Uint8Array,
 	runtime: TargetGraphReFlyRuntime,
 ): Promise<Record<string, unknown>> {
 	const worktreeRoot = resolve(
@@ -239,11 +267,22 @@ async function executeBlueprint(
 		try {
 			await access(entrypoint);
 		} catch {
-			throw new RepositoryReviewError(
-				"ENTRYPOINT_MISSING",
-				`Blueprint entrypoint is missing at ${revision.slice(0, 12)}`,
-			);
+			let canonicalParent: string;
+			try {
+				canonicalParent = await realpath(dirname(entrypoint));
+			} catch {
+				throw new RepositoryReviewError(
+					"ENTRYPOINT_MISSING",
+					`Blueprint entrypoint parent is missing at ${revision.slice(0, 12)}`,
+				);
+			}
+			ensureInside(canonicalWorktree, canonicalParent);
+			await writeFile(resolve(canonicalParent, basename(entrypoint)), entrypointSource, {
+				flag: "wx",
+			});
 		}
+		const canonicalEntrypoint = await realpath(entrypoint);
+		ensureInside(canonicalWorktree, canonicalEntrypoint);
 		const worktreeNodeModules = resolve(canonicalWorktree, "node_modules");
 		await rm(worktreeNodeModules, { recursive: true, force: true });
 		await symlink(runtime.nodeModulesRoot, worktreeNodeModules, "dir");
@@ -254,7 +293,7 @@ async function executeBlueprint(
 				`--allow-fs-read=${canonicalWorktree}`,
 				`--allow-fs-read=${runtime.nodeModulesRoot}`,
 				"--disable-warning=ExperimentalWarning",
-				entrypoint,
+				canonicalEntrypoint,
 			],
 			{
 				cwd: canonicalWorktree,
@@ -433,6 +472,7 @@ export async function createRepositoryReview(options: {
 		);
 	}
 	const config = await readRepositoryConfig(repository);
+	const entrypointSource = await readConfiguredEntrypoint(repository, config.blueprint.entrypoint);
 	const git = new SystemGitAdapter();
 	let baseOid: string;
 	let headOid: string;
@@ -493,6 +533,7 @@ export async function createRepositoryReview(options: {
 			repository,
 			revision,
 			config.blueprint.entrypoint,
+			entrypointSource,
 			runtime,
 		);
 		evidence.push({

@@ -21,14 +21,13 @@ GraphReFly repository you want to review:
 ```bash
 pnpm add -D @graphrefly/stack
 pnpm exec grfs init --graph-module src/application-graph.ts
-git add .graphrefly-stack.json graphrefly-stack.blueprint.mjs
-git commit -m "configure GraphReFly Stack"
 
 BASE=<the commit immediately before your stack>
 pnpm exec grfs review --repo . --base "$BASE" --head HEAD
 ```
 
-Open <http://127.0.0.1:4173>, then:
+The review command stays running and prints its loopback URL; it does not launch a browser
+automatically. Open the printed URL (normally <http://127.0.0.1:4173>), then:
 
 1. Select each commit discovered from the real linear Git range.
 2. See the Blueprint and parent delta produced by the repository's installed GraphReFly 0.3.x
@@ -38,15 +37,28 @@ Open <http://127.0.0.1:4173>, then:
 4. Expand repository evidence or commit lineage only when needed. No session, delivery, fixture, or
    fake semantic-gate state appears in the generic review.
 
-`grfs init` does not guess how an arbitrary application assembles its graph. You point it at the
-module and export that already build the repository's root Graph. It generates the strict
-`.graphrefly-stack.json` config and a small deterministic `graphrefly-stack.blueprint.mjs` adapter;
-both are ordinary source files that should be committed. Use `--graph-export <name>` when the module
-does not export `createApplicationGraph`.
+`--graph-module` means the repository's root Graph construction module, not the only Graph module
+allowed in the repository. That root module may import, compose, and mount any number of Graphs and
+subgraphs. The first version reviews one configured root Blueprint target at a time; selecting among
+multiple independent application roots in a monorepo is roadmap work.
 
-The CLI executes that generated adapter at the base and every commit in permission-limited detached
-worktrees. Each invocation calls the real GraphReFly `graph.blueprint()` API; Stack then parses,
-verifies, renders, and diffs only with the installed runtime's public GraphReFly APIs.
+`grfs init` does not guess how an arbitrary application assembles that root Graph. You point it at
+the module and export that already construct it once during onboarding. The command generates the
+strict `.graphrefly-stack.json` config and a small deterministic
+`graphrefly-stack.blueprint.mjs` adapter; both are ordinary source files that should be committed.
+Use `--graph-export <name>` when the module does not export `createApplicationGraph`. JSON is the v1
+configuration format; optional YAML and TOML authoring formats are deferred roadmap work and must
+normalize to the same strict configuration contract before execution.
+
+Initialization may happen after the stack already exists. The review snapshots the configured
+adapter and supplies those same bounded bytes only inside isolated detached revisions where that
+entrypoint did not exist yet; it does not rewrite repository history. The referenced root Graph
+module must exist at every reviewed revision. Commit the config and adapter after onboarding so
+future reviews have a Git-owned configuration witness.
+
+The CLI executes the adapter at the base and every commit in permission-limited detached worktrees.
+Each invocation calls the real GraphReFly `graph.blueprint()` API; Stack then parses, verifies,
+renders, and diffs only with the installed runtime's public GraphReFly APIs.
 
 ## Generic repository contract
 

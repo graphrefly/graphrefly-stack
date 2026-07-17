@@ -1,6 +1,6 @@
 {
 	"name": "@graphrefly/stack",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"private": false,
 	"description": "Semantic stacked diffs with commit-indexed GraphBlueprint validity gates.",
 	"license": "MIT",

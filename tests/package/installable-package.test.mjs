@@ -1,12 +1,24 @@
 import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
-import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
+import {
+	mkdir,
+	mkdtemp,
+	readdir,
+	readFile,
+	realpath,
+	rm,
+	symlink,
+	writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
 const workspace = fileURLToPath(new URL("../../", import.meta.url));
+const packageVersion = JSON.parse(
+	await readFile(resolve(workspace, "package.json"), "utf8"),
+).version;
 const gitEnvironment = {
 	...process.env,
 	GIT_AUTHOR_NAME: "GraphReFly Stack package test",
@@ -71,7 +83,7 @@ test("the npm tarball installs and reviews an independent GraphReFly 0.3.x repos
 
 	run(workspace, "pnpm", ["pack", "--pack-destination", tarballs, "--silent"]);
 	const tarballFiles = (await readdir(tarballs)).filter((path) => path.endsWith(".tgz"));
-	assert.deepEqual(tarballFiles, ["graphrefly-stack-0.1.0.tgz"]);
+	assert.deepEqual(tarballFiles, [`graphrefly-stack-${packageVersion}.tgz`]);
 	const tarball = resolve(tarballs, tarballFiles[0]);
 	const packedPaths = run(workspace, "tar", ["-tf", tarball]).split("\n");
 	assert.equal(packedPaths.includes("package/dist/grfs.js"), true);
@@ -98,7 +110,6 @@ test("the npm tarball installs and reviews an independent GraphReFly 0.3.x repos
 					private: true,
 					type: "module",
 					dependencies: { "@graphrefly/ts": "0.3.x" },
-					devDependencies: { "@graphrefly/stack": `file:${tarball}` },
 				},
 				null,
 				2,
@@ -118,6 +129,33 @@ export function createApplicationGraph() {
 	]);
 	run(repository, "pnpm", ["install", "--ignore-scripts"]);
 	run(repository, "git", ["init", "-b", "main"]);
+	const base = commit(repository, "create existing GraphReFly repository");
+
+	await put(
+		repository,
+		"src/application-graph.mjs",
+		`import { graph } from "@graphrefly/ts/graph";
+export function createApplicationGraph() {
+  const application = graph({ name: "installed-package-proof" });
+  const source = application.state(1, { name: "source" });
+  application.derived([source], (value) => value + 1, { name: "projection" });
+  return application;
+}
+`,
+	);
+	const head = commit(repository, "derive projection before Stack onboarding");
+
+	const consumerPackage = JSON.parse(await readFile(resolve(repository, "package.json"), "utf8"));
+	consumerPackage.devDependencies = { "@graphrefly/stack": `file:${tarball}` };
+	await put(repository, "package.json", `${JSON.stringify(consumerPackage, null, 2)}\n`);
+	run(repository, "pnpm", ["install", "--ignore-scripts"]);
+	const packedCli = await realpath(
+		resolve(repository, "node_modules/@graphrefly/stack/dist/grfs.js"),
+	);
+	const registryLayoutCli = resolve(repository, "registry-layout-grfs.js");
+	await symlink(packedCli, registryLayoutCli);
+	assert.match(run(repository, process.execPath, [registryLayoutCli, "--help"]), /Usage:/u);
+
 	const initialized = JSON.parse(
 		run(repository, "pnpm", [
 			"exec",
@@ -136,21 +174,6 @@ export function createApplicationGraph() {
 			.entrypoint,
 		"graphrefly-stack.blueprint.mjs",
 	);
-	const base = commit(repository, "initialize GraphReFly Stack review");
-
-	await put(
-		repository,
-		"src/application-graph.mjs",
-		`import { graph } from "@graphrefly/ts/graph";
-export function createApplicationGraph() {
-  const application = graph({ name: "installed-package-proof" });
-  const source = application.state(1, { name: "source" });
-  application.derived([source], (value) => value + 1, { name: "projection" });
-  return application;
-}
-`,
-	);
-	const head = commit(repository, "derive projection");
 
 	const reviewed = JSON.parse(
 		run(repository, "pnpm", [
