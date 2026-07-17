@@ -73,7 +73,8 @@ test("validated Codex plan output is deterministically bound without changing ga
 	assert.equal(liveRun.provenance.outputDigest.value.length, 64);
 	const bundle = resolve(runRoot, "live-bundle");
 	await exportEvidenceBundle(runtime, bundle, { plan: liveRun });
-	const manifest = JSON.parse(await readFile(resolve(bundle, "manifest.json"), "utf8"));
+	const portable = JSON.parse(await readFile(resolve(bundle, "evidence-bundle.json"), "utf8"));
+	const manifest = portable.manifest;
 	const artifactsSchema = JSON.parse(
 		await readFile(resolve("contracts/v1/schemas/artifacts.schema.json"), "utf8"),
 	);
@@ -90,17 +91,13 @@ test("validated Codex plan output is deterministically bound without changing ga
 	});
 	assert.equal(manifest.promptVersion, "stack.plan.v1");
 	assert.equal(
-		JSON.parse(await readFile(resolve(bundle, "plan/change-plan.json"), "utf8")).workUnits[0].title,
+		portable.artifacts["plan/change-plan.json"].workUnits[0].title,
 		proposedUnits[0].title,
 	);
 	for (const artifact of manifest.artifacts) {
-		const value = JSON.parse(await readFile(resolve(bundle, artifact.path), "utf8"));
-		assert.equal(sha256Jcs(value), artifact.hash.value, artifact.path);
+		assert.equal(sha256Jcs(portable.artifacts[artifact.path]), artifact.hash.value, artifact.path);
 	}
-	assert.equal(
-		JSON.parse(await readFile(resolve(bundle, "provenance/live-plan.json"), "utf8")).kind,
-		"plan",
-	);
+	assert.equal(portable.artifacts["provenance/live-plan.json"].kind, "plan");
 });
 
 test("validated Codex selective replan preserves U1 and accepts only U2 and U3", async () => {
@@ -125,15 +122,14 @@ test("validated Codex selective replan preserves U1 and accepts only U2 and U3",
 	const liveRun = JSON.parse(await readFile(result.runArtifact, "utf8"));
 	const bundle = resolve(runRoot, "live-replan-bundle");
 	await exportEvidenceBundle(runtime, bundle, { replan: liveRun });
-	const exportedRun = JSON.parse(
-		await readFile(resolve(bundle, "provenance/live-replan.json"), "utf8"),
-	);
+	const portable = JSON.parse(await readFile(resolve(bundle, "evidence-bundle.json"), "utf8"));
+	const exportedRun = portable.artifacts["provenance/live-replan.json"];
 	assert.match(
 		exportedRun.output.proposedWorkUnits[0].blueprintClaims[0].statement,
 		/sessionMutationBroker.*session-writes\.v2/,
 	);
 	const replayGate = computeGate(runtime.cases[5].input);
-	const liveGate = JSON.parse(await readFile(resolve(bundle, "gates/final.json"), "utf8"));
+	const liveGate = portable.artifacts["gates/final.json"];
 	assert.notEqual(liveGate.inputDigest.value, replayGate.inputDigest.value);
 	assert.deepEqual(
 		{ verdict: liveGate.verdict, units: liveGate.units, checkIds: liveGate.checkIds },

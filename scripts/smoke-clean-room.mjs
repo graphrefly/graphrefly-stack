@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { cpSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 
@@ -40,6 +40,25 @@ try {
 	run("corepack", ["pnpm", "cli", "fixture", "create", "--force", "--json"]);
 	run("corepack", ["pnpm", "cli", "gate", "--case", "current-valid", "--json"]);
 	run("corepack", ["pnpm", "cli", "gate", "--case", "fresh-selective-replan", "--json"]);
+	run("corepack", ["pnpm", "product:sample"]);
+	const sample = JSON.parse(
+		readFileSync(
+			join(cleanRoom, ".private/fixtures/generic-linear-v1/.graphrefly-stack-sample.json"),
+			"utf8",
+		),
+	);
+	run("corepack", [
+		"pnpm",
+		"cli",
+		"review",
+		"--repo",
+		sample.repository,
+		"--base",
+		sample.base,
+		"--head",
+		sample.head,
+		"--json",
+	]);
 	process.stdout.write(`Clean-room smoke passed with ${publicFiles.length} public files.\n`);
 } finally {
 	rmSync(cleanRoom, { recursive: true, force: true });

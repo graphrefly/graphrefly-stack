@@ -15,10 +15,47 @@ const goldenSuiteSchema = await readJson("contracts/v1/schemas/golden-suite.sche
 const suite = await readJson("fixtures/contracts/v1/golden-suite.json");
 const digests = await readJson("fixtures/contracts/v1/golden-digests.json");
 const bundleLayout = await readJson("fixtures/contracts/v1/bundle-layout.json");
+const repositoryConfigSchema = await readJson(
+	"contracts/repository/v1/repository-config.schema.json",
+);
+const repositoryReviewSchema = await readJson("contracts/repository/v1/review.schema.json");
 
 const ajv = createStrictAjv();
 ajv.addSchema(artifactsSchema);
 const validateSuite = ajv.compile(goldenSuiteSchema);
+
+test("the generic repository config is strict and path-safe", () => {
+	const repositoryAjv = createStrictAjv();
+	const validate = repositoryAjv.compile(repositoryConfigSchema);
+	assert.equal(
+		validate({
+			schema: "graphrefly.stack.repository.v1",
+			blueprint: { entrypoint: "tools/graphrefly-stack.blueprint.mjs" },
+		}),
+		true,
+	);
+	assert.equal(
+		validate({
+			schema: "graphrefly.stack.repository.v1",
+			blueprint: { entrypoint: "../private.mjs" },
+		}),
+		false,
+	);
+	assert.equal(
+		validate({
+			schema: "graphrefly.stack.repository.v1",
+			blueprint: { entrypoint: "blueprint.mjs" },
+			unreviewed: true,
+		}),
+		false,
+	);
+});
+
+test("the generic review schema compiles with the repository config authority", () => {
+	const repositoryAjv = createStrictAjv();
+	repositoryAjv.addSchema(repositoryConfigSchema);
+	assert.equal(typeof repositoryAjv.compile(repositoryReviewSchema), "function");
+});
 
 const reasonOrder = [
 	"SCHEMA_INVALID",
@@ -38,22 +75,39 @@ const reasonOrder = [
 	"ARTIFACT_HASH_MISMATCH",
 ];
 
-const expectedBundlePaths = [
-	"README.md",
-	"manifest.json",
+const expectedCommittedBundlePaths = ["README.md", "evidence-bundle.json"];
+const expectedBundleArtifactPaths = [
 	"task.json",
 	"stack.json",
 	"blueprints/base.json",
 	"blueprints/current.json",
 	"blueprints/delta.json",
+	"blueprints/commits/base.json",
+	"blueprints/commits/u1.json",
+	"blueprints/commits/u2.json",
+	"blueprints/commits/u3.json",
+	"blueprints/diagrams/base.json",
+	"blueprints/diagrams/u1.json",
+	"blueprints/diagrams/u2.json",
+	"blueprints/diagrams/u3.json",
+	"blueprints/deltas/u1.json",
+	"blueprints/deltas/u2.json",
+	"blueprints/deltas/u3.json",
+	"diffs/u1.json",
+	"diffs/u2.json",
+	"diffs/u3.json",
 	"plan/change-plan.json",
 	"semantic-changes/u1.json",
 	"semantic-changes/u2.json",
 	"semantic-changes/u3.json",
+	"semantic-changes/final/u1.json",
+	"semantic-changes/final/u2.json",
+	"semantic-changes/final/u3.json",
 	"gates/before-change.json",
 	"gates/after-change.json",
 	"replan/affected.json",
 	"checks/final.json",
+	"checks/after-rebase.json",
 	"gates/final.json",
 	"review/decision.json",
 ];
@@ -188,8 +242,9 @@ test("golden cases fix verdicts, work-unit order, reason order, and index integr
 });
 
 test("bundle layout and provenance preserve the evidence boundary", () => {
-	assert.deepEqual(bundleLayout.requiredPaths, expectedBundlePaths);
-	assert.equal(bundleLayout.requiredPaths.includes("review/decision.json"), true);
+	assert.deepEqual(bundleLayout.committedPaths, expectedCommittedBundlePaths);
+	assert.deepEqual(bundleLayout.requiredArtifactPaths, expectedBundleArtifactPaths);
+	assert.equal(bundleLayout.requiredArtifactPaths.includes("review/decision.json"), true);
 	for (const artifact of suite.manifest.artifacts) {
 		assert.notEqual(artifact.path, "manifest.json");
 		assert.notEqual(artifact.path, "README.md");

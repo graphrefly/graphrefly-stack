@@ -1,0 +1,182 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "urn:graphrefly-stack:schema:repository-review:v1",
+	"title": "GraphReFly Stack generic repository review v1",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["schema", "source", "repository", "base", "commits", "semanticStatus"],
+	"properties": {
+		"schema": { "const": "graphrefly.stack.review.v1" },
+		"source": { "const": "generic-repository" },
+		"repository": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["label", "graphreflyVersion", "entrypoint", "baseOid", "headOid"],
+			"properties": {
+				"label": { "type": "string", "minLength": 1 },
+				"graphreflyVersion": { "const": "0.3.0" },
+				"entrypoint": {
+					"$ref": "urn:graphrefly-stack:schema:repository-config:v1#/properties/blueprint/properties/entrypoint"
+				},
+				"baseOid": { "$ref": "#/definitions/GitOid" },
+				"headOid": { "$ref": "#/definitions/GitOid" }
+			}
+		},
+		"base": { "$ref": "#/definitions/RevisionEvidence" },
+		"commits": {
+			"type": "array",
+			"minItems": 1,
+			"items": { "$ref": "#/definitions/ReviewCommit" }
+		},
+		"semanticStatus": { "const": "not-configured" }
+	},
+	"definitions": {
+		"GitOid": { "type": "string", "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$" },
+		"Hash": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["kind", "algorithm", "input", "value"],
+			"properties": {
+				"kind": { "const": "topology" },
+				"algorithm": { "const": "sha256" },
+				"input": { "const": "strictCanonicalTopologyBytes" },
+				"value": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+			}
+		},
+		"Blueprint": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["version", "topology", "diagnostics", "hash"],
+			"properties": {
+				"version": { "const": "graphrefly.blueprint.v2" },
+				"topology": { "type": "object" },
+				"diagnostics": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["ok", "issues"],
+					"properties": {
+						"ok": { "const": true },
+						"issues": { "type": "array" }
+					}
+				},
+				"provenance": { "type": "object" },
+				"hash": { "$ref": "#/definitions/Hash" }
+			}
+		},
+		"Diagram": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["format", "renderer", "source"],
+			"properties": {
+				"format": { "const": "mermaid" },
+				"renderer": { "const": "@graphrefly/ts/render.blueprintToMermaid" },
+				"source": { "type": "string", "pattern": "^flowchart " }
+			}
+		},
+		"Delta": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["version", "fromBlueprintVersion", "toBlueprintVersion", "events"],
+			"properties": {
+				"version": { "const": "graphrefly.blueprint-delta.v1" },
+				"fromBlueprintVersion": { "const": "graphrefly.blueprint.v2" },
+				"toBlueprintVersion": { "const": "graphrefly.blueprint.v2" },
+				"fromHash": { "$ref": "#/definitions/Hash" },
+				"toHash": { "$ref": "#/definitions/Hash" },
+				"events": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"required": ["type", "topologyPath"],
+						"properties": {
+							"type": {
+								"enum": [
+									"subgraph-added",
+									"node-added",
+									"node-changed",
+									"edge-added",
+									"edge-removed",
+									"node-removed",
+									"subgraph-removed"
+								]
+							},
+							"topologyPath": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+						},
+						"additionalProperties": true
+					}
+				}
+			}
+		},
+		"DiffLine": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["kind", "content"],
+			"properties": {
+				"kind": { "enum": ["context", "delete", "add"] },
+				"content": { "type": "string" },
+				"oldNo": { "type": "integer", "minimum": 1 },
+				"newNo": { "type": "integer", "minimum": 1 }
+			}
+		},
+		"StructuredDiff": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["paths", "files"],
+			"properties": {
+				"paths": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+				"files": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"additionalProperties": false,
+						"required": ["oldPath", "newPath", "additions", "deletions", "binary", "hunks"],
+						"properties": {
+							"oldPath": { "type": "string" },
+							"newPath": { "type": "string" },
+							"additions": { "type": "integer", "minimum": 0 },
+							"deletions": { "type": "integer", "minimum": 0 },
+							"binary": { "type": "boolean" },
+							"hunks": {
+								"type": "array",
+								"items": {
+									"type": "object",
+									"additionalProperties": false,
+									"required": ["header", "lines"],
+									"properties": {
+										"header": { "type": "string" },
+										"lines": { "type": "array", "items": { "$ref": "#/definitions/DiffLine" } }
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"RevisionEvidence": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["oid", "subject", "blueprint", "diagram"],
+			"properties": {
+				"oid": { "$ref": "#/definitions/GitOid" },
+				"subject": { "type": "string" },
+				"blueprint": { "$ref": "#/definitions/Blueprint" },
+				"diagram": { "$ref": "#/definitions/Diagram" }
+			}
+		},
+		"ReviewCommit": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["oid", "parentOid", "subject", "blueprint", "diagram", "delta", "diff"],
+			"properties": {
+				"oid": { "$ref": "#/definitions/GitOid" },
+				"parentOid": { "$ref": "#/definitions/GitOid" },
+				"subject": { "type": "string" },
+				"blueprint": { "$ref": "#/definitions/Blueprint" },
+				"diagram": { "$ref": "#/definitions/Diagram" },
+				"delta": { "$ref": "#/definitions/Delta" },
+				"diff": { "$ref": "#/definitions/StructuredDiff" }
+			}
+		}
+	}
+}

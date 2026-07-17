@@ -1,8 +1,0 @@
-{
-	"schema": "urn:graphrefly-stack:schema:review-decision:v1",
-	"decision": "defer",
-	"reviewerLabel": "local-reviewer",
-	"recordIds": ["stale.u1.3d8696c74e3b", "stale.u2.acc8c32a2ff2", "stale.u3.08a3f4403cbc"],
-	"recordedAt": "2026-07-16T00:00:00Z",
-	"identityVerified": false
-}

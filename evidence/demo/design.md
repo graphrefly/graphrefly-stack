@@ -1,48 +1,57 @@
+---
+colors:
+  canvas: "#dfe9ef"
+  ink: "#173044"
+  paper: "#f7fafb"
+  blueprint: "#246482"
+  blueprint_soft: "#d9edf4"
+  valid: "#39765f"
+  valid_soft: "#dcece5"
+  blocked: "#963e68"
+  blocked_soft: "#f2dce7"
+  line: "#b6c8d1"
+  focus: "#f0a45d"
+typography:
+  display: "Avenir Next"
+  evidence: "SFMono-Regular"
+  display_weight: 900
+  body_weight: 350
+spacing:
+  frame_x: 92
+  frame_top: 62
+  caption_safe_bottom: 170
+components:
+  radius: 0
+  structural_rule_px: 3
+  shadow: "24px 28px 0 rgba(23, 48, 68, 0.12)"
+---
+
 # GraphReFly Stack demo identity
 
 ## Mood
 
-Architecture review desk: precise, editorial, calm under pressure. Light technical canvas with dark
-ink, sharp rules, real evidence, and one warm focus accent. The video must feel like the existing
-review product, not a generic neon developer promo.
+Architecture review desk: precise, editorial, calm under pressure. The product evidence is the visual
+hero. The frame should feel like an annotated engineering drawing rather than a generic developer
+promo.
 
-## Palette
+## Composition
 
-- Canvas: `#dfe9ef`
-- Ink: `#173044`
-- Paper: `#f7fafb`
-- Blueprint: `#246482`
-- Blueprint soft: `#d9edf4`
-- Valid: `#39765f`
-- Valid soft: `#dcece5`
-- Blocked: `#963e68`
-- Blocked soft: `#f2dce7`
-- Structural line: `#b6c8d1`
-- Focus accent: `#f0a45d`
-
-## Typography
-
-- Product statements and titles: `Avenir Next`, weights 900 and 350.
-- Evidence, reason codes, commit IDs, and metadata: `SFMono-Regular`, weight 600.
-- Use the contrast between human-readable proportional intent and mechanical monospace evidence.
-
-## Geometry and depth
-
-- Square corners; no pill-shaped cards.
-- Two-to-four-pixel structural rules on the light canvas.
-- Layered paper panels and restrained shadows only around captured product UI.
-- Grid texture and oversized ghost commit IDs may provide depth.
+- Use two focal zones per scene: one primary product or statement area and one evidence annotation.
+- Treat Git identity, Blueprint evidence, graph delta, and code diff as distinct visual registers.
+- Square geometry and heavy structural rules match the review UI; screenshots may carry the only
+  restrained offset shadow.
+- Keep the light grid canvas persistent so the seven beats feel like one review workspace.
 
 ## Motion
 
 - Primary transition: medium blur crossfade, 0.5 seconds.
-- Accent transition at semantic invalidation: quick color dip through blocked magenta.
-- Movement should read as synchronized selection and witness rebinding: draw, cascade, focus, stamp,
-  and rebind.
+- Movement verbs: draw, select, synchronize, focus, stamp, and bind.
+- Product screenshots move slowly inside a fixed viewport; labels and evidence snap into place.
+- One finite ambient drift per scene keeps the held frame alive without suggesting live data.
 
 ## Avoid
 
 - No gradient text, purple-blue neon, black cyberpunk canvas, rounded SaaS cards, or fake terminal
   rain.
-- Do not make raw code the hero; architecture and exact evidence stay primary.
-- Do not imply auto-approval, auto-merge, hosted authentication, or a public deployment.
+- Do not imply automatic approval, automatic merge, hosted authentication, or public deployment.
+- Do not present GPT-5.6 as the source of deterministic GraphBlueprint or Git evidence.

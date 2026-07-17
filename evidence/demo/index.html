@@ -1,8 +1,8 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=1920, height=1080" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
     <script src="transcript-data.js"></script>
     <style>
@@ -53,9 +53,10 @@
       .mono,
       .eyebrow,
       .meta,
-      .reason,
       .chip,
-      .caption {
+      .caption,
+      .command,
+      .event {
         font-family: "GraphReFly Mono", monospace;
         font-variant-ligatures: none;
       }
@@ -67,8 +68,8 @@
         overflow: hidden;
         background-color: var(--canvas);
         background-image:
-          linear-gradient(rgba(36, 100, 130, 0.11) 2px, rgba(36, 100, 130, 0) 2px),
-          linear-gradient(90deg, rgba(36, 100, 130, 0.11) 2px, rgba(36, 100, 130, 0) 2px);
+          linear-gradient(rgba(36, 100, 130, 0.11) 2px, transparent 2px),
+          linear-gradient(90deg, rgba(36, 100, 130, 0.11) 2px, transparent 2px);
         background-size: 48px 48px;
       }
 
@@ -78,7 +79,7 @@
         width: 1920px;
         height: 1080px;
         overflow: hidden;
-        background-color: var(--canvas);
+        background: var(--canvas);
       }
 
       #scene-2,
@@ -96,7 +97,7 @@
         width: 100%;
         height: 100%;
         padding: 62px 92px 170px;
-        gap: 28px;
+        gap: 25px;
       }
 
       .topline {
@@ -104,7 +105,7 @@
         align-items: center;
         justify-content: space-between;
         width: 100%;
-        padding-bottom: 18px;
+        padding-bottom: 16px;
         border-bottom: 3px solid var(--ink);
       }
 
@@ -130,7 +131,7 @@
       .eyebrow,
       .meta,
       .chip {
-        font-size: 20px;
+        font-size: 19px;
         font-weight: 700;
         letter-spacing: 0.04em;
         text-transform: uppercase;
@@ -146,136 +147,319 @@
 
       h1,
       h2 {
-        max-width: 1520px;
         font-weight: 900;
         letter-spacing: -0.055em;
         line-height: 0.96;
       }
 
       h1 {
-        font-size: 124px;
+        max-width: 1540px;
+        font-size: 116px;
       }
 
       h2 {
-        font-size: 78px;
+        font-size: 68px;
+      }
+
+      h3 {
+        font-size: 34px;
+        line-height: 1.08;
       }
 
       .lede {
-        max-width: 1250px;
-        font-size: 33px;
-        line-height: 1.42;
+        max-width: 1390px;
         color: #395467;
+        font-size: 31px;
+        line-height: 1.38;
       }
 
       .ghost {
         position: absolute;
-        right: -34px;
-        top: 160px;
+        right: -24px;
+        top: 148px;
+        color: rgba(36, 100, 130, 0.15);
         font-family: "GraphReFly Mono", monospace;
-        font-size: 170px;
+        font-size: 148px;
         font-weight: 700;
-        color: rgba(36, 100, 130, 0.14);
         letter-spacing: -0.08em;
         pointer-events: none;
       }
 
-      .rule {
-        width: 100%;
-        height: 4px;
-        transform-origin: left center;
-        background: var(--blueprint);
-      }
-
-      .status-row,
-      .work-unit-row,
-      .trust-flow,
-      .rebind-row {
+      .question-row,
+      .role-row,
+      .guard-grid,
+      .scope-grid {
         display: grid;
         gap: 20px;
         width: 100%;
       }
 
-      .status-row {
-        grid-template-columns: 1fr 1fr;
+      .question-row {
+        grid-template-columns: repeat(3, 1fr);
+        margin-top: 10px;
       }
 
-      .status-card,
-      .unit-card,
-      .trust-card,
-      .rebind-card,
-      .delta-card,
-      .gate-card {
-        min-width: 0;
-        padding: 28px 32px;
-        background: rgba(247, 250, 251, 0.95);
+      .question-card,
+      .role-card,
+      .guard-card,
+      .scope-card,
+      .annotation,
+      .proof-card {
+        padding: 26px 30px;
+        background: rgba(247, 250, 251, 0.96);
         border: 3px solid var(--line);
       }
 
-      .status-card {
+      .question-card {
         display: flex;
-        align-items: center;
-        justify-content: space-between;
-        min-height: 132px;
-        font-size: 38px;
-        font-weight: 900;
-      }
-
-      .status-card.valid {
-        color: var(--valid);
-        background: var(--valid-soft);
-        border-color: var(--valid);
-      }
-
-      .status-card.blocked {
-        color: var(--blocked);
-        background: var(--blocked-soft);
-        border-color: var(--blocked);
-      }
-
-      .work-unit-row {
-        grid-template-columns: repeat(3, 1fr);
-        align-items: stretch;
-      }
-
-      .unit-card {
-        display: flex;
+        min-height: 250px;
         flex-direction: column;
-        min-height: 360px;
-        gap: 22px;
+        gap: 24px;
       }
 
-      .unit-card .unit-id {
-        font-size: 70px;
+      .question-card .number {
+        color: var(--blueprint);
+        font-size: 68px;
         font-weight: 900;
         line-height: 1;
       }
 
-      .unit-card h3 {
-        font-size: 34px;
-        line-height: 1.12;
-      }
-
-      .unit-card p {
-        font-size: 24px;
-        line-height: 1.45;
+      .question-card p,
+      .role-card p,
+      .guard-card p,
+      .scope-card p,
+      .annotation p {
         color: #4e6675;
+        font-size: 24px;
+        line-height: 1.36;
       }
 
-      .unit-card .meta {
-        margin-top: auto;
+      .question-card.git {
+        border-color: var(--ink);
       }
 
-      .dependency-line {
-        position: absolute;
-        left: 235px;
-        right: 235px;
-        bottom: 282px;
-        height: 5px;
-        transform-origin: left center;
-        background: var(--blueprint);
+      .question-card.graph {
+        background: var(--blueprint-soft);
+        border-color: var(--blueprint);
       }
 
-      .chip-row {
+      .question-card.code {
+        background: var(--valid-soft);
+        border-color: var(--valid);
+      }
+
+      .command {
+        padding: 24px 28px;
+        color: var(--paper);
+        font-size: 25px;
+        line-height: 1.45;
+        background: var(--ink);
+        border: 3px solid var(--ink);
+      }
+
+      .command .accent {
+        color: #86c5d8;
+      }
+
+      .repo-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.45fr) 0.72fr;
+        gap: 28px;
+        min-height: 0;
+        flex: 1;
+      }
+
+      .scope-grid {
+        grid-template-columns: 1fr;
+        align-content: start;
+      }
+
+      .scope-card {
+        min-height: 112px;
+      }
+
+      .scope-card strong,
+      .guard-card strong {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 26px;
+      }
+
+      .screen {
+        min-width: 0;
+        min-height: 0;
+        overflow: hidden;
+        background: var(--ink);
+        border: 13px solid var(--ink);
+        box-shadow: 24px 28px 0 rgba(23, 48, 68, 0.12);
+      }
+
+      .screen img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .screen.top img {
+        object-position: top center;
+      }
+
+      .screen.bottom img {
+        object-position: bottom center;
+      }
+
+      .evidence-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.56fr) 0.58fr;
+        gap: 28px;
+        min-height: 0;
+        flex: 1;
+      }
+
+      .annotation {
+        display: flex;
+        flex-direction: column;
+        gap: 11px;
+      }
+
+      .annotation h2 {
+        font-size: 49px;
+      }
+
+      .fact-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .fact {
+        padding: 9px 15px;
+        color: var(--ink);
+        font-family: "GraphReFly Mono", monospace;
+        font-size: 21px;
+        font-weight: 700;
+        background: var(--paper);
+        border: 2px solid var(--line);
+      }
+
+      .fact.upstream {
+        color: var(--blueprint);
+        background: var(--blueprint-soft);
+        border-color: var(--blueprint);
+      }
+
+      .event {
+        padding: 11px 16px;
+        color: var(--blueprint);
+        font-size: 20px;
+        font-weight: 700;
+        background: var(--blueprint-soft);
+        border: 3px solid var(--blueprint);
+      }
+
+      .sync-row {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 12px;
+      }
+
+      .sync-item {
+        padding: 16px 13px;
+        text-align: center;
+        background: var(--paper);
+        border: 3px solid var(--line);
+      }
+
+      .sync-item strong {
+        display: block;
+        margin-bottom: 7px;
+        color: var(--blueprint);
+        font-size: 23px;
+      }
+
+      .sync-item span {
+        font-family: "GraphReFly Mono", monospace;
+        font-size: 17px;
+      }
+
+      .metadata-layout {
+        display: grid;
+        grid-template-columns: 0.68fr minmax(0, 1.5fr);
+        gap: 28px;
+        min-height: 0;
+        flex: 1;
+      }
+
+      .proof-card {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .proof-card .big-event {
+        padding: 24px;
+        color: #725817;
+        font-family: "GraphReFly Mono", monospace;
+        font-size: 29px;
+        font-weight: 700;
+        line-height: 1.35;
+        background: #fff1c9;
+        border: 3px solid #9a7623;
+      }
+
+      .code-line {
+        padding: 22px;
+        color: #215a42;
+        font-family: "GraphReFly Mono", monospace;
+        font-size: 21px;
+        line-height: 1.42;
+        background: #d8f1e2;
+        border: 3px solid var(--valid);
+      }
+
+      .guard-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .guard-card {
+        min-height: 158px;
+      }
+
+      .neutral {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 24px 28px;
+        color: #725817;
+        font-size: 30px;
+        font-weight: 900;
+        background: #fff1c9;
+        border: 3px solid #9a7623;
+      }
+
+      .neutral .mono {
+        font-size: 20px;
+      }
+
+      .role-row {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .role-card {
+        min-height: 230px;
+      }
+
+      .role-card h3 {
+        margin-bottom: 15px;
+      }
+
+      .role-card.deterministic {
+        background: var(--valid-soft);
+        border-color: var(--valid);
+      }
+
+      .roadmap {
         display: flex;
         flex-wrap: wrap;
         gap: 12px;
@@ -288,272 +472,27 @@
         border: 2px solid var(--ink);
       }
 
-      .chip.model {
+      .chip.now {
+        color: var(--paper);
+        background: var(--valid);
+        border-color: var(--valid);
+      }
+
+      .chip.next {
         color: var(--paper);
         background: var(--blueprint);
         border-color: var(--blueprint);
       }
 
-      .product-layout {
-        display: grid;
-        grid-template-columns: minmax(0, 1.5fr) 390px;
-        gap: 32px;
-        min-height: 0;
-      }
-
-      .device-wrap {
-        min-width: 0;
-        padding: 14px;
-        overflow: hidden;
-        background: var(--ink);
-        box-shadow: 24px 28px 0 rgba(23, 48, 68, 0.12);
-      }
-
-      .device-wrap img {
-        display: block;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        object-position: top left;
-      }
-
-      .callouts {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-      }
-
-      .callout {
-        display: grid;
-        grid-template-columns: 46px 1fr;
-        gap: 18px;
-        align-items: start;
-        padding: 22px;
-        background: var(--paper);
-        border: 3px solid var(--line);
-      }
-
-      .callout b {
-        display: grid;
-        place-items: center;
-        width: 46px;
-        height: 46px;
-        color: var(--paper);
-        font-size: 22px;
-        background: var(--blueprint);
-      }
-
-      .callout span {
-        font-size: 25px;
-        line-height: 1.3;
-      }
-
-      .split-proof {
-        display: grid;
-        grid-template-columns: minmax(0, 1.35fr) 0.65fr;
-        gap: 28px;
-        min-height: 0;
-      }
-
-      .delta-card {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-      }
-
-      .broker-node {
-        padding: 28px;
-        color: var(--paper);
-        font-family: "GraphReFly Mono", monospace;
-        font-size: 29px;
-        font-weight: 700;
-        line-height: 1.35;
-        background: var(--blueprint);
-        border: 3px solid var(--ink);
-      }
-
-      .reason-stack {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-      }
-
-      .reason {
-        padding: 18px 20px;
-        color: var(--blocked);
-        font-size: 23px;
-        font-weight: 700;
-        background: var(--blocked-soft);
-        border: 3px solid var(--blocked);
-      }
-
-      .gate-grid {
-        display: grid;
-        grid-template-columns: 0.82fr 1.18fr;
-        gap: 28px;
-        min-height: 0;
-      }
-
-      .verdict-rail {
-        display: grid;
-        gap: 14px;
-      }
-
-      .verdict {
-        display: grid;
-        grid-template-columns: 92px 1fr auto;
-        gap: 18px;
-        align-items: center;
-        padding: 22px 26px;
-        background: var(--paper);
-        border: 3px solid var(--line);
-      }
-
-      .verdict .unit-id {
-        font-size: 42px;
-        font-weight: 900;
-      }
-
-      .verdict strong {
-        font-size: 30px;
-      }
-
-      .verdict.valid {
-        color: var(--valid);
-        background: var(--valid-soft);
-        border-color: var(--valid);
-      }
-
-      .verdict.blocked {
-        color: var(--blocked);
-        background: var(--blocked-soft);
-        border-color: var(--blocked);
-      }
-
-      .gate-card {
-        display: flex;
-        flex-direction: column;
-        gap: 22px;
-        color: var(--paper);
-        background: var(--ink);
-        border-color: var(--ink);
-      }
-
-      .gate-card h2 {
-        font-size: 68px;
-        color: var(--paper);
-      }
-
-      .gate-card .meta {
-        color: #b9ccd6;
-      }
-
-      .read-only {
-        margin-top: auto;
-        padding-top: 18px;
-        color: #86c5d8;
-        font-size: 24px;
-        border-top: 3px solid #7693a3;
-      }
-
-      .rebind-row {
-        grid-template-columns: 0.72fr 1fr 1fr;
-      }
-
-      .rebind-card {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-        min-height: 330px;
-      }
-
-      .rebind-card.preserved {
-        color: var(--valid);
-        background: var(--valid-soft);
-        border-color: var(--valid);
-      }
-
-      .rebind-card h3 {
-        font-size: 42px;
-      }
-
-      .binding {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 16px;
-        font-family: "GraphReFly Mono", monospace;
-        font-size: 22px;
-        background: rgba(247, 250, 251, 0.75);
-        border: 2px solid var(--line);
-      }
-
-      .binding.fresh {
-        color: var(--valid);
-        border-color: var(--valid);
-      }
-
-      .pass-stamp {
-        position: absolute;
-        right: 104px;
-        bottom: 184px;
-        padding: 20px 32px;
-        color: var(--paper);
-        font-size: 46px;
-        font-weight: 900;
-        transform: rotate(-2deg);
-        background: var(--valid);
-        border: 4px solid var(--ink);
-      }
-
-      .trust-flow {
-        grid-template-columns: 1fr auto 1fr auto 1fr;
-        align-items: center;
-      }
-
-      .trust-card {
-        min-height: 170px;
-        font-size: 34px;
-        font-weight: 900;
-      }
-
-      .trust-arrow {
-        color: var(--blueprint);
-        font-size: 64px;
-        font-weight: 900;
-      }
-
-      .bundle-line {
-        display: flex;
-        align-items: baseline;
-        gap: 24px;
-      }
-
-      .bundle-count {
-        color: var(--blueprint);
-        font-size: 120px;
-        font-weight: 900;
-        line-height: 0.9;
-        font-variant-numeric: tabular-nums;
-      }
-
-      .tagline {
-        max-width: 1500px;
-        font-size: 66px;
-        font-weight: 900;
-        letter-spacing: -0.045em;
-        line-height: 1.05;
-      }
-
       #caption-rail {
         position: absolute;
-        left: 92px;
         right: 92px;
         bottom: 50px;
+        left: 92px;
         z-index: 100;
         height: 94px;
         overflow: visible;
-        background: rgba(247, 250, 251, 0.97);
+        background: rgba(247, 250, 251, 0.98);
         border: 3px solid var(--ink);
         box-shadow: 12px 12px 0 rgba(23, 48, 68, 0.12);
       }
@@ -577,150 +516,138 @@
         padding: 14px 50px 14px 62px;
         overflow: visible;
         color: var(--ink);
-        font-size: 34px;
+        font-size: 33px;
         font-weight: 700;
         line-height: 1.2;
         text-align: center;
         visibility: hidden;
         opacity: 0;
       }
-
-      #transition-block {
-        position: absolute;
-        inset: 0;
-        z-index: 90;
-        pointer-events: none;
-        background: var(--blocked);
-        opacity: 0;
-      }
     </style>
   </head>
   <body>
-    <div
-      id="root"
-      data-composition-id="main"
-      data-start="0"
-      data-duration="165"
-      data-width="1920"
-      data-height="1080"
-    >
-      <section id="scene-1" class="scene">
-        <div class="ghost" id="s1-ghost" data-layout-ignore aria-hidden="true">0 CONFLICTS</div>
-        <div class="scene-content">
-          <div class="topline" id="s1-top">
-            <div class="brand"><span class="brand-mark">G</span> GraphReFly Stack</div>
-            <span class="meta">REAL GIT · SEMANTIC VALIDITY</span>
+    <div data-hf-id="hf-ogy9" id="root" data-composition-id="main" data-start="0" data-duration="142" data-width="1920" data-height="1080">
+      <section data-hf-id="hf-k674" id="scene-1" class="scene">
+        <div data-hf-id="hf-ymvb" id="s1-ghost" class="ghost" data-layout-ignore="" aria-hidden="true">COMMIT → GRAPH → CODE</div>
+        <div data-hf-id="hf-cn5c" class="scene-content">
+          <div data-hf-id="hf-4xaz" id="s1-top" class="topline"><div data-hf-id="hf-2idp" class="brand"><span data-hf-id="hf-p7fv" class="brand-mark">G</span> GraphReFly Stack</div><span data-hf-id="hf-79h2" class="meta">REAL REPOSITORY REVIEW</span></div>
+          <p data-hf-id="hf-pybz" id="s1-eye" class="eyebrow">THE SMALLEST USEFUL PRODUCT</p>
+          <h1 data-hf-id="hf-rrq9" id="s1-title">Three questions. One selected commit.</h1>
+          <p data-hf-id="hf-zw9n" id="s1-lede" class="lede">Every stacked change binds real Git identity to a GraphReFly-generated graph delta and the exact parent code diff.</p>
+          <div data-hf-id="hf-wyff" class="question-row">
+            <article data-hf-id="hf-azd5" id="s1-q1" class="question-card git"><span data-hf-id="hf-g3id" class="number">01</span><h3 data-hf-id="hf-79n7">Which Git commit?</h3><p data-hf-id="hf-k9xc">Immutable OID, parent edge, and subject from the repository.</p></article>
+            <article data-hf-id="hf-tl3i" id="s1-q2" class="question-card graph"><span data-hf-id="hf-hafg" class="number">02</span><h3 data-hf-id="hf-tmw3">What changed in the graph?</h3><p data-hf-id="hf-01yy">Verified GraphBlueprint and upstream structural events.</p></article>
+            <article data-hf-id="hf-vbeq" id="s1-q3" class="question-card code"><span data-hf-id="hf-gw4f" class="number">03</span><h3 data-hf-id="hf-5xck">Which lines produced it?</h3><p data-hf-id="hf-vtgc">GitHub-style split comparison against the exact parent.</p></article>
           </div>
-          <p class="eyebrow" id="s1-eye">GIT'S BLIND SPOT</p>
-          <h1 id="s1-title">A clean rebase can still be wrong.</h1>
-          <p class="lede" id="s1-lede">Textual success does not prove the architecture that shaped a plan is still current.</p>
-          <div class="status-row">
-            <div class="status-card valid" id="s1-valid"><span>Git rebase</span><span>✓ CLEAN</span></div>
-            <div class="status-card blocked" id="s1-blocked"><span>Architecture witness</span><span>! STALE</span></div>
-          </div>
-          <div class="rule" id="s1-rule"></div>
         </div>
       </section>
 
-      <section id="scene-2" class="scene">
-        <div class="ghost" id="s2-ghost" data-layout-ignore aria-hidden="true">CHANGEPLAN</div>
-        <div class="scene-content">
-          <div class="topline" id="s2-top">
-            <div class="brand"><span class="brand-mark">G</span> One task · three work units</div>
-            <div class="chip-row"><span class="chip model">gpt-5.6-sol · high</span><span class="chip">strict schema</span></div>
-          </div>
-          <p class="eyebrow" id="s2-eye">DEPENDENCY-AWARE REAL STACK</p>
-          <div class="work-unit-row">
-            <article class="unit-card" id="s2-u1"><span class="unit-id">U1</span><h3>Contracts</h3><p>Define rotation inputs, outputs, and invariants.</p><span class="meta">3d8696c · contracts</span></article>
-            <article class="unit-card" id="s2-u2"><span class="unit-id">U2</span><h3>GraphReFly runtime</h3><p>Persist replacement tokens through the approved session path.</p><span class="meta">acc8c32 · refresh-runtime</span></article>
-            <article class="unit-card" id="s2-u3"><span class="unit-id">U3</span><h3>HTTP adapter</h3><p>Expose the broker-backed refresh result and reject replay.</p><span class="meta">08a3f44 · refresh-api</span></article>
-          </div>
-          <div class="dependency-line" id="s2-deps"></div>
-        </div>
-      </section>
-
-      <section id="scene-3" class="scene">
-        <div class="scene-content">
-          <div class="topline" id="s3-top"><div class="brand"><span class="brand-mark">G</span> High-level semantic review</div><span class="meta">REAL GIT · READ ONLY</span></div>
-          <div class="product-layout">
-            <div class="device-wrap" id="s3-device"><img id="s3-image" data-layout-allow-overflow src="assets/review-u1.png" alt="GraphReFly Stack review UI with U1 selected" /></div>
-            <div class="callouts">
-              <div class="callout" id="s3-c1"><b>1</b><span>Select the real commit stack.</span></div>
-              <div class="callout" id="s3-c2"><b>2</b><span>Read structure and claim impact.</span></div>
-              <div class="callout" id="s3-c3"><b>3</b><span>Verify gate and exact checks.</span></div>
-              <div class="callout" id="s3-c4"><b>4</b><span>Open raw code only on demand.</span></div>
+      <section data-hf-id="hf-v1or" id="scene-2" class="scene">
+        <div data-hf-id="hf-o0eg" class="scene-content">
+          <div data-hf-id="hf-iw1o" id="s2-top" class="topline"><div data-hf-id="hf-gld9" class="brand"><span data-hf-id="hf-o5hn" class="brand-mark">G</span> Point at a compatible repository</div><span data-hf-id="hf-35yq" class="meta">NO FLAGSHIP FIXTURE BRANCH</span></div>
+          <div data-hf-id="hf-b2p1" id="s2-command" class="command"><span data-hf-id="hf-5q74" class="accent">graphrefly-stack review</span> --repo ./my-repo --base &lt;oid&gt; --head &lt;oid&gt;</div>
+          <div data-hf-id="hf-in7v" class="repo-layout">
+            <div data-hf-id="hf-7qm1" id="s2-screen" class="screen top"><img data-hf-id="hf-q4j6" id="s2-image" data-layout-allow-overflow="" src="assets/review-derived.png" alt="GraphReFly Stack reviewing three real commits in a small repository"></div>
+            <div data-hf-id="hf-ttwd" class="scope-grid">
+              <article data-hf-id="hf-f9uc" id="s2-c1" class="scope-card"><strong data-hf-id="hf-kjz3">Real Git range</strong><p data-hf-id="hf-kfkw">Base plus three discovered commits.</p></article>
+              <article data-hf-id="hf-q5bz" id="s2-c2" class="scope-card"><strong data-hf-id="hf-r6qh">Exact runtime</strong><p data-hf-id="hf-h52i">@graphrefly/ts 0.3.0 from the target repository.</p></article>
+              <article data-hf-id="hf-m77y" id="s2-c3" class="scope-card"><strong data-hf-id="hf-cj1k">Linear-first</strong><p data-hf-id="hf-1c2z">One root package, unchanged manifest and lock.</p></article>
+              <article data-hf-id="hf-uv3t" id="s2-c4" class="scope-card"><strong data-hf-id="hf-cmf1">Explicit adapter</strong><p data-hf-id="hf-07k5">.graphrefly-stack.json selects the Blueprint entrypoint.</p></article>
             </div>
           </div>
         </div>
       </section>
 
-      <section id="scene-4" class="scene">
-        <div class="ghost" id="s4-ghost" data-layout-ignore aria-hidden="true">session-writes.v2</div>
-        <div class="scene-content">
-          <div class="topline" id="s4-top"><div class="brand"><span class="brand-mark">G</span> Clean rebase · stale architecture</div><span class="meta">FILES DISJOINT · CHECKS GREEN</span></div>
-          <div class="split-proof">
-            <div class="device-wrap" id="s4-device"><img id="s4-image" src="assets/review-u2.png" alt="GraphReFly Stack review UI with U2 selected" /></div>
-            <article class="delta-card" id="s4-delta">
-              <p class="eyebrow">FOCUSED BLUEPRINT DELTA</p>
-              <h2>One new broker changes the write path.</h2>
-              <div class="broker-node" id="s4-broker">password-reset.intent<br />↓<br />sessionMutationBroker<br />↓<br />session.persist</div>
-              <div class="reason-stack"><div class="reason" id="s4-r1">BLUEPRINT_CHANGED</div><div class="reason" id="s4-r2">POLICY_CHANGED</div></div>
+      <section data-hf-id="hf-r3kq" id="scene-3" class="scene">
+        <div data-hf-id="hf-mthd" class="scene-content">
+          <div data-hf-id="hf-tk8x" id="s3-top" class="topline"><div data-hf-id="hf-eyo9" class="brand"><span data-hf-id="hf-nr6m" class="brand-mark">G</span> Blueprint comes from GraphReFly</div><span data-hf-id="hf-u5ll" class="meta">TARGET RUNTIME · PUBLIC UPSTREAM APIS</span></div>
+          <div data-hf-id="hf-pfqa" class="evidence-layout">
+            <div data-hf-id="hf-4fnm" id="s3-screen" class="screen top"><img data-hf-id="hf-wq2t" id="s3-image" data-layout-allow-overflow="" src="assets/review-derived-blueprint.png" alt="Derived node and source edge rendered from a GraphReFly Blueprint"></div>
+            <article data-hf-id="hf-iisb" id="s3-note" class="annotation">
+              <p data-hf-id="hf-5lrn" class="eyebrow">NOT HAND-AUTHORED</p>
+              <h2 data-hf-id="hf-rzb4">Repository evidence becomes a readable diagram.</h2>
+              <div data-hf-id="hf-oiw9" class="fact-stack">
+                <div data-hf-id="hf-u1dl" id="s3-f1" class="fact upstream">graph.blueprint()</div>
+                <div data-hf-id="hf-fnmu" id="s3-f2" class="fact upstream">parseGraphBlueprint</div>
+                <div data-hf-id="hf-jkdl" id="s3-f3" class="fact upstream">verifyBlueprintHash</div>
+                <div data-hf-id="hf-bi15" id="s3-f4" class="fact upstream">blueprintToMermaid</div>
+                <div data-hf-id="hf-xnem" id="s3-f5" class="fact upstream">diffGraphBlueprints</div>
+              </div>
+              <div data-hf-id="hf-qht5" id="s3-event" class="event">node-added: derived<br data-hf-id="hf-x5px">edge-added: source → derived</div>
             </article>
           </div>
         </div>
       </section>
 
-      <section id="scene-5" class="scene">
-        <div class="ghost" id="s5-ghost" data-layout-ignore aria-hidden="true">GATE v1</div>
-        <div class="scene-content">
-          <div class="topline" id="s5-top"><div class="brand"><span class="brand-mark">G</span> Deterministic selective invalidation</div><span class="meta">CLAIM ≠ EVIDENCE ≠ VERDICT</span></div>
-          <div class="gate-grid">
-            <div class="verdict-rail">
-              <div class="verdict valid" id="s5-u1"><span class="unit-id">U1</span><strong>VALID</strong><span>✓</span></div>
-              <div class="verdict blocked" id="s5-u2"><span class="unit-id">U2</span><strong>NEEDS REPLAN</strong><span>!</span></div>
-              <div class="verdict blocked" id="s5-u3"><span class="unit-id">U3</span><strong>DEPENDENCY INVALID</strong><span>!</span></div>
-            </div>
-            <article class="gate-card" id="s5-gate">
-              <p class="eyebrow">EXACT CANONICAL REASONS</p>
-              <h2>Only affected work turns red.</h2>
-              <div class="reason-stack"><div class="reason" id="s5-r1">01 · BLUEPRINT_CHANGED</div><div class="reason" id="s5-r2">02 · POLICY_CHANGED</div><div class="reason" id="s5-r3">U3 · DEPENDENCY_INVALID</div></div>
-              <p class="read-only mono" id="s5-readonly">GateResult · read only · model cannot self-grade</p>
+      <section data-hf-id="hf-8bv1" id="scene-4" class="scene">
+        <div data-hf-id="hf-n7se" class="scene-content">
+          <div data-hf-id="hf-2pu2" id="s4-top" class="topline"><div data-hf-id="hf-lfva" class="brand"><span data-hf-id="hf-ncvl" class="brand-mark">G</span> One selection, synchronized evidence</div><span data-hf-id="hf-cl5a" class="meta">PARENT afb23b8e ↔ COMMIT 6f7b0c77</span></div>
+          <div data-hf-id="hf-sdrj" id="s4-sync" class="sync-row">
+            <div data-hf-id="hf-26gr" class="sync-item"><strong data-hf-id="hf-s4pz">Commit</strong><span data-hf-id="hf-x8qn">6f7b0c77</span></div>
+            <div data-hf-id="hf-z4sb" class="sync-item"><strong data-hf-id="hf-o3sd">Blueprint</strong><span data-hf-id="hf-2ga7">54d64ee1</span></div>
+            <div data-hf-id="hf-yqha" class="sync-item"><strong data-hf-id="hf-01ff">Diagram</strong><span data-hf-id="hf-m834">audit mounted</span></div>
+            <div data-hf-id="hf-yc69" class="sync-item"><strong data-hf-id="hf-gp7a">Graph Δ</strong><span data-hf-id="hf-vcta">2 events</span></div>
+            <div data-hf-id="hf-xxv8" class="sync-item"><strong data-hf-id="hf-pgoz">Code Δ</strong><span data-hf-id="hf-3imn">+3 −0</span></div>
+          </div>
+          <div data-hf-id="hf-yxij" id="s4-screen" class="screen top"><img data-hf-id="hf-s2km" id="s4-image" data-layout-allow-overflow="" src="assets/review-mounted.png" alt="Mounted audit graph with synchronized commit, Blueprint delta, and code diff"></div>
+        </div>
+      </section>
+
+      <section data-hf-id="hf-7k78" id="scene-5" class="scene">
+        <div data-hf-id="hf-m0vb" class="scene-content">
+          <div data-hf-id="hf-4xv3" id="s5-top" class="topline"><div data-hf-id="hf-yyxg" class="brand"><span data-hf-id="hf-mykk" class="brand-mark">G</span> Graph delta explains code delta</div><span data-hf-id="hf-kgel" class="meta">PARENT 6f7b0c77 ↔ COMMIT 56932719</span></div>
+          <div data-hf-id="hf-c98a" class="metadata-layout">
+            <article data-hf-id="hf-zgbr" id="s5-proof" class="proof-card">
+              <p data-hf-id="hf-5jrx" class="eyebrow">UPSTREAM PARENT DELTA</p>
+              <h2 data-hf-id="hf-w62t">One metadata edit changes one graph node.</h2>
+              <div data-hf-id="hf-knd2" id="s5-event" class="big-event">node-changed:<br data-hf-id="hf-rsrt">audit::status</div>
+              <div data-hf-id="hf-zz97" id="s5-code" class="code-line">+ meta: { role:<br data-hf-id="hf-szow">&#160;&#160;"validated-observer" }</div>
+              <p data-hf-id="hf-h8v3" class="lede">Same revision. Same parent edge. No golden structural fixture.</p>
             </article>
+            <div data-hf-id="hf-c5ys" id="s5-screen" class="screen bottom"><img data-hf-id="hf-hy1i" id="s5-image" data-layout-allow-overflow="" src="assets/review-metadata.png" alt="Metadata node change beside the exact one-line split code diff"></div>
           </div>
         </div>
       </section>
 
-      <section id="scene-6" class="scene">
-        <div class="ghost" id="s6-ghost" data-layout-ignore aria-hidden="true">SELECTIVE REPLAN</div>
-        <div class="scene-content">
-          <div class="topline" id="s6-top"><div class="brand"><span class="brand-mark">G</span> Rebind only what expired</div><div class="chip-row"><span class="chip model">gpt-5.6-sol · high</span><span class="chip">codex-sdk</span></div></div>
-          <p class="eyebrow" id="s6-eye">FRESH WITNESSES · SAME DETERMINISTIC GATE</p>
-          <div class="rebind-row">
-            <article class="rebind-card preserved" id="s6-u1"><h3>U1 · preserved</h3><p class="lede">Contracts remain valid and are not regenerated.</p><div class="binding fresh">3d8696c <span>✓ current</span></div></article>
-            <article class="rebind-card" id="s6-u2"><h3>U2 · rebound</h3><div class="binding">session-writes.v1 <span>stale</span></div><div class="binding fresh">session-writes.v2 <span>fresh</span></div><div class="binding fresh">refresh-runtime <span>exit 0</span></div></article>
-            <article class="rebind-card" id="s6-u3"><h3>U3 · recovered</h3><div class="binding">depends U2 <span>blocked</span></div><div class="binding fresh">depends U2 <span>valid</span></div><div class="binding fresh">refresh-api <span>exit 0</span></div></article>
+      <section data-hf-id="hf-g833" id="scene-6" class="scene">
+        <div data-hf-id="hf-tawk" id="s6-ghost" class="ghost" data-layout-ignore="" aria-hidden="true">FAIL CLOSED</div>
+        <div data-hf-id="hf-mf6c" class="scene-content">
+          <div data-hf-id="hf-huds" id="s6-top" class="topline"><div data-hf-id="hf-nq1t" class="brand"><span data-hf-id="hf-mk9j" class="brand-mark">G</span> Narrow, honest trust boundary</div><span data-hf-id="hf-f7uu" class="meta">DETERMINISTIC · LOCAL · BOUNDED</span></div>
+          <p data-hf-id="hf-8krp" id="s6-eye" class="eyebrow">THE V1 COMPATIBILITY CONTRACT</p>
+          <h2 data-hf-id="hf-rmoh" id="s6-title">Unsupported repositories stop. They never become demo data.</h2>
+          <div data-hf-id="hf-qtrc" class="guard-grid">
+            <article data-hf-id="hf-od07" id="s6-g1" class="guard-card"><strong data-hf-id="hf-85fz">Detached &amp; read-only</strong><p data-hf-id="hf-snud">Network, child processes, writes, and inherited environment are denied.</p></article>
+            <article data-hf-id="hf-jr3g" id="s6-g2" class="guard-card"><strong data-hf-id="hf-0kj0">Exact dependency continuity</strong><p data-hf-id="hf-vp21">One 0.3.0 runtime; manifest and lock may not drift inside the range.</p></article>
+            <article data-hf-id="hf-ggs5" id="s6-g3" class="guard-card"><strong data-hf-id="hf-y6i1">Bounded execution</strong><p data-hf-id="hf-vmla">Five seconds, one mebibyte, and at most sixty-four commits.</p></article>
+            <article data-hf-id="hf-z8hu" id="s6-g4" class="guard-card"><strong data-hf-id="hf-olbb">Verified evidence</strong><p data-hf-id="hf-q7s3">Malformed Blueprint, diagnostics error, hash mismatch, or helper failure stops.</p></article>
+            <article data-hf-id="hf-36lv" id="s6-g5" class="guard-card"><strong data-hf-id="hf-l007">User-first disclosure</strong><p data-hf-id="hf-twyy">Provenance and lineage stay collapsed until requested.</p></article>
+            <article data-hf-id="hf-wd3c" id="s6-g6" class="guard-card"><strong data-hf-id="hf-8flz">No fake semantics</strong><p data-hf-id="hf-t5r7">Absent policy records do not create WorkUnits or a passing GateResult.</p></article>
           </div>
-          <div class="pass-stamp" id="s6-pass">FINAL GATE · PASS</div>
+          <div data-hf-id="hf-qx86" id="s6-neutral" class="neutral"><span data-hf-id="hf-zpnv">Semantic gate not configured</span><span data-hf-id="hf-g0fl" class="mono">evidence only</span></div>
         </div>
       </section>
 
-      <section id="scene-7" class="scene">
-        <div class="ghost" id="s7-ghost" data-layout-ignore aria-hidden="true">24 HASHED ARTIFACTS</div>
-        <div class="scene-content">
-          <div class="topline" id="s7-top"><div class="brand"><span class="brand-mark">G</span> GraphReFly Stack</div><span class="meta">NO CREDENTIALS · PORTABLE EVIDENCE</span></div>
-          <p class="eyebrow" id="s7-eye">REVIEW COMPRESSION, NOT BLIND TRUST</p>
-          <div class="trust-flow">
-            <div class="trust-card" id="s7-claim">Editable claim</div><span class="trust-arrow" id="s7-a1">→</span><div class="trust-card" id="s7-evidence">Validated evidence</div><span class="trust-arrow" id="s7-a2">→</span><div class="trust-card" id="s7-verdict">Deterministic verdict</div>
+      <section data-hf-id="hf-c9z2" id="scene-7" class="scene">
+        <div data-hf-id="hf-l899" class="scene-content">
+          <div data-hf-id="hf-8q79" id="s7-top" class="topline"><div data-hf-id="hf-t5oj" class="brand"><span data-hf-id="hf-m5yi" class="brand-mark">G</span> Real now. Larger by design.</div><span data-hf-id="hf-ah78" class="meta">CODEX · GPT-5.6 · GRAPHREFLY</span></div>
+          <p data-hf-id="hf-dqu0" id="s7-eye" class="eyebrow">CLEAR ROLES, EXPLICIT ROADMAP</p>
+          <h2 data-hf-id="hf-y9m4" id="s7-title">The product does not confuse planning with evidence.</h2>
+          <div data-hf-id="hf-npyf" class="role-row">
+            <article data-hf-id="hf-1rhe" id="s7-r1" class="role-card"><h3 data-hf-id="hf-zmh7">Codex</h3><p data-hf-id="hf-os7c">Design, implementation, tests, adversarial review, and delivery workflow.</p></article>
+            <article data-hf-id="hf-xtdd" id="s7-r2" class="role-card"><h3 data-hf-id="hf-65dr">GPT-5.6</h3><p data-hf-id="hf-r6zu">Optional structured planning and selective-replan proposals under locked anchors.</p></article>
+            <article data-hf-id="hf-8ryi" id="s7-r3" class="role-card deterministic"><h3 data-hf-id="hf-kyyt">Deterministic core</h3><p data-hf-id="hf-xkbc">Git identity, GraphReFly Blueprint evidence, structural delta, and exact code diff.</p></article>
           </div>
-          <div class="bundle-line" id="s7-bundle"><span class="bundle-count">24</span><h2>canonical, redacted artifacts</h2></div>
-          <p class="tagline" id="s7-tagline">Semantic stacked diffs that know when their architectural assumptions expire.</p>
-          <div class="rule" id="s7-rule"></div>
+          <div data-hf-id="hf-uzbj" id="s7-roadmap" class="roadmap">
+            <span data-hf-id="hf-0gyb" class="chip now">NOW · LINEAR REVIEW</span>
+            <span data-hf-id="hf-7gec" class="chip next">NEXT · IN-PRODUCT PLANNING</span>
+            <span data-hf-id="hf-t43y" class="chip">DAG STACKS</span><span data-hf-id="hf-uc3k" class="chip">HOSTED SAAS</span><span data-hf-id="hf-pw4f" class="chip">MUTUAL EXCLUSION</span><span data-hf-id="hf-e73j" class="chip">CONFLICT AVOIDANCE</span><span data-hf-id="hf-5p04" class="chip">EDIT SCOPES</span><span data-hf-id="hf-9tvc" class="chip">SAFE REVERT</span>
+          </div>
+          <p data-hf-id="hf-vhq6" id="s7-close" class="lede">GraphReFly Stack: see the stack, the graph change, and the code change as one reviewable fact.</p>
         </div>
       </section>
 
-      <div id="transition-block"></div>
-      <div id="caption-rail" aria-label="English captions"></div>
-      <audio id="narration" class="clip" data-start="0" data-duration="158.912" data-track-index="20" src="assets/narration.wav"></audio>
+      <div data-hf-id="hf-of3y" id="caption-rail" aria-label="English captions"></div>
+      <audio data-hf-id="hf-mmzs" id="narration" class="clip" data-start="0" data-duration="137.728" data-track-index="20" src="assets/narration.wav"></audio>
     </div>
 
     <script>
@@ -731,92 +658,77 @@
         tl.fromTo(selector, from, { ...to, immediateRender: false }, at);
       }
 
-      function blurTransition(oldScene, newScene, at, duration) {
-        tl.to(oldScene, { filter: "blur(10px)", scale: 1.03, opacity: 0, duration, ease: "power2.inOut" }, at);
-        tl.fromTo(newScene, { filter: "blur(10px)", scale: 0.97, opacity: 0 }, { filter: "blur(0px)", scale: 1, opacity: 1, duration, ease: "power2.inOut", immediateRender: false }, at + 0.1);
-        tl.set(oldScene, { visibility: "hidden" }, at + duration + 0.12);
+      function transition(oldScene, newScene, at) {
+        tl.to(oldScene, { filter: "blur(12px)", scale: 1.025, opacity: 0, duration: 0.5, ease: "power2.in" }, at);
+        tl.fromTo(newScene, { filter: "blur(12px)", scale: 0.975, opacity: 0 }, { filter: "blur(0px)", scale: 1, opacity: 1, duration: 0.58, ease: "power3.out", immediateRender: false }, at + 0.08);
+        tl.set(oldScene, { visibility: "hidden" }, at + 0.62);
       }
 
-      enter("#s1-top", { y: -36, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7, ease: "expo.out" }, 0.2);
-      enter("#s1-eye", { x: -80, opacity: 0 }, { x: 0, opacity: 1, duration: 0.52, ease: "power3.out" }, 0.42);
-      enter("#s1-title", { x: -120, opacity: 0 }, { x: 0, opacity: 1, duration: 0.9, ease: "quart.out" }, 0.56);
-      enter("#s1-lede", { y: 46, opacity: 0 }, { y: 0, opacity: 1, duration: 0.62, ease: "back.out(1.2)" }, 0.82);
-      enter("#s1-valid", { x: -90, opacity: 0 }, { x: 0, opacity: 1, duration: 0.48, ease: "power4.out" }, 1.06);
-      enter("#s1-blocked", { x: 90, opacity: 0 }, { x: 0, opacity: 1, duration: 0.58, ease: "circ.out" }, 1.18);
-      enter("#s1-rule", { scaleX: 0 }, { scaleX: 1, duration: 0.82, ease: "expo.out" }, 1.38);
-      enter("#s1-ghost", { opacity: 0 }, { opacity: 1, duration: 1.1, ease: "sine.out" }, 0.35);
-      tl.to("#s1-ghost", { x: 32, duration: 4, repeat: 3, yoyo: true, ease: "sine.inOut" }, 1.5);
-      enter("#caption-rail", { y: 120, opacity: 0 }, { y: 0, opacity: 1, duration: 0.65, ease: "power3.out" }, 0.3);
+      enter("#s1-top", { y: -34, opacity: 0 }, { y: 0, opacity: 1, duration: 0.62, ease: "expo.out" }, 0.2);
+      enter("#s1-eye", { x: -76, opacity: 0 }, { x: 0, opacity: 1, duration: 0.45, ease: "power4.out" }, 0.42);
+      enter("#s1-title", { x: -120, opacity: 0 }, { x: 0, opacity: 1, duration: 0.82, ease: "quart.out" }, 0.58);
+      enter("#s1-lede", { y: 42, opacity: 0 }, { y: 0, opacity: 1, duration: 0.58, ease: "back.out(1.2)" }, 0.82);
+      enter("#s1-q1", { x: -90, opacity: 0 }, { x: 0, opacity: 1, duration: 0.48, ease: "circ.out" }, 1.08);
+      enter("#s1-q2", { y: 76, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, ease: "back.out(1.15)" }, 1.22);
+      enter("#s1-q3", { x: 90, opacity: 0 }, { x: 0, opacity: 1, duration: 0.52, ease: "power3.out" }, 1.36);
+      enter("#s1-ghost", { opacity: 0 }, { opacity: 1, duration: 1.0, ease: "sine.out" }, 0.4);
+      tl.to("#s1-ghost", { x: 28, duration: 4.2, repeat: 3, yoyo: true, ease: "sine.inOut" }, 1.6);
+      enter("#caption-rail", { y: 120, opacity: 0 }, { y: 0, opacity: 1, duration: 0.62, ease: "power3.out" }, 0.3);
 
-      blurTransition("#scene-1", "#scene-2", 17.5, 0.5);
-      enter("#s2-top", { y: -34, opacity: 0 }, { y: 0, opacity: 1, duration: 0.64, ease: "expo.out" }, 18.18);
-      enter("#s2-eye", { x: -70, opacity: 0 }, { x: 0, opacity: 1, duration: 0.42, ease: "power4.out" }, 18.36);
-      enter("#s2-u1", { x: -100, opacity: 0 }, { x: 0, opacity: 1, duration: 0.55, ease: "circ.out" }, 18.52);
-      enter("#s2-u2", { y: 90, opacity: 0 }, { y: 0, opacity: 1, duration: 0.68, ease: "back.out(1.2)" }, 18.68);
-      enter("#s2-u3", { x: 100, opacity: 0 }, { x: 0, opacity: 1, duration: 0.48, ease: "power3.out" }, 18.84);
-      enter("#s2-deps", { scaleX: 0 }, { scaleX: 1, duration: 0.9, ease: "expo.out" }, 19.12);
-      enter("#s2-ghost", { opacity: 0 }, { opacity: 1, duration: 1.2, ease: "sine.out" }, 18.28);
-      tl.to("#s2-ghost", { y: 20, duration: 4.6, repeat: 4, yoyo: true, ease: "sine.inOut" }, 19.3);
+      transition("#scene-1", "#scene-2", 9.8);
+      enter("#s2-top", { y: -34, opacity: 0 }, { y: 0, opacity: 1, duration: 0.58, ease: "expo.out" }, 10.48);
+      enter("#s2-command", { scaleX: 0.82, opacity: 0 }, { scaleX: 1, opacity: 1, duration: 0.58, ease: "power4.out" }, 10.64);
+      enter("#s2-screen", { x: -84, y: 30, opacity: 0 }, { x: 0, y: 0, opacity: 1, duration: 0.76, ease: "circ.out" }, 10.8);
+      ["#s2-c1", "#s2-c2", "#s2-c3", "#s2-c4"].forEach(function (selector, index) {
+        enter(selector, { x: 90 + index * 18, opacity: 0 }, { x: 0, opacity: 1, duration: 0.44 + index * 0.06, ease: index % 2 ? "back.out(1.1)" : "power3.out" }, 11.0 + index * 0.13);
+      });
+      tl.to("#s2-image", { scale: 1.035, duration: 19.5, ease: "none" }, 11.2);
 
-      blurTransition("#scene-2", "#scene-3", 41.5, 0.5);
-      enter("#s3-top", { y: -32, opacity: 0 }, { y: 0, opacity: 1, duration: 0.58, ease: "expo.out" }, 42.16);
-      enter("#s3-device", { x: -80, y: 34, opacity: 0, scale: 0.96 }, { x: 0, y: 0, opacity: 1, scale: 1, duration: 0.82, ease: "power4.out" }, 42.3);
-      enter("#s3-c1", { x: 72, opacity: 0 }, { x: 0, opacity: 1, duration: 0.42, ease: "circ.out" }, 42.55);
-      enter("#s3-c2", { x: 96, opacity: 0 }, { x: 0, opacity: 1, duration: 0.5, ease: "power3.out" }, 42.68);
-      enter("#s3-c3", { x: 120, opacity: 0 }, { x: 0, opacity: 1, duration: 0.58, ease: "back.out(1.1)" }, 42.81);
-      enter("#s3-c4", { x: 144, opacity: 0 }, { x: 0, opacity: 1, duration: 0.46, ease: "expo.out" }, 42.94);
-      tl.to("#s3-image", { scale: 1.025, duration: 10.5, ease: "sine.inOut" }, 43.1);
+      transition("#scene-2", "#scene-3", 31.2);
+      enter("#s3-top", { y: -34, opacity: 0 }, { y: 0, opacity: 1, duration: 0.58, ease: "expo.out" }, 31.88);
+      enter("#s3-screen", { x: -86, opacity: 0 }, { x: 0, opacity: 1, duration: 0.74, ease: "power4.out" }, 32.04);
+      enter("#s3-note", { x: 96, opacity: 0 }, { x: 0, opacity: 1, duration: 0.66, ease: "circ.out" }, 32.18);
+      ["#s3-f1", "#s3-f2", "#s3-f3", "#s3-f4", "#s3-f5"].forEach(function (selector, index) {
+        enter(selector, { x: 54 + index * 8, opacity: 0 }, { x: 0, opacity: 1, duration: 0.38, ease: "power3.out" }, 32.48 + index * 0.12);
+      });
+      enter("#s3-event", { y: 44, scale: 0.94, opacity: 0 }, { y: 0, scale: 1, opacity: 1, duration: 0.52, ease: "back.out(1.3)" }, 33.15);
+      tl.to("#s3-image", { scale: 1.032, duration: 13.9, ease: "none" }, 32.3);
 
-      blurTransition("#scene-3", "#scene-4", 64.5, 0.5);
-      enter("#s4-top", { y: -34, opacity: 0 }, { y: 0, opacity: 1, duration: 0.61, ease: "expo.out" }, 65.16);
-      enter("#s4-device", { x: -86, opacity: 0 }, { x: 0, opacity: 1, duration: 0.76, ease: "power4.out" }, 65.32);
-      enter("#s4-delta", { x: 92, opacity: 0 }, { x: 0, opacity: 1, duration: 0.68, ease: "circ.out" }, 65.48);
-      enter("#s4-broker", { y: -48, scale: 0.93, opacity: 0 }, { y: 0, scale: 1, opacity: 1, duration: 0.72, ease: "back.out(1.35)" }, 65.74);
-      enter("#s4-r1", { x: 68, opacity: 0 }, { x: 0, opacity: 1, duration: 0.38, ease: "power3.out" }, 66.08);
-      enter("#s4-r2", { x: 92, opacity: 0 }, { x: 0, opacity: 1, duration: 0.46, ease: "expo.out" }, 66.24);
-      enter("#s4-ghost", { opacity: 0 }, { opacity: 1, duration: 1.1, ease: "sine.out" }, 65.2);
-      tl.to("#s4-image", { scale: 1.022, duration: 12, ease: "none" }, 66.4);
+      transition("#scene-3", "#scene-4", 46.65);
+      enter("#s4-top", { y: -34, opacity: 0 }, { y: 0, opacity: 1, duration: 0.58, ease: "expo.out" }, 47.33);
+      enter("#s4-sync", { y: 48, opacity: 0 }, { y: 0, opacity: 1, duration: 0.62, ease: "back.out(1.1)" }, 47.49);
+      enter("#s4-screen", { y: 76, scale: 0.96, opacity: 0 }, { y: 0, scale: 1, opacity: 1, duration: 0.78, ease: "power4.out" }, 47.69);
+      tl.to("#s4-image", { scale: 1.045, yPercent: -2, duration: 15.4, ease: "none" }, 48.2);
 
-      tl.to("#scene-4", { opacity: 0, duration: 0.2, ease: "power2.in" }, 91.78);
-      tl.fromTo("#transition-block", { opacity: 0 }, { opacity: 1, duration: 0.16, ease: "power4.in", immediateRender: false }, 91.72);
-      tl.to("#transition-block", { opacity: 0, duration: 0.22, ease: "power4.out" }, 91.98);
-      tl.fromTo("#scene-5", { opacity: 0 }, { opacity: 1, duration: 0.22, ease: "power3.out", immediateRender: false }, 91.98);
-      tl.set("#scene-4", { visibility: "hidden" }, 92.12);
-      enter("#s5-top", { y: -38, opacity: 0 }, { y: 0, opacity: 1, duration: 0.58, ease: "expo.out" }, 92.24);
-      enter("#s5-u1", { x: -110, opacity: 0 }, { x: 0, opacity: 1, duration: 0.45, ease: "circ.out" }, 92.42);
-      enter("#s5-u2", { x: -140, opacity: 0 }, { x: 0, opacity: 1, duration: 0.53, ease: "power4.out" }, 92.58);
-      enter("#s5-u3", { x: -170, opacity: 0 }, { x: 0, opacity: 1, duration: 0.61, ease: "back.out(1.15)" }, 92.74);
-      enter("#s5-gate", { x: 105, opacity: 0 }, { x: 0, opacity: 1, duration: 0.74, ease: "expo.out" }, 92.5);
-      enter("#s5-r1", { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.38, ease: "power3.out" }, 93.02);
-      enter("#s5-r2", { y: 38, opacity: 0 }, { y: 0, opacity: 1, duration: 0.46, ease: "circ.out" }, 93.18);
-      enter("#s5-r3", { y: 46, opacity: 0 }, { y: 0, opacity: 1, duration: 0.54, ease: "back.out(1.1)" }, 93.34);
-      enter("#s5-readonly", { scaleX: 0, opacity: 0 }, { scaleX: 1, opacity: 1, duration: 0.7, ease: "expo.out" }, 93.58);
-      enter("#s5-ghost", { opacity: 0 }, { opacity: 1, duration: 1.0, ease: "sine.out" }, 92.3);
-      tl.to("#s5-ghost", { x: -24, duration: 4.2, repeat: 5, yoyo: true, ease: "sine.inOut" }, 93.8);
+      transition("#scene-4", "#scene-5", 64.05);
+      enter("#s5-top", { y: -34, opacity: 0 }, { y: 0, opacity: 1, duration: 0.58, ease: "expo.out" }, 64.73);
+      enter("#s5-proof", { x: -86, opacity: 0 }, { x: 0, opacity: 1, duration: 0.66, ease: "circ.out" }, 64.89);
+      enter("#s5-event", { x: -54, scale: 0.93, opacity: 0 }, { x: 0, scale: 1, opacity: 1, duration: 0.54, ease: "back.out(1.25)" }, 65.19);
+      enter("#s5-code", { y: 46, opacity: 0 }, { y: 0, opacity: 1, duration: 0.52, ease: "power3.out" }, 65.37);
+      enter("#s5-screen", { x: 94, opacity: 0 }, { x: 0, opacity: 1, duration: 0.74, ease: "power4.out" }, 65.01);
+      tl.to("#s5-image", { scale: 1.035, duration: 14.9, ease: "none" }, 65.8);
 
-      blurTransition("#scene-5", "#scene-6", 117.5, 0.5);
-      enter("#s6-top", { y: -36, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, ease: "expo.out" }, 118.18);
-      enter("#s6-eye", { x: -82, opacity: 0 }, { x: 0, opacity: 1, duration: 0.43, ease: "power4.out" }, 118.34);
-      enter("#s6-u1", { x: -90, opacity: 0 }, { x: 0, opacity: 1, duration: 0.52, ease: "circ.out" }, 118.52);
-      enter("#s6-u2", { y: 86, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7, ease: "back.out(1.2)" }, 118.68);
-      enter("#s6-u3", { x: 100, opacity: 0 }, { x: 0, opacity: 1, duration: 0.61, ease: "power3.out" }, 118.84);
-      enter("#s6-pass", { scale: 1.35, rotation: 4, opacity: 0 }, { scale: 1, rotation: -2, opacity: 1, duration: 0.54, ease: "back.out(1.6)" }, 119.5);
-      enter("#s6-ghost", { opacity: 0 }, { opacity: 1, duration: 1.0, ease: "sine.out" }, 118.3);
-      tl.to("#s6-ghost", { y: -20, duration: 4.8, repeat: 4, yoyo: true, ease: "sine.inOut" }, 119.8);
+      transition("#scene-5", "#scene-6", 80.8);
+      enter("#s6-top", { y: -34, opacity: 0 }, { y: 0, opacity: 1, duration: 0.58, ease: "expo.out" }, 81.48);
+      enter("#s6-eye", { x: -72, opacity: 0 }, { x: 0, opacity: 1, duration: 0.42, ease: "power4.out" }, 81.64);
+      enter("#s6-title", { x: -110, opacity: 0 }, { x: 0, opacity: 1, duration: 0.72, ease: "circ.out" }, 81.78);
+      ["#s6-g1", "#s6-g2", "#s6-g3", "#s6-g4", "#s6-g5", "#s6-g6"].forEach(function (selector, index) {
+        enter(selector, { y: 54 + index * 5, opacity: 0 }, { y: 0, opacity: 1, duration: 0.44 + (index % 3) * 0.06, ease: index % 2 ? "back.out(1.08)" : "power3.out" }, 82.08 + index * 0.1);
+      });
+      enter("#s6-neutral", { scaleX: 0.82, opacity: 0 }, { scaleX: 1, opacity: 1, duration: 0.58, ease: "expo.out" }, 82.78);
+      enter("#s6-ghost", { opacity: 0 }, { opacity: 1, duration: 1.0, ease: "sine.out" }, 81.7);
+      tl.to("#s6-ghost", { x: -24, duration: 5, repeat: 4, yoyo: true, ease: "sine.inOut" }, 83.1);
 
-      blurTransition("#scene-6", "#scene-7", 144.4, 0.6);
-      enter("#s7-top", { y: -34, opacity: 0 }, { y: 0, opacity: 1, duration: 0.62, ease: "expo.out" }, 145.18);
-      enter("#s7-eye", { x: -74, opacity: 0 }, { x: 0, opacity: 1, duration: 0.44, ease: "power4.out" }, 145.34);
-      enter("#s7-claim", { x: -92, opacity: 0 }, { x: 0, opacity: 1, duration: 0.52, ease: "circ.out" }, 145.5);
-      enter("#s7-a1", { scale: 0.5, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.36, ease: "back.out(1.5)" }, 145.72);
-      enter("#s7-evidence", { y: 68, opacity: 0 }, { y: 0, opacity: 1, duration: 0.64, ease: "power3.out" }, 145.84);
-      enter("#s7-a2", { scale: 0.5, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.42, ease: "expo.out" }, 146.04);
-      enter("#s7-verdict", { x: 92, opacity: 0 }, { x: 0, opacity: 1, duration: 0.58, ease: "circ.out" }, 146.16);
-      enter("#s7-bundle", { y: 54, opacity: 0 }, { y: 0, opacity: 1, duration: 0.62, ease: "back.out(1.15)" }, 146.5);
-      enter("#s7-tagline", { filter: "blur(12px)", opacity: 0 }, { filter: "blur(0px)", opacity: 1, duration: 0.86, ease: "power2.out" }, 146.8);
-      enter("#s7-rule", { scaleX: 0 }, { scaleX: 1, duration: 0.8, ease: "expo.out" }, 147.2);
-      enter("#s7-ghost", { opacity: 0 }, { opacity: 1, duration: 1.1, ease: "sine.out" }, 145.24);
-      tl.to("#s7-ghost", { x: 22, duration: 4.2, repeat: 3, yoyo: true, ease: "sine.inOut" }, 147.4);
+      transition("#scene-6", "#scene-7", 110.3);
+      enter("#s7-top", { y: -34, opacity: 0 }, { y: 0, opacity: 1, duration: 0.58, ease: "expo.out" }, 110.98);
+      enter("#s7-eye", { x: -72, opacity: 0 }, { x: 0, opacity: 1, duration: 0.42, ease: "power4.out" }, 111.14);
+      enter("#s7-title", { x: -110, opacity: 0 }, { x: 0, opacity: 1, duration: 0.7, ease: "circ.out" }, 111.28);
+      enter("#s7-r1", { x: -86, opacity: 0 }, { x: 0, opacity: 1, duration: 0.5, ease: "power3.out" }, 111.58);
+      enter("#s7-r2", { y: 72, opacity: 0 }, { y: 0, opacity: 1, duration: 0.62, ease: "back.out(1.15)" }, 111.72);
+      enter("#s7-r3", { x: 86, opacity: 0 }, { x: 0, opacity: 1, duration: 0.56, ease: "circ.out" }, 111.86);
+      enter("#s7-roadmap", { y: 44, opacity: 0 }, { y: 0, opacity: 1, duration: 0.58, ease: "power4.out" }, 112.22);
+      enter("#s7-close", { filter: "blur(10px)", opacity: 0 }, { filter: "blur(0px)", opacity: 1, duration: 0.74, ease: "power2.out" }, 112.5);
+      tl.to("#s7-roadmap", { x: 16, duration: 6, repeat: 3, yoyo: true, ease: "sine.inOut" }, 112.8);
 
       var words = (window.__GRAPHREFLY_TRANSCRIPT__ || []).filter(function (word) {
         return word.text && word.text.trim().length > 0 && !/^[♪�]+$/.test(word.text);
@@ -846,10 +758,9 @@
         tl.set(el, { opacity: 0, visibility: "hidden" }, group.end);
       });
 
-      tl.to(["#scene-7", "#caption-rail"], { opacity: 0, duration: 0.8, ease: "power1.in" }, 164.0);
-      tl.set(["#scene-7", "#caption-rail"], { opacity: 0, visibility: "hidden" }, 164.82);
-
-      window.__timelines["main"] = tl;
+      tl.to(["#scene-7", "#caption-rail"], { opacity: 0, duration: 0.8, ease: "power1.in" }, 141.0);
+      tl.set(["#scene-7", "#caption-rail"], { opacity: 0, visibility: "hidden" }, 141.84);
+      window.__timelines.main = tl;
     </script>
   </body>
 </html>

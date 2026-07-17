@@ -54,7 +54,7 @@ export async function startReviewServer(
 		response.setHeader("Cache-Control", "no-store");
 		response.setHeader(
 			"Content-Security-Policy",
-			"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'",
+			"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'",
 		);
 		response.setHeader("X-Content-Type-Options", "nosniff");
 

@@ -16,11 +16,19 @@ coverage/
 
 # Private Build Week material and unredacted model output
 .private/
-evidence/runs/**/raw/
+
+# Evidence runs commit only reviewed portable bundles and compact summaries.
+# Expanded artifact trees are reproducible runtime output.
+evidence/runs/**/*
+!evidence/runs/**/
+!evidence/runs/**/README.md
+!evidence/runs/**/evidence-bundle.json
+!evidence/runs/**/summary.json
 
 # Large demo captures belong on the submission host, not in Git
 evidence/media/*.mp4
 evidence/media/*.mov
+evidence/demo/.waveform-cache/
 
 # Editors and operating systems
 .DS_Store

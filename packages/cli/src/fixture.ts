@@ -57,6 +57,14 @@ export interface RuntimeSuite {
 	ordinaryChecks: FixtureCheckResult[];
 	snapshots: Record<string, unknown>[];
 	deltas: Record<string, unknown>[];
+	reviewBlueprints: {
+		workUnitId: "BASE" | "U1" | "U2" | "U3";
+		oid: string;
+		parentOid: string | null;
+		snapshot: Record<string, unknown>;
+		delta: Record<string, unknown> | null;
+		diagram: DerivedFixtureBlueprint["diagram"];
+	}[];
 	cases: RuntimeCase[];
 	selectiveReplan: Record<string, unknown>;
 }
@@ -130,27 +138,59 @@ function withSnapshotBinding(
 	derived: DerivedFixtureBlueprint,
 ): Record<string, unknown> {
 	const snapshot = clone(template);
-	const blueprint = snapshot.blueprint as Record<string, unknown>;
-	blueprint.topology = derived.topology;
-	blueprint.provenance = derived.provenance;
-	const topologyHash = graphreflyTopologyHash(derived.topology);
+	const blueprint = clone(derived.blueprint) as unknown as Record<string, unknown>;
+	const topologyHash = graphreflyTopologyHash(derived.blueprint.topology);
+	if ((blueprint.hash as Record<string, unknown>).value !== topologyHash) {
+		throw new Error("GraphReFly runtime Blueprint hash does not match its topology");
+	}
+	snapshot.blueprint = blueprint;
 	(snapshot.commit as Record<string, unknown>).value = commit;
 	(snapshot.semanticParent as Record<string, unknown>).value = semanticParent;
 	(snapshot.topologyHash as Record<string, unknown>).value = topologyHash;
-	((blueprint.hash as Record<string, unknown>).value as string) = topologyHash;
 	snapshot.policyRevision = derived.policyRevision;
 	return snapshot;
 }
 
-function withDeltaHashes(
-	template: Record<string, unknown>,
-	from: string,
-	to: string,
+function snapshotTopology(snapshot: Record<string, unknown>) {
+	return (snapshot.blueprint as Record<string, unknown>).topology as {
+		nodes: Record<string, unknown>[];
+		edges: { from: string; to: string }[];
+	};
+}
+
+function deriveBlueprintDelta(
+	fromSnapshot: Record<string, unknown>,
+	toSnapshot: Record<string, unknown>,
+	claimImpacts: { workUnitId: string; claimId: string; impact: "none" | "affected" }[],
 ): Record<string, unknown> {
-	const delta = clone(template);
-	(delta.from as Record<string, unknown>).value = from;
-	(delta.to as Record<string, unknown>).value = to;
-	return delta;
+	const from = snapshotTopology(fromSnapshot);
+	const to = snapshotTopology(toSnapshot);
+	const fromNodes = new Map(from.nodes.map((node) => [node.id as string, node]));
+	const toNodes = new Map(to.nodes.map((node) => [node.id as string, node]));
+	const changedNodeIds = new Set(
+		[...fromNodes.keys()].filter(
+			(id) => toNodes.has(id) && sha256Jcs(fromNodes.get(id)) !== sha256Jcs(toNodes.get(id)),
+		),
+	);
+	const edgeKey = (edge: { from: string; to: string }) => `${edge.from}\u0000${edge.to}`;
+	const fromEdges = new Set(from.edges.map(edgeKey));
+	const toEdges = new Set(to.edges.map(edgeKey));
+	return {
+		schema: "urn:graphrefly-stack:schema:blueprint-delta:v1",
+		from: hash(topologyHash(fromSnapshot)),
+		to: hash(topologyHash(toSnapshot)),
+		structural: {
+			addedNodes: [...toNodes.entries()]
+				.filter(([id]) => !fromNodes.has(id) || changedNodeIds.has(id))
+				.map(([, node]) => node),
+			removedNodeIds: [...fromNodes.keys()].filter(
+				(id) => !toNodes.has(id) || changedNodeIds.has(id),
+			),
+			addedEdges: to.edges.filter((edge) => !fromEdges.has(edgeKey(edge))),
+			removedEdges: from.edges.filter((edge) => !toEdges.has(edgeKey(edge))),
+		},
+		claimImpacts,
+	};
 }
 
 function topologyHash(snapshot: Record<string, unknown>): string {
@@ -346,46 +386,78 @@ export async function createFlagshipFixture(output: string, force = false): Prom
 	runGit(repository, ["switch", "recovery"]);
 	runGit(repository, ["diff", "--check"]);
 
-	const derived: DerivedFixtureBlueprint[] = [];
-	for (const revision of ["S3", "R3", "T1", "RP3"]) {
-		derived.push(await deriveFixtureBlueprint(repository, revision));
+	const derived = new Map<string, DerivedFixtureBlueprint>();
+	for (const revision of ["S3", "R3", "T1", "RP3", "A1", "R1", "R2"]) {
+		derived.set(revision, await deriveFixtureBlueprint(repository, revision));
 	}
+	const requiredDerived = (revision: string) => {
+		const value = derived.get(revision);
+		if (value === undefined) throw new Error(`Missing GraphReFly Blueprint for ${revision}`);
+		return value;
+	};
+	const snapshotFor = (revision: string, parent: string, templateIndex = 0) =>
+		withSnapshotBinding(
+			suite.snapshots[templateIndex] ?? suite.snapshots[0] ?? {},
+			refs[revision] ?? "",
+			refs[parent] ?? "",
+			requiredDerived(revision),
+		);
 	const snapshots = [
-		withSnapshotBinding(
-			suite.snapshots[0] ?? {},
-			refs.S3 ?? "",
-			refs.S2 ?? "",
-			derived[0] as DerivedFixtureBlueprint,
-		),
-		withSnapshotBinding(
-			suite.snapshots[1] ?? {},
-			refs.R3 ?? "",
-			refs.R2 ?? "",
-			derived[1] as DerivedFixtureBlueprint,
-		),
-		withSnapshotBinding(
-			suite.snapshots[2] ?? {},
-			refs.T1 ?? "",
-			refs.S3 ?? "",
-			derived[2] as DerivedFixtureBlueprint,
-		),
-		withSnapshotBinding(
-			suite.snapshots[3] ?? {},
-			refs.RP3 ?? "",
-			refs.RP2 ?? "",
-			derived[3] as DerivedFixtureBlueprint,
-		),
+		snapshotFor("S3", "S2", 0),
+		snapshotFor("R3", "R2", 1),
+		snapshotFor("T1", "S3", 2),
+		snapshotFor("RP3", "RP2", 3),
 	];
+	const reviewSnapshots = {
+		A1: snapshotFor("A1", "B0"),
+		R1: snapshotFor("R1", "A1"),
+		R2: snapshotFor("R2", "R1"),
+		R3: snapshots[1] as Record<string, unknown>,
+	};
 	const checkIds = ["contracts", "refresh-runtime", "refresh-api"];
 	const ordinaryChecks = await runFixtureChecks(repository, "R3", checkIds);
 	const finalChecks = await runFixtureChecks(repository, "RP3", checkIds);
 	suite.checks = finalChecks;
 	const hashes = snapshots.map(topologyHash);
+	const impacts = (index: number) =>
+		(suite.deltas[index]?.claimImpacts as {
+			workUnitId: string;
+			claimId: string;
+			impact: "none" | "affected";
+		}[]) ?? [];
 	const deltas = [
-		withDeltaHashes(suite.deltas[0] ?? {}, hashes[0] ?? "", hashes[0] ?? ""),
-		withDeltaHashes(suite.deltas[1] ?? {}, hashes[0] ?? "", hashes[1] ?? ""),
-		withDeltaHashes(suite.deltas[2] ?? {}, hashes[0] ?? "", hashes[2] ?? ""),
-		withDeltaHashes(suite.deltas[3] ?? {}, hashes[1] ?? "", hashes[3] ?? ""),
+		deriveBlueprintDelta(snapshots[0] ?? {}, snapshots[0] ?? {}, impacts(0)),
+		deriveBlueprintDelta(snapshots[0] ?? {}, snapshots[1] ?? {}, impacts(1)),
+		deriveBlueprintDelta(snapshots[0] ?? {}, snapshots[2] ?? {}, impacts(2)),
+		deriveBlueprintDelta(snapshots[1] ?? {}, snapshots[3] ?? {}, impacts(3)),
+	];
+	const reviewBlueprints: RuntimeSuite["reviewBlueprints"] = [
+		{
+			workUnitId: "BASE",
+			oid: refs.A1 ?? "",
+			parentOid: refs.B0 ?? null,
+			snapshot: reviewSnapshots.A1,
+			delta: null,
+			diagram: requiredDerived("A1").diagram,
+		},
+		...(
+			[
+				["U1", "R1", "A1", "contracts", "none"],
+				["U2", "R2", "R1", "session-write-path", "affected"],
+				["U3", "R3", "R2", "refresh-runtime", "none"],
+			] as const
+		).map(([workUnitId, revision, parent, claimId, impact]) => ({
+			workUnitId,
+			oid: refs[revision] ?? "",
+			parentOid: refs[parent] ?? null,
+			snapshot: reviewSnapshots[revision as "R1" | "R2" | "R3"],
+			delta: deriveBlueprintDelta(
+				reviewSnapshots[parent as "A1" | "R1" | "R2"],
+				reviewSnapshots[revision as "R1" | "R2" | "R3"],
+				[{ workUnitId, claimId, impact }],
+			),
+			diagram: requiredDerived(revision).diagram,
+		})),
 	];
 
 	const current = await recordsAndFacts(
@@ -479,6 +551,7 @@ export async function createFlagshipFixture(output: string, force = false): Prom
 		ordinaryChecks,
 		snapshots,
 		deltas,
+		reviewBlueprints,
 		cases,
 		selectiveReplan: {
 			schema: "urn:graphrefly-stack:schema:selective-replan:v1",
@@ -535,7 +608,8 @@ export async function readRuntimeSuite(path: string): Promise<RuntimeSuite> {
 		!Array.isArray(runtime.checks) ||
 		!Array.isArray(runtime.ordinaryChecks) ||
 		!Array.isArray(runtime.snapshots) ||
-		!Array.isArray(runtime.deltas)
+		!Array.isArray(runtime.deltas) ||
+		!Array.isArray(runtime.reviewBlueprints)
 	) {
 		throw new Error("Runtime suite has an invalid envelope");
 	}
@@ -557,6 +631,19 @@ export async function readRuntimeSuite(path: string): Promise<RuntimeSuite> {
 	for (const check of runtime.ordinaryChecks) validate("CheckResult", check);
 	for (const snapshot of runtime.snapshots) validate("BlueprintSnapshot", snapshot);
 	for (const delta of runtime.deltas) validate("BlueprintDelta", delta);
+	for (const review of runtime.reviewBlueprints) {
+		validate("BlueprintSnapshot", review.snapshot);
+		if (review.delta !== null) validate("BlueprintDelta", review.delta);
+		if (
+			review.diagram.format !== "mermaid" ||
+			review.diagram.renderer !== "@graphrefly/ts/render.describeToMermaid" ||
+			!review.diagram.source.startsWith("flowchart ")
+		) {
+			throw new Error(
+				`Review Blueprint ${review.workUnitId} has invalid GraphReFly diagram evidence`,
+			);
+		}
+	}
 	const planUnits = (runtime.changePlan.workUnits as unknown[]) ?? [];
 	const snapshotDigests = new Set(runtime.snapshots.map((snapshot) => sha256Jcs(snapshot)));
 	const deltaDigests = new Set(runtime.deltas.map((delta) => sha256Jcs(delta)));

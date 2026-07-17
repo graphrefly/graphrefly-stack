@@ -78,6 +78,40 @@ test("runtime failures still emit exactly one JSON envelope", () => {
 	assert.equal(JSON.parse(result.stdout).error.code, "RUNTIME_ERROR");
 });
 
+test("the CLI reviews the same verified portable evidence from a file or directory", () => {
+	const directory = "evidence/runs/refresh-token-rotation-v1-live";
+	const file = `${directory}/evidence-bundle.json`;
+	const run = (bundle) =>
+		spawnSync(
+			process.execPath,
+			["packages/cli/dist/cli.js", "review", "--bundle", bundle, "--json"],
+			{
+				cwd: new URL("../..", import.meta.url),
+				encoding: "utf8",
+			},
+		);
+	const fromDirectory = run(directory);
+	const fromFile = run(file);
+	assert.equal(fromDirectory.status, 0, fromDirectory.stderr);
+	assert.equal(fromFile.status, 0, fromFile.stderr);
+	assert.deepEqual(JSON.parse(fromDirectory.stdout), JSON.parse(fromFile.stdout));
+	const result = JSON.parse(fromFile.stdout);
+	assert.equal(result.data.source, "redacted-bundle");
+	assert.equal(result.data.commits.length, 3);
+	assert.equal(result.data.blueprints.length, 4);
+});
+
+test("the review server refuses non-loopback exposure", () => {
+	const result = spawnSync(
+		process.execPath,
+		["packages/cli/dist/cli.js", "review", "--host", "0.0.0.0", "--json"],
+		{ cwd: new URL("../..", import.meta.url), encoding: "utf8" },
+	);
+	assert.equal(result.status, 1);
+	assert.equal(result.stderr, "");
+	assert.equal(JSON.parse(result.stdout).error.code, "REVIEW_HOST_NOT_LOOPBACK");
+});
+
 test("the local review shell is served by one loopback HTTP process", async (context) => {
 	const temporary = await mkdtemp(resolve(tmpdir(), "graphrefly-review-"));
 	const portable = resolve(temporary, "evidence-bundle.json");

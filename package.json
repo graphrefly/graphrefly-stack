@@ -16,21 +16,25 @@
 	"packageManager": "pnpm@11.7.0+sha512.19cc852c120c7125760f2443ee6be0ca5b40f9f50598de1a09a1f177503e010e57c23c77646e01e761de59bf874fb22a3398c33ab9691fc13eb946b6f0f4d620",
 	"scripts": {
 		"build": "pnpm --filter @graphrefly-stack/contracts build && pnpm --filter @graphrefly-stack/core build && pnpm --filter @graphrefly-stack/review build && pnpm --filter @graphrefly-stack/cli build",
-		"check": "pnpm docs:check && pnpm skills:check && pnpm test:contracts && pnpm test:architecture && pnpm test:semantic && pnpm test:live && biome check .",
+		"check": "pnpm docs:check && pnpm skills:check && pnpm test:compatibility && pnpm test:contracts && pnpm test:architecture && pnpm test:semantic && pnpm test:product && pnpm test:live && biome check .",
 		"cli": "node packages/cli/dist/cli.js",
 		"docs:check": "node scripts/check-docs.mjs",
+		"product:sample": "node scripts/create-generic-sample.mjs",
 		"review:dev": "pnpm --filter @graphrefly-stack/review dev",
 		"smoke:clean-room": "node scripts/smoke-clean-room.mjs",
 		"skills:check": "node scripts/check-skills.mjs",
 		"test:architecture": "pnpm build && node --test tests/architecture/*.test.mjs",
+		"test:compatibility": "node --test tests/compatibility/*.test.mjs",
 		"test:contracts": "pnpm --filter @graphrefly-stack/contracts build && node --test tests/contracts/*.test.mjs",
 		"test:live": "pnpm --filter @graphrefly-stack/contracts build && pnpm --filter @graphrefly-stack/core build && pnpm --filter @graphrefly-stack/cli build && node --test tests/live/*.test.mjs",
+		"test:product": "pnpm build && node --test tests/product/*.test.mjs",
 		"test:semantic": "pnpm --filter @graphrefly-stack/contracts build && pnpm --filter @graphrefly-stack/core build && pnpm --filter @graphrefly-stack/cli build && node --test tests/semantic/*.test.mjs",
 		"lint": "biome lint .",
 		"format": "biome format --write .",
 		"format:check": "biome format ."
 	},
 	"devDependencies": {
+		"@graphrefly/ts": "0.3.0",
 		"@biomejs/biome": "2.4.6",
 		"@types/node": "26.1.1",
 		"typescript": "7.0.2"

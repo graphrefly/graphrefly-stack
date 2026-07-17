@@ -156,7 +156,14 @@ export async function exportEvidenceBundle(
 	try {
 		await stat(root);
 		const ownership = await readFile(marker, "utf8").catch(() => "");
-		if (ownership.trim() !== runtime.scenario) {
+		const existingPortable = await readFile(resolve(root, "evidence-bundle.json"), "utf8")
+			.then((contents) => JSON.parse(contents) as Record<string, unknown>)
+			.catch(() => null);
+		const existingManifest = existingPortable?.manifest as Record<string, unknown> | undefined;
+		const ownsHistoricalRun =
+			existingPortable?.schema === "urn:graphrefly-stack:schema:portable-bundle:v1" &&
+			existingManifest?.runId === "fixture-refresh-token-rotation-v1-real-git";
+		if (ownership.trim() !== runtime.scenario && !ownsHistoricalRun) {
 			throw new Error(`Refusing to replace an output not owned by GraphReFly Stack: ${root}`);
 		}
 		await rm(root, { recursive: true, force: true });
@@ -260,12 +267,20 @@ export async function exportEvidenceBundle(
 		"gates/final.json": finalGate,
 		"review/decision.json": review,
 	};
+	for (const reviewBlueprint of runtime.reviewBlueprints) {
+		const key =
+			reviewBlueprint.workUnitId === "BASE" ? "base" : reviewBlueprint.workUnitId.toLowerCase();
+		files[`blueprints/commits/${key}.json`] = reviewBlueprint.snapshot;
+		files[`blueprints/diagrams/${key}.json`] = reviewBlueprint.diagram;
+		if (reviewBlueprint.delta !== null) {
+			files[`blueprints/deltas/${key}.json`] = reviewBlueprint.delta;
+		}
+	}
 	for (const rawDiff of rawDiffs) {
 		files[`diffs/${rawDiff.workUnitId.toLowerCase()}.json`] = rawDiff;
 	}
 	if (liveRuns.plan !== undefined) files["provenance/live-plan.json"] = liveRuns.plan;
 	if (liveRuns.replan !== undefined) files["provenance/live-replan.json"] = liveRuns.replan;
-	for (const [relative, value] of Object.entries(files)) await writeJson(root, relative, value);
 	const liveProvenance = liveRuns.plan?.provenance ?? liveRuns.replan?.provenance;
 
 	const manifest = {
@@ -294,22 +309,21 @@ export async function exportEvidenceBundle(
 			hash: { algorithm: "sha256", value: sha256Jcs(value) },
 		})),
 	};
-	await writeJson(root, "manifest.json", manifest);
-	await writeJson(root, "evidence-bundle.json", {
+	const portable = {
 		schema: "urn:graphrefly-stack:schema:portable-bundle:v1",
 		manifest,
 		artifacts: files,
-	});
+	};
+	for (const artifact of manifest.artifacts) {
+		if (sha256Jcs(files[artifact.path]) !== artifact.hash.value) {
+			throw new Error(`Artifact hash mismatch: ${artifact.path}`);
+		}
+	}
+	await writeJson(root, "evidence-bundle.json", portable);
 	await writeFile(
 		resolve(root, "README.md"),
-		"# GraphReFly Stack evidence bundle\n\nRedacted deterministic evidence. Gate results are computed; the local review decision is separate evidence. `evidence-bundle.json` is the portable single-file projection of every manifest-bound JSON artifact.\n",
+		"# GraphReFly Stack evidence bundle\n\nRedacted deterministic evidence. Gate results are computed; the local review decision is separate evidence. `evidence-bundle.json` embeds and hash-binds every logical JSON artifact; expanded run files are generated output and are not stored in Git.\n",
 		"utf8",
 	);
-
-	for (const artifact of manifest.artifacts) {
-		const parsed = JSON.parse(await readFile(resolve(root, artifact.path), "utf8")) as unknown;
-		if (sha256Jcs(parsed) !== artifact.hash.value)
-			throw new Error(`Artifact hash mismatch: ${artifact.path}`);
-	}
 	return root;
 }

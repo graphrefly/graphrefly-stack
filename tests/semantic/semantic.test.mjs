@@ -1,11 +1,13 @@
 import assert from "node:assert/strict";
-import { readFile, rm, writeFile } from "node:fs/promises";
+import { readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import test from "node:test";
 
 import { exportEvidenceBundle } from "../../packages/cli/dist/exporter.js";
 import { createFlagshipFixture, readRuntimeSuite } from "../../packages/cli/dist/fixture.js";
+import { assertDiagramProjectsTopology } from "../../packages/cli/dist/graphrefly-provider.js";
+import { readPortableEvidenceBundle } from "../../packages/cli/dist/portable-bundle.js";
 import { createStrictAjv, sha256Jcs } from "../../packages/contracts/dist/index.js";
 import { computeGate } from "../../packages/core/dist/index.js";
 
@@ -56,6 +58,49 @@ test("the fixed source template produces byte-stable real Git lineages", () => {
 		first.cases[4].input.gitFacts[1].changedPaths.includes("docs/unauthorized-session-note.md"),
 		true,
 	);
+});
+
+test("every review commit is projected from the pinned GraphReFly runtime and renderer", async () => {
+	assert.deepEqual(
+		first.reviewBlueprints.map((entry) => entry.workUnitId),
+		["BASE", "U1", "U2", "U3"],
+	);
+	for (const entry of first.reviewBlueprints) {
+		assert.equal(entry.snapshot.commit.value, entry.oid);
+		assert.equal(entry.snapshot.blueprint.version, "graphrefly.blueprint.v1");
+		assert.equal(entry.snapshot.blueprint.provenance.source, "@graphrefly/ts");
+		assert.equal(entry.snapshot.blueprint.provenance.api, "graph.blueprint()");
+		assert.equal(
+			entry.snapshot.blueprint.provenance.isolation,
+			"detached-worktree-node-permission-read-only",
+		);
+		assert.equal(entry.diagram.renderer, "@graphrefly/ts/render.describeToMermaid");
+		assert.match(entry.diagram.source, /^flowchart LR\n/u);
+		assert.doesNotThrow(() =>
+			assertDiagramProjectsTopology(entry.snapshot.blueprint.topology, entry.diagram.source),
+		);
+	}
+	const runtimeEntry = first.reviewBlueprints.find((entry) => entry.workUnitId === "U2");
+	assert.ok(runtimeEntry);
+	assert.throws(
+		() =>
+			assertDiagramProjectsTopology(
+				runtimeEntry.snapshot.blueprint.topology,
+				runtimeEntry.diagram.source.replace("n1 --> n3", "n1 --> n2"),
+			),
+		/not a projection/u,
+	);
+	const u1 = first.reviewBlueprints.find((entry) => entry.workUnitId === "U1");
+	const u2 = first.reviewBlueprints.find((entry) => entry.workUnitId === "U2");
+	const u3 = first.reviewBlueprints.find((entry) => entry.workUnitId === "U3");
+	assert.deepEqual(u1.delta.structural.addedNodes, []);
+	assert.deepEqual(
+		u2.delta.structural.addedNodes.map((node) => node.id),
+		["refresh.request", "refresh.rotate", "refresh.validate", "session.persist.refresh"],
+	);
+	assert.deepEqual(u3.delta.structural.addedNodes, []);
+	const packageJson = JSON.parse(await readFile(resolve(first.repository, "package.json"), "utf8"));
+	assert.equal(packageJson.dependencies["@graphrefly/ts"], "0.1.1");
 });
 
 test("all six golden semantics are produced by the same deterministic gate", async () => {
@@ -150,7 +195,14 @@ test("redacted bundle export is complete and every manifest hash revalidates", a
 	const layout = JSON.parse(
 		await readFile(new URL("fixtures/contracts/v1/bundle-layout.json", root), "utf8"),
 	);
-	const manifest = JSON.parse(await readFile(resolve(output, "manifest.json"), "utf8"));
+	assert.deepEqual((await readdir(output)).sort(), [
+		".graphrefly-stack-bundle",
+		"README.md",
+		"evidence-bundle.json",
+	]);
+	const portable = JSON.parse(await readFile(resolve(output, "evidence-bundle.json"), "utf8"));
+	const manifest = portable.manifest;
+	const artifact = (path) => portable.artifacts[path];
 	const artifactsSchema = JSON.parse(
 		await readFile(new URL("contracts/v1/schemas/artifacts.schema.json", root), "utf8"),
 	);
@@ -162,44 +214,34 @@ test("redacted bundle export is complete and every manifest hash revalidates", a
 		);
 		assert.equal(validator(value), true, `${name}: ${JSON.stringify(validator.errors, null, 2)}`);
 	};
+	validate("PortableBundle", portable);
 	validate("BundleManifest", manifest);
-	validate("Task", JSON.parse(await readFile(resolve(output, "task.json"), "utf8")));
-	const stack = JSON.parse(await readFile(resolve(output, "stack.json"), "utf8"));
+	validate("Task", artifact("task.json"));
+	const stack = artifact("stack.json");
 	validate("GitStack", stack);
-	validate(
-		"ChangePlan",
-		JSON.parse(await readFile(resolve(output, "plan/change-plan.json"), "utf8")),
-	);
-	validate(
-		"BlueprintSnapshot",
-		JSON.parse(await readFile(resolve(output, "blueprints/current.json"), "utf8")),
-	);
-	validate(
-		"BlueprintDelta",
-		JSON.parse(await readFile(resolve(output, "blueprints/delta.json"), "utf8")),
-	);
-	validate(
-		"SelectiveReplan",
-		JSON.parse(await readFile(resolve(output, "replan/affected.json"), "utf8")),
-	);
-	validate(
-		"ReviewDecision",
-		JSON.parse(await readFile(resolve(output, "review/decision.json"), "utf8")),
-	);
-	const staleRecords = await Promise.all(
-		["u1", "u2", "u3"].map(async (unit) =>
-			JSON.parse(await readFile(resolve(output, `semantic-changes/${unit}.json`), "utf8")),
-		),
-	);
-	const finalRecords = await Promise.all(
-		["u1", "u2", "u3"].map(async (unit) =>
-			JSON.parse(await readFile(resolve(output, `semantic-changes/final/${unit}.json`), "utf8")),
-		),
+	validate("ChangePlan", artifact("plan/change-plan.json"));
+	validate("BlueprintSnapshot", artifact("blueprints/current.json"));
+	validate("BlueprintDelta", artifact("blueprints/delta.json"));
+	for (const commit of ["base", "u1", "u2", "u3"]) {
+		const snapshot = artifact(`blueprints/commits/${commit}.json`);
+		validate("BlueprintSnapshot", snapshot);
+		const diagram = artifact(`blueprints/diagrams/${commit}.json`);
+		assert.equal(diagram.renderer, "@graphrefly/ts/render.describeToMermaid");
+		assert.match(diagram.source, /^flowchart LR\n/u);
+	}
+	for (const unit of ["u1", "u2", "u3"]) {
+		validate("BlueprintDelta", artifact(`blueprints/deltas/${unit}.json`));
+	}
+	validate("SelectiveReplan", artifact("replan/affected.json"));
+	validate("ReviewDecision", artifact("review/decision.json"));
+	const staleRecords = ["u1", "u2", "u3"].map((unit) => artifact(`semantic-changes/${unit}.json`));
+	const finalRecords = ["u1", "u2", "u3"].map((unit) =>
+		artifact(`semantic-changes/final/${unit}.json`),
 	);
 	for (const record of [...staleRecords, ...finalRecords]) validate("SemanticChangeRecord", record);
 	const exportedChecks = [
-		...JSON.parse(await readFile(resolve(output, "checks/after-rebase.json"), "utf8")),
-		...JSON.parse(await readFile(resolve(output, "checks/final.json"), "utf8")),
+		...artifact("checks/after-rebase.json"),
+		...artifact("checks/final.json"),
 	];
 	for (const check of exportedChecks) {
 		validate("CheckResult", check);
@@ -214,26 +256,45 @@ test("redacted bundle export is complete and every manifest hash revalidates", a
 		finalRecords.slice(1).map((record) => record.commit.value),
 		first.selectiveReplan.replacements.map((replacement) => replacement.toCommit.value),
 	);
-	for (const relative of layout.requiredPaths) await readFile(resolve(output, relative));
+	assert.deepEqual(layout.committedPaths, ["README.md", "evidence-bundle.json"]);
+	for (const relative of layout.requiredArtifactPaths) {
+		assert.equal(Object.hasOwn(portable.artifacts, relative), true, relative);
+	}
 	for (const artifact of manifest.artifacts) {
-		const value = JSON.parse(await readFile(resolve(output, artifact.path), "utf8"));
-		assert.equal(sha256Jcs(value), artifact.hash.value, artifact.path);
+		assert.equal(sha256Jcs(portable.artifacts[artifact.path]), artifact.hash.value, artifact.path);
 	}
 	for (const unit of ["u1", "u2", "u3"]) {
-		const rawDiff = JSON.parse(await readFile(resolve(output, `diffs/${unit}.json`), "utf8"));
+		const rawDiff = artifact(`diffs/${unit}.json`);
 		validate("RawDiff", rawDiff);
 		assert.match(rawDiff.patch, /diff --git a\//);
 		assert.equal(rawDiff.patch.includes(first.repository), false);
 	}
-	const portable = JSON.parse(await readFile(resolve(output, "evidence-bundle.json"), "utf8"));
-	validate("PortableBundle", portable);
-	assert.deepEqual(portable.manifest, manifest);
 	assert.deepEqual(
 		Object.keys(portable.artifacts),
 		manifest.artifacts.map((artifact) => artifact.path),
 	);
-	const finalGate = JSON.parse(await readFile(resolve(output, "gates/final.json"), "utf8"));
+	const loadedFromDirectory = await readPortableEvidenceBundle(output);
+	const loadedFromFile = await readPortableEvidenceBundle(resolve(output, "evidence-bundle.json"));
+	assert.deepEqual(loadedFromDirectory.artifacts, loadedFromFile.artifacts);
+	const tampered = structuredClone(portable);
+	tampered.artifacts["task.json"].title = "forged";
+	const tamperedPath = resolve(output, "tampered.json");
+	await writeFile(tamperedPath, JSON.stringify(tampered));
+	await assert.rejects(() => readPortableEvidenceBundle(tamperedPath), /artifact hash mismatch/u);
+	const missing = structuredClone(portable);
+	delete missing.artifacts["task.json"];
+	await writeFile(tamperedPath, JSON.stringify(missing));
+	await assert.rejects(() => readPortableEvidenceBundle(tamperedPath), /exactly match/u);
+	const extra = structuredClone(portable);
+	extra.artifacts["unmanifested.json"] = {};
+	await writeFile(tamperedPath, JSON.stringify(extra));
+	await assert.rejects(() => readPortableEvidenceBundle(tamperedPath), /exactly match/u);
+	const duplicate = structuredClone(portable);
+	duplicate.manifest.artifacts.push(duplicate.manifest.artifacts[0]);
+	await writeFile(tamperedPath, JSON.stringify(duplicate));
+	await assert.rejects(() => readPortableEvidenceBundle(tamperedPath), /duplicate artifact paths/u);
+	const finalGate = artifact("gates/final.json");
 	assert.equal(finalGate.verdict, "pass");
-	const afterGate = JSON.parse(await readFile(resolve(output, "gates/after-change.json"), "utf8"));
+	const afterGate = artifact("gates/after-change.json");
 	assert.equal(afterGate.verdict, "blocked");
 });

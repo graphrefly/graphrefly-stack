@@ -1,2324 +1,1752 @@
 [
   {
-    "id": "w0",
+    "text": "A",
+    "start": 0.03,
+    "end": 0.06
+  },
+  {
+    "text": "stacked",
+    "start": 0.06,
+    "end": 0.45
+  },
+  {
+    "text": "diff",
+    "start": 0.52,
+    "end": 0.76
+  },
+  {
+    "text": "should",
+    "start": 0.77,
+    "end": 1.16
+  },
+  {
+    "text": "answer",
+    "start": 1.16,
+    "end": 1.55
+  },
+  {
+    "text": "three",
+    "start": 1.55,
+    "end": 1.87
+  },
+  {
+    "text": "questions",
+    "start": 1.87,
+    "end": 2.45
+  },
+  {
+    "text": "at",
+    "start": 2.45,
+    "end": 2.48
+  },
+  {
+    "text": "once.",
+    "start": 2.48,
+    "end": 2.91
+  },
+  {
+    "text": "Which",
+    "start": 2.91,
+    "end": 3.22
+  },
+  {
+    "text": "real",
+    "start": 3.3,
+    "end": 3.5
+  },
+  {
     "text": "Git",
-    "start": 0.0,
-    "end": 0.16
+    "start": 3.56,
+    "end": 3.7
   },
   {
-    "id": "w1",
-    "text": "says",
-    "start": 0.16,
-    "end": 0.4
+    "text": "commit",
+    "start": 3.71,
+    "end": 4.04
   },
   {
-    "id": "w2",
-    "text": "this",
-    "start": 0.4,
-    "end": 0.62
+    "text": "am",
+    "start": 4.17,
+    "end": 4.28
   },
   {
-    "id": "w3",
-    "text": "stack",
-    "start": 0.62,
-    "end": 0.92
+    "text": "I",
+    "start": 4.28,
+    "end": 4.35
   },
   {
-    "id": "w4",
-    "text": "",
-    "start": 0.92,
-    "end": 1.14
+    "text": "reviewing?",
+    "start": 4.35,
+    "end": 5.15
   },
   {
-    "id": "w5",
-    "text": "rebased",
-    "start": 1.14,
-    "end": 1.42
+    "text": "What",
+    "start": 5.23,
+    "end": 5.47
   },
   {
-    "id": "w6",
-    "text": "cleanly.",
-    "start": 1.42,
-    "end": 1.94
+    "text": "changed",
+    "start": 5.47,
+    "end": 5.94
   },
   {
-    "id": "w7",
-    "text": "Zero",
-    "start": 2.38,
-    "end": 2.64
+    "text": "in",
+    "start": 5.94,
+    "end": 6.07
   },
   {
-    "id": "w8",
-    "text": "conflicts,",
-    "start": 2.64,
-    "end": 3.02
-  },
-  {
-    "id": "w9",
-    "text": "but",
-    "start": 3.62,
-    "end": 3.72
-  },
-  {
-    "id": "w10",
-    "text": "clean",
-    "start": 3.72,
-    "end": 3.9
-  },
-  {
-    "id": "w11",
-    "text": "is",
-    "start": 3.9,
-    "end": 4.14
-  },
-  {
-    "id": "w12",
-    "text": "not",
-    "start": 4.14,
-    "end": 4.32
-  },
-  {
-    "id": "w13",
     "text": "the",
-    "start": 4.32,
-    "end": 4.48
+    "start": 6.07,
+    "end": 6.26
   },
   {
-    "id": "w14",
-    "text": "same",
-    "start": 4.48,
-    "end": 4.66
-  },
-  {
-    "id": "w15",
-    "text": "as",
-    "start": 4.66,
-    "end": 4.82
-  },
-  {
-    "id": "w16",
-    "text": "still",
-    "start": 4.82,
-    "end": 5.02
-  },
-  {
-    "id": "w17",
-    "text": "valid.",
-    "start": 5.02,
-    "end": 5.28
-  },
-  {
-    "id": "w18",
-    "text": "An",
-    "start": 5.88,
-    "end": 5.9
-  },
-  {
-    "id": "w19",
-    "text": "agent",
-    "start": 5.9,
-    "end": 6.14
-  },
-  {
-    "id": "w20",
-    "text": "can",
-    "start": 6.14,
-    "end": 6.44
-  },
-  {
-    "id": "w21",
-    "text": "write",
-    "start": 6.44,
-    "end": 6.64
-  },
-  {
-    "id": "w22",
-    "text": "correct",
-    "start": 6.64,
-    "end": 6.9
-  },
-  {
-    "id": "w23",
-    "text": "code",
-    "start": 6.9,
-    "end": 7.42
-  },
-  {
-    "id": "w24",
-    "text": "against",
-    "start": 7.42,
-    "end": 7.72
-  },
-  {
-    "id": "w25",
-    "text": "an",
-    "start": 7.72,
-    "end": 7.9
-  },
-  {
-    "id": "w26",
-    "text": "architectural",
-    "start": 7.9,
-    "end": 8.3
-  },
-  {
-    "id": "w27",
-    "text": "assumption",
-    "start": 8.3,
-    "end": 8.86
-  },
-  {
-    "id": "w28",
-    "text": "that",
-    "start": 8.86,
-    "end": 9.3
-  },
-  {
-    "id": "w29",
-    "text": "expires",
-    "start": 9.3,
-    "end": 9.52
-  },
-  {
-    "id": "w30",
-    "text": "before",
-    "start": 9.52,
-    "end": 10.28
-  },
-  {
-    "id": "w31",
-    "text": "review.",
-    "start": 10.28,
-    "end": 10.68
-  },
-  {
-    "id": "w32",
-    "text": "",
-    "start": 11.6,
-    "end": 11.6
-  },
-  {
-    "id": "w33",
     "text": "GraphReFly",
-    "start": 11.6,
-    "end": 12.08
+    "start": 6.26,
+    "end": 6.99
   },
   {
-    "id": "w34",
-    "text": "stack",
-    "start": 12.08,
-    "end": 12.34
+    "text": "graph,",
+    "start": 6.99,
+    "end": 7.36
   },
   {
-    "id": "w35",
-    "text": "makes",
-    "start": 12.34,
-    "end": 12.68
+    "text": "and",
+    "start": 7.39,
+    "end": 7.52
   },
   {
-    "id": "w36",
+    "text": "which",
+    "start": 7.56,
+    "end": 7.81
+  },
+  {
+    "text": "exact",
+    "start": 7.88,
+    "end": 8.17
+  },
+  {
+    "text": "lines",
+    "start": 8.17,
+    "end": 8.48
+  },
+  {
+    "text": "produced",
+    "start": 8.48,
+    "end": 8.97
+  },
+  {
     "text": "that",
-    "start": 12.68,
-    "end": 12.94
+    "start": 8.99,
+    "end": 9.23
   },
   {
-    "id": "w37",
-    "text": "invisible",
-    "start": 12.94,
-    "end": 13.3
+    "text": "change?",
+    "start": 9.23,
+    "end": 9.82
   },
   {
-    "id": "w38",
-    "text": "risk",
-    "start": 13.3,
-    "end": 13.78
+    "text": "This",
+    "start": 9.87,
+    "end": 10.11
   },
   {
-    "id": "w39",
-    "text": "reviewable.",
-    "start": 13.78,
-    "end": 14.42
+    "text": "is",
+    "start": 10.11,
+    "end": 10.18
   },
   {
-    "id": "w40",
-    "text": "Here,",
-    "start": 14.98,
-    "end": 15.04
+    "text": "GraphReFly",
+    "start": 10.26,
+    "end": 10.97
   },
   {
-    "id": "w41",
-    "text": "GPT",
-    "start": 15.16,
-    "end": 15.46
+    "text": "stack",
+    "start": 10.97,
+    "end": 11.32
   },
   {
-    "id": "w42",
-    "text": "5",
-    "start": 15.46,
-    "end": 16.14
+    "text": "reviewing",
+    "start": 11.36,
+    "end": 11.75
   },
   {
-    "id": "w43",
-    "text": ".6",
-    "start": 16.14,
-    "end": 16.64
+    "text": "a",
+    "start": 11.79,
+    "end": 11.84
   },
   {
-    "id": "w44",
-    "text": "turns",
-    "start": 16.64,
-    "end": 16.92
+    "text": "small,",
+    "start": 11.9,
+    "end": 12.38
   },
   {
-    "id": "w45",
-    "text": "one",
-    "start": 16.92,
+    "text": "ordinary",
+    "start": 12.44,
+    "end": 13.07
+  },
+  {
+    "text": "repository,",
+    "start": 13.07,
+    "end": 13.92
+  },
+  {
+    "text": "not",
+    "start": 13.95,
+    "end": 14.08
+  },
+  {
+    "text": "a",
+    "start": 14.12,
+    "end": 14.18
+  },
+  {
+    "text": "pre-built",
+    "start": 14.18,
+    "end": 14.78
+  },
+  {
+    "text": "flagship",
+    "start": 14.78,
+    "end": 15.32
+  },
+  {
+    "text": "fixture.",
+    "start": 15.32,
+    "end": 16.04
+  },
+  {
+    "text": "The",
+    "start": 16.07,
+    "end": 16.2
+  },
+  {
+    "text": "public",
+    "start": 16.24,
+    "end": 16.58
+  },
+  {
+    "text": "command",
+    "start": 16.58,
+    "end": 17
+  },
+  {
+    "text": "takes",
+    "start": 17,
     "end": 17.2
   },
   {
-    "id": "w46",
-    "text": "refresh",
-    "start": 17.2,
-    "end": 17.52
+    "text": "a",
+    "start": 17.33,
+    "end": 17.36
   },
   {
-    "id": "w47",
-    "text": "token",
-    "start": 17.52,
-    "end": 17.86
+    "text": "repository,",
+    "start": 17.36,
+    "end": 18.12
   },
   {
-    "id": "w48",
-    "text": "task",
-    "start": 17.86,
-    "end": 18.24
+    "text": "base,",
+    "start": 18.12,
+    "end": 18.51
   },
   {
-    "id": "w49",
-    "text": "into",
-    "start": 18.24,
-    "end": 18.58
+    "text": "and",
+    "start": 18.51,
+    "end": 18.95
   },
   {
-    "id": "w50",
+    "text": "head.",
+    "start": 18.95,
+    "end": 19.32
+  },
+  {
+    "text": "It",
+    "start": 19.35,
+    "end": 19.41
+  },
+  {
+    "text": "discovers",
+    "start": 19.46,
+    "end": 19.94
+  },
+  {
     "text": "three",
-    "start": 18.58,
-    "end": 18.9
+    "start": 20,
+    "end": 20.23
   },
   {
-    "id": "w51",
-    "text": "dependent",
-    "start": 18.9,
-    "end": 19.24
+    "text": "linear",
+    "start": 20.23,
+    "end": 20.48
   },
   {
-    "id": "w52",
-    "text": "work",
-    "start": 19.24,
-    "end": 19.52
-  },
-  {
-    "id": "w53",
-    "text": "units,",
-    "start": 19.52,
-    "end": 19.84
-  },
-  {
-    "id": "w54",
-    "text": "contracts,",
-    "start": 20.2,
-    "end": 20.54
-  },
-  {
-    "id": "w55",
-    "text": "runtime,",
-    "start": 20.98,
-    "end": 21.08
-  },
-  {
-    "id": "w56",
-    "text": "and",
-    "start": 21.58,
-    "end": 21.58
-  },
-  {
-    "id": "w57",
-    "text": "the",
-    "start": 21.58,
-    "end": 21.7
-  },
-  {
-    "id": "w58",
-    "text": "HTTP",
-    "start": 21.7,
-    "end": 22.06
-  },
-  {
-    "id": "w59",
-    "text": "adapter.",
-    "start": 22.06,
-    "end": 22.76
-  },
-  {
-    "id": "w60",
-    "text": "The",
-    "start": 23.48,
-    "end": 23.56
-  },
-  {
-    "id": "w61",
-    "text": "real",
-    "start": 23.56,
-    "end": 23.7
-  },
-  {
-    "id": "w62",
-    "text": "Git",
-    "start": 23.7,
-    "end": 23.98
-  },
-  {
-    "id": "w63",
     "text": "commits",
-    "start": 23.98,
-    "end": 24.3
+    "start": 20.61,
+    "end": 21
   },
   {
-    "id": "w64",
-    "text": "carry",
-    "start": 24.3,
-    "end": 24.58
+    "text": "from",
+    "start": 21,
+    "end": 21.3
   },
   {
-    "id": "w65",
-    "text": "locked",
-    "start": 24.58,
-    "end": 24.94
-  },
-  {
-    "id": "w66",
-    "text": "source",
-    "start": 24.94,
-    "end": 25.28
-  },
-  {
-    "id": "w67",
-    "text": "scopes.",
-    "start": 25.28,
-    "end": 25.84
-  },
-  {
-    "id": "w68",
-    "text": "Blueprint",
-    "start": 26.54,
-    "end": 26.54
-  },
-  {
-    "id": "w69",
-    "text": "claims,",
-    "start": 26.54,
-    "end": 26.88
-  },
-  {
-    "id": "w70",
-    "text": "dependencies,",
-    "start": 27.7,
-    "end": 27.7
-  },
-  {
-    "id": "w71",
-    "text": "and",
-    "start": 28.1,
-    "end": 28.16
-  },
-  {
-    "id": "w72",
-    "text": "required",
-    "start": 28.16,
-    "end": 28.52
-  },
-  {
-    "id": "w73",
-    "text": "checks.",
-    "start": 28.52,
-    "end": 28.98
-  },
-  {
-    "id": "w74",
-    "text": "The",
-    "start": 28.98,
-    "end": 29.82
-  },
-  {
-    "id": "w75",
-    "text": "model",
-    "start": 29.82,
-    "end": 30.0
-  },
-  {
-    "id": "w76",
-    "text": "can",
-    "start": 30.0,
-    "end": 30.32
-  },
-  {
-    "id": "w77",
-    "text": "improve",
-    "start": 30.32,
-    "end": 30.66
-  },
-  {
-    "id": "w78",
-    "text": "intent",
-    "start": 30.66,
-    "end": 31.02
-  },
-  {
-    "id": "w79",
-    "text": "and",
-    "start": 31.02,
-    "end": 31.32
-  },
-  {
-    "id": "w80",
-    "text": "claim",
-    "start": 31.32,
-    "end": 31.52
-  },
-  {
-    "id": "w81",
-    "text": "wording,",
-    "start": 31.52,
-    "end": 31.84
-  },
-  {
-    "id": "w82",
-    "text": "but",
-    "start": 32.16,
-    "end": 32.18
-  },
-  {
-    "id": "w83",
-    "text": "it",
-    "start": 32.18,
-    "end": 32.26
-  },
-  {
-    "id": "w84",
-    "text": "cannot",
-    "start": 32.26,
-    "end": 32.46
-  },
-  {
-    "id": "w85",
-    "text": "widen",
-    "start": 32.46,
-    "end": 32.9
-  },
-  {
-    "id": "w86",
-    "text": "those",
-    "start": 32.9,
-    "end": 33.22
-  },
-  {
-    "id": "w87",
-    "text": "anchors.",
-    "start": 33.22,
-    "end": 33.5
-  },
-  {
-    "id": "w88",
-    "text": "The",
-    "start": 34.08,
-    "end": 34.12
-  },
-  {
-    "id": "w89",
-    "text": "review",
-    "start": 34.12,
-    "end": 34.32
-  },
-  {
-    "id": "w90",
-    "text": "starts",
-    "start": 34.32,
-    "end": 34.66
-  },
-  {
-    "id": "w91",
-    "text": "with",
-    "start": 34.66,
-    "end": 34.9
-  },
-  {
-    "id": "w92",
-    "text": "the",
-    "start": 34.9,
-    "end": 35.02
-  },
-  {
-    "id": "w93",
-    "text": "stack,",
-    "start": 35.02,
-    "end": 35.26
-  },
-  {
-    "id": "w94",
-    "text": "not",
-    "start": 35.54,
-    "end": 35.62
-  },
-  {
-    "id": "w95",
-    "text": "a",
-    "start": 35.62,
-    "end": 35.78
-  },
-  {
-    "id": "w96",
-    "text": "wall",
-    "start": 35.78,
-    "end": 35.96
-  },
-  {
-    "id": "w97",
-    "text": "of",
-    "start": 35.96,
-    "end": 36.16
-  },
-  {
-    "id": "w98",
-    "text": "raw",
-    "start": 36.16,
-    "end": 36.32
-  },
-  {
-    "id": "w99",
-    "text": "code.",
-    "start": 36.32,
-    "end": 36.74
-  },
-  {
-    "id": "w100",
-    "text": "Select",
-    "start": 37.14,
-    "end": 37.44
-  },
-  {
-    "id": "w101",
-    "text": "a",
-    "start": 37.44,
-    "end": 37.66
-  },
-  {
-    "id": "w102",
     "text": "real",
-    "start": 37.66,
-    "end": 37.8
+    "start": 21.3,
+    "end": 21.59
   },
   {
-    "id": "w103",
-    "text": "commit,",
-    "start": 37.8,
-    "end": 38.12
+    "text": "Git",
+    "start": 21.61,
+    "end": 21.78
   },
   {
-    "id": "w104",
+    "text": "history.",
+    "start": 22.23,
+    "end": 22.6
+  },
+  {
+    "text": "Version",
+    "start": 22.63,
+    "end": 23.05
+  },
+  {
+    "text": "one",
+    "start": 23.12,
+    "end": 23.22
+  },
+  {
+    "text": "is",
+    "start": 23.28,
+    "end": 23.4
+  },
+  {
+    "text": "intentionally",
+    "start": 23.4,
+    "end": 24.27
+  },
+  {
+    "text": "narrow,",
+    "start": 24.28,
+    "end": 24.83
+  },
+  {
+    "text": "one",
+    "start": 24.87,
+    "end": 25.05
+  },
+  {
+    "text": "root",
+    "start": 25.05,
+    "end": 25.29
+  },
+  {
+    "text": "package,",
+    "start": 25.36,
+    "end": 26
+  },
+  {
+    "text": "an",
+    "start": 26,
+    "end": 26.14
+  },
+  {
+    "text": "unchanged",
+    "start": 26.14,
+    "end": 26.75
+  },
+  {
+    "text": "lock",
+    "start": 26.77,
+    "end": 27.05
+  },
+  {
+    "text": "file,",
+    "start": 27.05,
+    "end": 27.34
+  },
+  {
     "text": "and",
-    "start": 38.38,
-    "end": 38.42
+    "start": 27.37,
+    "end": 27.61
   },
   {
-    "id": "w105",
+    "text": "an",
+    "start": 27.61,
+    "end": 27.79
+  },
+  {
+    "text": "exact",
+    "start": 27.79,
+    "end": 28.24
+  },
+  {
+    "text": "GraphReFly",
+    "start": 28.24,
+    "end": 29.23
+  },
+  {
+    "text": "0.3.0",
+    "start": 29.24,
+    "end": 30.58
+  },
+  {
+    "text": "pin.",
+    "start": 30.58,
+    "end": 31.16
+  },
+  {
+    "text": "For",
+    "start": 31.19,
+    "end": 31.23
+  },
+  {
+    "text": "every",
+    "start": 31.3,
+    "end": 31.5
+  },
+  {
+    "text": "revision,",
+    "start": 31.58,
+    "end": 32.04
+  },
+  {
     "text": "the",
-    "start": 38.42,
-    "end": 38.54
+    "start": 32.04,
+    "end": 32.22
   },
   {
-    "id": "w106",
-    "text": "same",
-    "start": 38.54,
-    "end": 38.76
+    "text": "repository",
+    "start": 32.22,
+    "end": 32.84
   },
   {
-    "id": "w107",
-    "text": "view",
-    "start": 38.76,
-    "end": 38.98
+    "text": "itself",
+    "start": 32.84,
+    "end": 33.24
   },
   {
-    "id": "w108",
-    "text": "focuses",
-    "start": 38.98,
+    "text": "emits",
+    "start": 33.27,
+    "end": 33.58
+  },
+  {
+    "text": "a",
+    "start": 33.58,
+    "end": 33.66
+  },
+  {
+    "text": "graph",
+    "start": 33.66,
+    "end": 33.98
+  },
+  {
+    "text": "Blueprint",
+    "start": 33.98,
+    "end": 34.6
+  },
+  {
+    "text": "version",
+    "start": 34.6,
+    "end": 35.08
+  },
+  {
+    "text": "two.",
+    "start": 35.08,
+    "end": 35.51
+  },
+  {
+    "text": "Stack",
+    "start": 35.55,
+    "end": 35.83
+  },
+  {
+    "text": "does",
+    "start": 35.83,
+    "end": 36.08
+  },
+  {
+    "text": "not",
+    "start": 36.08,
+    "end": 36.27
+  },
+  {
+    "text": "handwrite",
+    "start": 36.27,
+    "end": 36.83
+  },
+  {
+    "text": "this",
+    "start": 36.83,
+    "end": 37.08
+  },
+  {
+    "text": "picture.",
+    "start": 37.08,
+    "end": 37.74
+  },
+  {
+    "text": "It",
+    "start": 37.77,
+    "end": 37.82
+  },
+  {
+    "text": "uses",
+    "start": 37.88,
+    "end": 38.08
+  },
+  {
+    "text": "the",
+    "start": 38.16,
+    "end": 38.3
+  },
+  {
+    "text": "target",
+    "start": 38.3,
+    "end": 38.68
+  },
+  {
+    "text": "GraphReFly",
+    "start": 38.68,
     "end": 39.4
   },
   {
-    "id": "w109",
-    "text": "its",
+    "text": "runtimes",
     "start": 39.4,
-    "end": 39.72
+    "end": 39.92
   },
   {
-    "id": "w110",
-    "text": "intent,",
-    "start": 39.72,
-    "end": 40.1
+    "text": "public",
+    "start": 39.92,
+    "end": 40.2
   },
   {
-    "id": "w111",
-    "text": "architecture,",
-    "start": 40.4,
-    "end": 40.62
+    "text": "parse,",
+    "start": 40.65,
+    "end": 40.78
   },
   {
-    "id": "w112",
-    "text": "delta,",
-    "start": 40.9,
-    "end": 41.26
+    "text": "hash,",
+    "start": 40.81,
+    "end": 41.12
   },
   {
-    "id": "w113",
-    "text": "claim",
-    "start": 41.46,
-    "end": 41.58
-  },
-  {
-    "id": "w114",
-    "text": "impact,",
-    "start": 41.58,
-    "end": 42.1
-  },
-  {
-    "id": "w115",
-    "text": "checks,",
-    "start": 42.42,
-    "end": 42.6
-  },
-  {
-    "id": "w116",
-    "text": "and",
-    "start": 42.96,
-    "end": 43.0
-  },
-  {
-    "id": "w117",
-    "text": "deterministic",
-    "start": 43.0,
-    "end": 43.54
-  },
-  {
-    "id": "w118",
-    "text": "gate.",
-    "start": 43.54,
-    "end": 43.96
-  },
-  {
-    "id": "w119",
-    "text": "Raw",
-    "start": 44.6,
-    "end": 44.78
-  },
-  {
-    "id": "w120",
-    "text": "patches",
-    "start": 44.78,
-    "end": 45.14
-  },
-  {
-    "id": "w121",
-    "text": "stay",
-    "start": 45.14,
-    "end": 45.48
-  },
-  {
-    "id": "w122",
-    "text": "one",
-    "start": 45.48,
-    "end": 45.78
-  },
-  {
-    "id": "w123",
-    "text": "click",
-    "start": 45.78,
-    "end": 46.02
-  },
-  {
-    "id": "w124",
-    "text": "away.",
-    "start": 46.02,
-    "end": 46.34
-  },
-  {
-    "id": "w125",
-    "text": "This",
-    "start": 46.86,
-    "end": 47.0
-  },
-  {
-    "id": "w126",
-    "text": "is",
-    "start": 47.0,
-    "end": 47.12
-  },
-  {
-    "id": "w127",
-    "text": "architecture",
-    "start": 47.12,
-    "end": 47.5
-  },
-  {
-    "id": "w128",
-    "text": "level",
-    "start": 47.5,
-    "end": 48.1
-  },
-  {
-    "id": "w129",
-    "text": "review",
-    "start": 48.1,
-    "end": 48.46
-  },
-  {
-    "id": "w130",
-    "text": "with",
-    "start": 48.46,
-    "end": 48.8
-  },
-  {
-    "id": "w131",
-    "text": "implementation",
-    "start": 48.8,
-    "end": 49.26
-  },
-  {
-    "id": "w132",
-    "text": "evidence",
-    "start": 49.26,
-    "end": 49.98
-  },
-  {
-    "id": "w133",
-    "text": "on",
-    "start": 49.98,
-    "end": 50.44
-  },
-  {
-    "id": "w134",
-    "text": "demand.",
-    "start": 50.44,
-    "end": 50.68
-  },
-  {
-    "id": "w135",
-    "text": "Now",
-    "start": 51.34,
-    "end": 51.46
-  },
-  {
-    "id": "w136",
-    "text": "main",
-    "start": 51.46,
-    "end": 51.66
-  },
-  {
-    "id": "w137",
-    "text": "changes",
-    "start": 51.66,
-    "end": 52.18
-  },
-  {
-    "id": "w138",
-    "text": "without",
-    "start": 52.18,
-    "end": 52.46
-  },
-  {
-    "id": "w139",
-    "text": "touching",
-    "start": 52.46,
-    "end": 53.0
-  },
-  {
-    "id": "w140",
-    "text": "the",
-    "start": 53.0,
-    "end": 53.18
-  },
-  {
-    "id": "w141",
-    "text": "feature",
-    "start": 53.18,
-    "end": 53.44
-  },
-  {
-    "id": "w142",
-    "text": "files.",
-    "start": 53.44,
-    "end": 53.82
-  },
-  {
-    "id": "w143",
-    "text": "Session",
-    "start": 54.52,
-    "end": 54.86
-  },
-  {
-    "id": "w144",
-    "text": "writes",
-    "start": 54.86,
-    "end": 55.14
-  },
-  {
-    "id": "w145",
-    "text": "must",
-    "start": 55.14,
-    "end": 55.46
-  },
-  {
-    "id": "w146",
-    "text": "pass",
-    "start": 55.46,
-    "end": 55.74
-  },
-  {
-    "id": "w147",
-    "text": "through",
-    "start": 55.74,
-    "end": 56.06
-  },
-  {
-    "id": "w148",
-    "text": "session",
-    "start": 56.06,
-    "end": 56.28
-  },
-  {
-    "id": "w149",
-    "text": "mutation",
-    "start": 56.28,
-    "end": 56.76
-  },
-  {
-    "id": "w150",
-    "text": "broker",
-    "start": 56.76,
-    "end": 57.22
-  },
-  {
-    "id": "w151",
-    "text": "and",
-    "start": 57.22,
-    "end": 57.68
-  },
-  {
-    "id": "w152",
-    "text": "policy",
-    "start": 57.68,
-    "end": 58.02
-  },
-  {
-    "id": "w153",
-    "text": "advances",
-    "start": 58.02,
-    "end": 58.4
-  },
-  {
-    "id": "w154",
-    "text": "to",
-    "start": 58.4,
-    "end": 58.92
-  },
-  {
-    "id": "w155",
-    "text": "version",
-    "start": 58.92,
-    "end": 59.08
-  },
-  {
-    "id": "w156",
-    "text": "two.",
-    "start": 59.08,
-    "end": 59.58
-  },
-  {
-    "id": "w157",
-    "text": "Git",
-    "start": 60.32,
-    "end": 60.46
-  },
-  {
-    "id": "w158",
-    "text": "still",
-    "start": 60.46,
-    "end": 60.74
-  },
-  {
-    "id": "w159",
-    "text": "rebases",
-    "start": 60.74,
-    "end": 61.2
-  },
-  {
-    "id": "w160",
-    "text": "all",
-    "start": 61.2,
-    "end": 61.54
-  },
-  {
-    "id": "w161",
-    "text": "three",
-    "start": 61.54,
-    "end": 61.8
-  },
-  {
-    "id": "w162",
-    "text": "commits",
-    "start": 61.8,
-    "end": 62.14
-  },
-  {
-    "id": "w163",
-    "text": "with",
-    "start": 62.14,
-    "end": 62.42
-  },
-  {
-    "id": "w164",
-    "text": "zero",
-    "start": 62.42,
-    "end": 62.76
-  },
-  {
-    "id": "w165",
-    "text": "text",
-    "start": 62.76,
-    "end": 63.06
-  },
-  {
-    "id": "w166",
-    "text": "conflicts.",
-    "start": 63.06,
-    "end": 63.62
-  },
-  {
-    "id": "w167",
-    "text": "Ordinary",
-    "start": 64.12,
-    "end": 64.48
-  },
-  {
-    "id": "w168",
-    "text": "fixture",
-    "start": 64.48,
-    "end": 64.86
-  },
-  {
-    "id": "w169",
-    "text": "checks",
-    "start": 64.86,
-    "end": 65.2
-  },
-  {
-    "id": "w170",
-    "text": "still",
-    "start": 65.2,
-    "end": 65.6
-  },
-  {
-    "id": "w171",
-    "text": "pass,",
-    "start": 65.6,
-    "end": 65.88
-  },
-  {
-    "id": "w172",
-    "text": "but",
-    "start": 66.2,
-    "end": 66.28
-  },
-  {
-    "id": "w173",
-    "text": "the",
-    "start": 66.28,
-    "end": 66.4
-  },
-  {
-    "id": "w174",
     "text": "Blueprint",
-    "start": 66.4,
-    "end": 66.64
+    "start": 41.2,
+    "end": 41.72
   },
   {
-    "id": "w175",
-    "text": "witness",
-    "start": 66.64,
-    "end": 67.04
+    "text": "to",
+    "start": 41.72,
+    "end": 41.84
   },
   {
-    "id": "w176",
-    "text": "that",
-    "start": 67.04,
-    "end": 67.28
+    "text": "mermaid,",
+    "start": 41.84,
+    "end": 42.39
   },
   {
-    "id": "w177",
-    "text": "shaped",
-    "start": 67.28,
+    "text": "and",
+    "start": 42.41,
+    "end": 42.59
+  },
+  {
+    "text": "diff",
+    "start": 42.59,
+    "end": 42.84
+  },
+  {
+    "text": "helpers.",
+    "start": 42.84,
+    "end": 43.52
+  },
+  {
+    "text": "Here,",
+    "start": 43.55,
+    "end": 43.86
+  },
+  {
+    "text": "one",
+    "start": 43.94,
+    "end": 44.08
+  },
+  {
+    "text": "commit",
+    "start": 44.08,
+    "end": 44.46
+  },
+  {
+    "text": "adds",
+    "start": 44.46,
+    "end": 44.68
+  },
+  {
+    "text": "a",
+    "start": 44.68,
+    "end": 44.81
+  },
+  {
+    "text": "derived",
+    "start": 44.81,
+    "end": 45.2
+  },
+  {
+    "text": "node",
+    "start": 45.24,
+    "end": 45.51
+  },
+  {
+    "text": "and",
+    "start": 45.56,
+    "end": 45.75
+  },
+  {
+    "text": "its",
+    "start": 45.75,
+    "end": 45.98
+  },
+  {
+    "text": "edge.",
+    "start": 46.33,
+    "end": 46.6
+  },
+  {
+    "text": "Click",
+    "start": 46.63,
+    "end": 46.94
+  },
+  {
+    "text": "the",
+    "start": 47.02,
+    "end": 47.19
+  },
+  {
+    "text": "next",
+    "start": 47.19,
+    "end": 47.48
+  },
+  {
+    "text": "commit.",
+    "start": 47.48,
+    "end": 48.16
+  },
+  {
+    "text": "The",
+    "start": 48.19,
+    "end": 48.39
+  },
+  {
+    "text": "commit",
+    "start": 48.39,
+    "end": 48.85
+  },
+  {
+    "text": "OID,",
+    "start": 48.85,
+    "end": 49.22
+  },
+  {
+    "text": "Blueprint",
+    "start": 49.22,
+    "end": 49.91
+  },
+  {
+    "text": "hash,",
+    "start": 49.91,
+    "end": 50.39
+  },
+  {
+    "text": "diagram,",
+    "start": 50.39,
+    "end": 51.12
+  },
+  {
+    "text": "parent",
+    "start": 51.12,
+    "end": 51.56
+  },
+  {
+    "text": "delta,",
+    "start": 51.6,
+    "end": 52
+  },
+  {
+    "text": "and",
+    "start": 52.03,
+    "end": 52.16
+  },
+  {
+    "text": "code",
+    "start": 52.2,
+    "end": 52.34
+  },
+  {
+    "text": "comparison",
+    "start": 52.42,
+    "end": 52.99
+  },
+  {
+    "text": "all",
+    "start": 53.02,
+    "end": 53.16
+  },
+  {
+    "text": "move",
+    "start": 53.29,
+    "end": 53.4
+  },
+  {
+    "text": "together.",
+    "start": 53.47,
+    "end": 54.16
+  },
+  {
+    "text": "Mounting",
+    "start": 54.19,
+    "end": 54.59
+  },
+  {
+    "text": "the",
+    "start": 54.59,
+    "end": 54.75
+  },
+  {
+    "text": "audit",
+    "start": 54.75,
+    "end": 55.02
+  },
+  {
+    "text": "graph",
+    "start": 55.02,
+    "end": 55.32
+  },
+  {
+    "text": "produces",
+    "start": 55.32,
+    "end": 55.8
+  },
+  {
+    "text": "a",
+    "start": 55.8,
+    "end": 55.84
+  },
+  {
+    "text": "subgraph",
+    "start": 55.88,
+    "end": 56.39
+  },
+  {
+    "text": "added",
+    "start": 56.39,
+    "end": 56.62
+  },
+  {
+    "text": "event",
+    "start": 57.07,
+    "end": 57.08
+  },
+  {
+    "text": "and",
+    "start": 57.11,
+    "end": 57.3
+  },
+  {
+    "text": "a",
+    "start": 57.3,
+    "end": 57.37
+  },
+  {
+    "text": "node",
+    "start": 57.37,
+    "end": 57.67
+  },
+  {
+    "text": "added",
+    "start": 57.67,
+    "end": 58.05
+  },
+  {
+    "text": "event.",
+    "start": 58.05,
+    "end": 58.68
+  },
+  {
+    "text": "Below",
+    "start": 58.71,
+    "end": 59.02
+  },
+  {
+    "text": "it",
+    "start": 59.02,
+    "end": 59.13
+  },
+  {
+    "text": "is",
+    "start": 59.2,
+    "end": 59.28
+  },
+  {
+    "text": "the",
+    "start": 59.28,
+    "end": 59.48
+  },
+  {
+    "text": "exact",
+    "start": 59.48,
+    "end": 59.82
+  },
+  {
+    "text": "parent",
+    "start": 59.82,
+    "end": 60.23
+  },
+  {
+    "text": "diff",
+    "start": 60.23,
+    "end": 60.56
+  },
+  {
+    "text": "in",
+    "start": 60.56,
+    "end": 60.67
+  },
+  {
+    "text": "a",
+    "start": 60.74,
+    "end": 60.77
+  },
+  {
+    "text": "familiar",
+    "start": 60.77,
+    "end": 61.14
+  },
+  {
+    "text": "split",
+    "start": 61.59,
+    "end": 61.72
+  },
+  {
+    "text": "view,",
+    "start": 61.72,
+    "end": 62.04
+  },
+  {
+    "text": "not",
+    "start": 62.07,
+    "end": 62.29
+  },
+  {
+    "text": "raw",
+    "start": 62.29,
+    "end": 62.49
+  },
+  {
+    "text": "terminal",
+    "start": 62.56,
+    "end": 63.2
+  },
+  {
+    "text": "output.",
+    "start": 63.33,
+    "end": 64
+  },
+  {
+    "text": "The",
+    "start": 64.03,
+    "end": 64.24
+  },
+  {
+    "text": "final",
+    "start": 64.24,
+    "end": 64.62
+  },
+  {
+    "text": "commit",
+    "start": 64.68,
+    "end": 65.12
+  },
+  {
+    "text": "changes",
+    "start": 65.12,
+    "end": 65.67
+  },
+  {
+    "text": "only",
+    "start": 65.67,
+    "end": 65.98
+  },
+  {
+    "text": "metadata.",
+    "start": 65.98,
+    "end": 66.88
+  },
+  {
+    "text": "The",
+    "start": 66.91,
+    "end": 67.12
+  },
+  {
+    "text": "graph",
+    "start": 67.12,
     "end": 67.5
   },
   {
-    "id": "w178",
-    "text": "the",
-    "start": 67.5,
-    "end": 67.8
+    "text": "delta",
+    "start": 67.56,
+    "end": 67.92
   },
   {
-    "id": "w179",
-    "text": "runtime",
-    "start": 67.8,
-    "end": 68.0
+    "text": "says",
+    "start": 67.92,
+    "end": 68.24
   },
   {
-    "id": "w180",
-    "text": "work",
-    "start": 68.0,
-    "end": 68.48
+    "text": "node",
+    "start": 68.24,
+    "end": 68.56
   },
   {
-    "id": "w181",
-    "text": "is",
-    "start": 68.48,
-    "end": 68.7
+    "text": "changed,",
+    "start": 68.56,
+    "end": 69.15
   },
   {
-    "id": "w182",
-    "text": "stale.",
-    "start": 68.7,
-    "end": 68.98
+    "text": "audit",
+    "start": 69.21,
+    "end": 69.36
   },
   {
-    "id": "w183",
+    "text": "status.",
+    "start": 69.79,
+    "end": 70.4
+  },
+  {
     "text": "The",
-    "start": 69.46,
-    "end": 69.48
+    "start": 70.43,
+    "end": 70.61
   },
   {
-    "id": "w184",
-    "text": "gate",
-    "start": 69.48,
-    "end": 69.62
+    "text": "code",
+    "start": 70.61,
+    "end": 70.85
   },
   {
-    "id": "w185",
-    "text": "computes",
-    "start": 69.62,
-    "end": 70.12
+    "text": "panel",
+    "start": 70.92,
+    "end": 71.26
   },
   {
-    "id": "w186",
+    "text": "shows",
+    "start": 71.26,
+    "end": 71.56
+  },
+  {
     "text": "the",
-    "start": 70.12,
-    "end": 70.32
+    "start": 71.69,
+    "end": 71.8
   },
   {
-    "id": "w187",
-    "text": "difference.",
-    "start": 70.32,
-    "end": 70.58
+    "text": "one",
+    "start": 71.87,
+    "end": 72.04
   },
   {
-    "id": "w188",
-    "text": "U1",
-    "start": 71.28,
-    "end": 71.58
+    "text": "changed",
+    "start": 72.04,
+    "end": 72.55
   },
   {
-    "id": "w189",
-    "text": "remains",
-    "start": 71.58,
-    "end": 71.94
+    "text": "line",
+    "start": 72.55,
+    "end": 72.86
   },
   {
-    "id": "w190",
-    "text": "valid.",
-    "start": 71.94,
-    "end": 72.4
+    "text": "that",
+    "start": 72.91,
+    "end": 73.16
   },
   {
-    "id": "w191",
-    "text": "U2",
-    "start": 72.94,
-    "end": 73.12
+    "text": "adds",
+    "start": 73.16,
+    "end": 73.44
   },
   {
-    "id": "w192",
-    "text": "needs",
-    "start": 73.12,
-    "end": 73.46
-  },
-  {
-    "id": "w193",
-    "text": "replan",
-    "start": 73.46,
-    "end": 74.02
-  },
-  {
-    "id": "w194",
-    "text": "because",
-    "start": 74.02,
-    "end": 74.38
-  },
-  {
-    "id": "w195",
     "text": "the",
-    "start": 74.38,
-    "end": 74.58
+    "start": 73.44,
+    "end": 73.64
   },
   {
-    "id": "w196",
-    "text": "Blueprint",
-    "start": 74.58,
-    "end": 74.88
+    "text": "validated",
+    "start": 73.65,
+    "end": 74.28
   },
   {
-    "id": "w197",
-    "text": "and",
-    "start": 74.88,
-    "end": 75.16
+    "text": "observer",
+    "start": 74.28,
+    "end": 74.84
   },
   {
-    "id": "w198",
-    "text": "policy",
-    "start": 75.16,
-    "end": 75.46
+    "text": "role.",
+    "start": 74.84,
+    "end": 75.34
   },
   {
-    "id": "w199",
-    "text": "changed.",
-    "start": 75.46,
-    "end": 75.9
+    "text": "That",
+    "start": 75.39,
+    "end": 75.6
   },
   {
-    "id": "w200",
-    "text": "U3",
-    "start": 76.76,
-    "end": 77.06
+    "text": "correspondence",
+    "start": 75.6,
+    "end": 76.44
   },
   {
-    "id": "w201",
     "text": "is",
-    "start": 77.06,
-    "end": 77.28
+    "start": 76.44,
+    "end": 76.52
   },
   {
-    "id": "w202",
-    "text": "blocked",
-    "start": 77.28,
-    "end": 77.52
+    "text": "generated",
+    "start": 76.65,
+    "end": 77.12
   },
   {
-    "id": "w203",
-    "text": "only",
-    "start": 77.52,
-    "end": 77.96
+    "text": "from",
+    "start": 77.15,
+    "end": 77.36
   },
   {
-    "id": "w204",
-    "text": "because",
-    "start": 77.96,
-    "end": 78.38
+    "text": "the",
+    "start": 77.36,
+    "end": 77.46
   },
   {
-    "id": "w205",
-    "text": "it",
-    "start": 78.38,
-    "end": 78.52
+    "text": "checked",
+    "start": 77.54,
+    "end": 77.97
   },
   {
-    "id": "w206",
-    "text": "depends",
-    "start": 78.52,
-    "end": 78.7
+    "text": "out",
+    "start": 77.97,
+    "end": 78.11
   },
   {
-    "id": "w207",
-    "text": "on",
-    "start": 78.7,
-    "end": 78.96
+    "text": "revision,",
+    "start": 78.15,
+    "end": 78.68
   },
   {
-    "id": "w208",
-    "text": "U2.",
-    "start": 78.96,
-    "end": 79.32
+    "text": "not",
+    "start": 78.71,
+    "end": 78.84
   },
   {
-    "id": "w209",
+    "text": "copied",
+    "start": 78.88,
+    "end": 79.28
+  },
+  {
+    "text": "from",
+    "start": 79.28,
+    "end": 79.54
+  },
+  {
+    "text": "a",
+    "start": 79.54,
+    "end": 79.6
+  },
+  {
+    "text": "golden",
+    "start": 79.6,
+    "end": 80
+  },
+  {
+    "text": "artifact.",
+    "start": 80,
+    "end": 80.76
+  },
+  {
     "text": "The",
-    "start": 79.74,
-    "end": 79.8
+    "start": 80.79,
+    "end": 80.92
   },
   {
-    "id": "w210",
-    "text": "reason",
-    "start": 79.8,
-    "end": 80.02
+    "text": "first",
+    "start": 80.96,
+    "end": 81.21
   },
   {
-    "id": "w211",
-    "text": "order",
-    "start": 80.02,
-    "end": 80.3
-  },
-  {
-    "id": "w212",
-    "text": "is",
-    "start": 80.3,
-    "end": 80.58
-  },
-  {
-    "id": "w213",
-    "text": "fixed.",
-    "start": 80.58,
-    "end": 80.84
-  },
-  {
-    "id": "w214",
-    "text": "The",
-    "start": 81.38,
-    "end": 81.4
-  },
-  {
-    "id": "w215",
-    "text": "checks",
-    "start": 81.4,
+    "text": "usable",
+    "start": 81.28,
     "end": 81.56
   },
   {
-    "id": "w216",
-    "text": "are",
+    "text": "release",
     "start": 81.56,
-    "end": 81.84
+    "end": 81.92
   },
   {
-    "id": "w217",
-    "text": "real,",
-    "start": 81.84,
-    "end": 82.14
-  },
-  {
-    "id": "w218",
-    "text": "and",
-    "start": 82.46,
-    "end": 82.5
-  },
-  {
-    "id": "w219",
-    "text": "gate",
-    "start": 82.5,
-    "end": 82.68
-  },
-  {
-    "id": "w220",
-    "text": "result",
-    "start": 82.68,
-    "end": 82.98
-  },
-  {
-    "id": "w221",
     "text": "is",
-    "start": 82.98,
-    "end": 83.3
+    "start": 82.05,
+    "end": 82.12
   },
   {
-    "id": "w222",
-    "text": "read",
-    "start": 83.3,
-    "end": 83.46
+    "text": "deliberately",
+    "start": 82.12,
+    "end": 82.72
   },
   {
-    "id": "w223",
-    "text": "only.",
-    "start": 83.46,
-    "end": 83.78
+    "text": "honest",
+    "start": 82.72,
+    "end": 83.03
   },
   {
-    "id": "w224",
-    "text": "Neither",
-    "start": 84.32,
-    "end": 84.7
+    "text": "about",
+    "start": 83.13,
+    "end": 83.44
   },
   {
-    "id": "w225",
-    "text": "GPT",
-    "start": 84.7,
-    "end": 85.2
+    "text": "its",
+    "start": 83.44,
+    "end": 83.64
   },
   {
-    "id": "w226",
-    "text": "5",
-    "start": 85.2,
-    "end": 85.84
+    "text": "boundary.",
+    "start": 83.64,
+    "end": 84.42
   },
   {
-    "id": "w227",
-    "text": ".6",
-    "start": 85.84,
-    "end": 86.44
+    "text": "Revisions",
+    "start": 84.45,
+    "end": 85
   },
   {
-    "id": "w228",
-    "text": "nor",
-    "start": 86.44,
-    "end": 86.74
+    "text": "run",
+    "start": 85,
+    "end": 85.18
   },
   {
-    "id": "w229",
+    "text": "in",
+    "start": 85.19,
+    "end": 85.32
+  },
+  {
+    "text": "detached,",
+    "start": 85.32,
+    "end": 85.97
+  },
+  {
+    "text": "read-only,",
+    "start": 85.97,
+    "end": 86.66
+  },
+  {
+    "text": "network",
+    "start": 86.68,
+    "end": 86.89
+  },
+  {
+    "text": "denied",
+    "start": 87.33,
+    "end": 87.6
+  },
+  {
+    "text": "work",
+    "start": 87.63,
+    "end": 87.83
+  },
+  {
+    "text": "trees",
+    "start": 87.83,
+    "end": 88.05
+  },
+  {
+    "text": "with",
+    "start": 88.12,
+    "end": 88.34
+  },
+  {
+    "text": "an",
+    "start": 88.34,
+    "end": 88.45
+  },
+  {
+    "text": "empty",
+    "start": 88.45,
+    "end": 88.73
+  },
+  {
+    "text": "environment,",
+    "start": 88.73,
+    "end": 89.49
+  },
+  {
     "text": "a",
-    "start": 86.74,
-    "end": 86.88
+    "start": 89.5,
+    "end": 89.57
   },
   {
-    "id": "w230",
-    "text": "reviewer",
-    "start": 86.88,
-    "end": 87.14
+    "text": "five",
+    "start": 89.57,
+    "end": 89.84
   },
   {
-    "id": "w231",
-    "text": "action",
-    "start": 87.14,
-    "end": 87.54
+    "text": "second",
+    "start": 89.86,
+    "end": 90.07
   },
   {
-    "id": "w232",
-    "text": "can",
-    "start": 87.54,
-    "end": 87.82
+    "text": "timeout,",
+    "start": 90.51,
+    "end": 90.96
   },
   {
-    "id": "w233",
-    "text": "edit",
-    "start": 87.82,
-    "end": 88.02
+    "text": "a",
+    "start": 90.99,
+    "end": 91.03
   },
   {
-    "id": "w234",
-    "text": "this",
-    "start": 88.02,
-    "end": 88.28
+    "text": "one",
+    "start": 91.03,
+    "end": 91.24
   },
   {
-    "id": "w235",
-    "text": "verdict.",
-    "start": 88.28,
-    "end": 88.5
+    "text": "megabyte",
+    "start": 91.24,
+    "end": 91.81
   },
   {
-    "id": "w236",
-    "text": "So",
-    "start": 88.92,
-    "end": 88.96
+    "text": "output",
+    "start": 91.81,
+    "end": 92.12
   },
   {
-    "id": "w237",
-    "text": "we",
-    "start": 88.96,
-    "end": 89.06
+    "text": "cap,",
+    "start": 92.25,
+    "end": 92.64
   },
   {
-    "id": "w238",
-    "text": "replan",
-    "start": 89.06,
-    "end": 89.44
-  },
-  {
-    "id": "w239",
-    "text": "selectively.",
-    "start": 89.44,
-    "end": 90.0
-  },
-  {
-    "id": "w240",
-    "text": "U1",
-    "start": 90.54,
-    "end": 90.92
-  },
-  {
-    "id": "w241",
-    "text": "stays",
-    "start": 90.92,
-    "end": 91.16
-  },
-  {
-    "id": "w242",
-    "text": "untouched.",
-    "start": 91.16,
-    "end": 91.48
-  },
-  {
-    "id": "w243",
-    "text": "GPT",
-    "start": 92.54,
-    "end": 92.78
-  },
-  {
-    "id": "w244",
-    "text": "5",
-    "start": 92.78,
-    "end": 93.46
-  },
-  {
-    "id": "w245",
-    "text": ".6",
-    "start": 93.46,
-    "end": 94.04
-  },
-  {
-    "id": "w246",
-    "text": "proposes",
-    "start": 94.04,
-    "end": 94.4
-  },
-  {
-    "id": "w247",
-    "text": "corrected",
-    "start": 94.4,
-    "end": 94.94
-  },
-  {
-    "id": "w248",
-    "text": "U2",
-    "start": 94.94,
-    "end": 95.6
-  },
-  {
-    "id": "w249",
     "text": "and",
-    "start": 95.6,
-    "end": 95.98
+    "start": 92.64,
+    "end": 92.87
   },
   {
-    "id": "w250",
-    "text": "U3",
-    "start": 95.98,
-    "end": 96.32
+    "text": "a",
+    "start": 92.89,
+    "end": 92.95
   },
   {
-    "id": "w251",
-    "text": "language",
-    "start": 96.32,
-    "end": 96.7
+    "text": "64",
+    "start": 92.96,
+    "end": 93.42
   },
   {
-    "id": "w252",
-    "text": "against",
-    "start": 96.7,
-    "end": 97.08
+    "text": "commit",
+    "start": 93.87,
+    "end": 93.9
   },
   {
-    "id": "w253",
-    "text": "session",
-    "start": 97.08,
-    "end": 97.4
+    "text": "limit.",
+    "start": 93.9,
+    "end": 94.5
   },
   {
-    "id": "w254",
-    "text": "mutation",
-    "start": 97.4,
-    "end": 97.9
+    "text": "Missing",
+    "start": 94.59,
+    "end": 94.99
   },
   {
-    "id": "w255",
-    "text": "broker",
-    "start": 97.9,
-    "end": 98.36
+    "text": "configuration,",
+    "start": 94.99,
+    "end": 95.9
   },
   {
-    "id": "w256",
+    "text": "dependency",
+    "start": 95.9,
+    "end": 96.51
+  },
+  {
+    "text": "drift,",
+    "start": 96.51,
+    "end": 96.93
+  },
+  {
+    "text": "malformed",
+    "start": 96.99,
+    "end": 97.51
+  },
+  {
+    "text": "Blueprints,",
+    "start": 97.51,
+    "end": 98.12
+  },
+  {
+    "text": "diagnostics",
+    "start": 98.25,
+    "end": 98.92
+  },
+  {
+    "text": "errors,",
+    "start": 98.92,
+    "end": 99.43
+  },
+  {
     "text": "and",
-    "start": 98.36,
-    "end": 98.82
+    "start": 99.47,
+    "end": 99.71
   },
   {
-    "id": "w257",
+    "text": "hash",
+    "start": 99.71,
+    "end": 100.06
+  },
+  {
+    "text": "mismatch",
+    "start": 100.12,
+    "end": 100.79
+  },
+  {
+    "text": "all",
+    "start": 100.79,
+    "end": 101.05
+  },
+  {
+    "text": "fail",
+    "start": 101.07,
+    "end": 101.42
+  },
+  {
+    "text": "closed.",
+    "start": 101.42,
+    "end": 102.24
+  },
+  {
+    "text": "User-relevant",
+    "start": 102.27,
+    "end": 103.08
+  },
+  {
+    "text": "provenance",
+    "start": 103.08,
+    "end": 103.72
+  },
+  {
+    "text": "is",
+    "start": 103.76,
+    "end": 103.85
+  },
+  {
+    "text": "collapsed.",
+    "start": 103.87,
+    "end": 104.66
+  },
+  {
+    "text": "With",
+    "start": 104.69,
+    "end": 104.92
+  },
+  {
+    "text": "no",
+    "start": 104.92,
+    "end": 105
+  },
+  {
+    "text": "semantic",
+    "start": 105.08,
+    "end": 105.57
+  },
+  {
     "text": "policy",
-    "start": 98.82,
-    "end": 99.12
+    "start": 105.57,
+    "end": 105.96
   },
   {
-    "id": "w258",
-    "text": "version",
-    "start": 99.12,
-    "end": 99.5
+    "text": "configured,",
+    "start": 105.96,
+    "end": 106.78
   },
   {
-    "id": "w259",
-    "text": "two.",
-    "start": 99.5,
-    "end": 99.96
-  },
-  {
-    "id": "w260",
-    "text": "Strict",
-    "start": 100.5,
-    "end": 100.74
-  },
-  {
-    "id": "w261",
-    "text": "schemas",
-    "start": 100.74,
-    "end": 101.22
-  },
-  {
-    "id": "w262",
-    "text": "and",
-    "start": 101.22,
-    "end": 101.4
-  },
-  {
-    "id": "w263",
-    "text": "post",
-    "start": 101.4,
-    "end": 101.58
-  },
-  {
-    "id": "w264",
-    "text": "-validation",
-    "start": 101.58,
-    "end": 102.34
-  },
-  {
-    "id": "w265",
-    "text": "reject",
-    "start": 102.34,
-    "end": 102.56
-  },
-  {
-    "id": "w266",
-    "text": "any",
-    "start": 102.56,
-    "end": 102.98
-  },
-  {
-    "id": "w267",
-    "text": "changed",
-    "start": 102.98,
-    "end": 103.3
-  },
-  {
-    "id": "w268",
-    "text": "scope,",
-    "start": 103.3,
-    "end": 103.76
-  },
-  {
-    "id": "w269",
-    "text": "dependency,",
-    "start": 104.0,
-    "end": 104.22
-  },
-  {
-    "id": "w270",
-    "text": "claim,",
-    "start": 104.86,
-    "end": 104.96
-  },
-  {
-    "id": "w271",
-    "text": "or",
-    "start": 105.32,
-    "end": 105.34
-  },
-  {
-    "id": "w272",
-    "text": "check.",
-    "start": 105.34,
-    "end": 105.58
-  },
-  {
-    "id": "w273",
-    "text": "Fresh",
-    "start": 106.44,
-    "end": 106.7
-  },
-  {
-    "id": "w274",
-    "text": "witnesses",
-    "start": 106.7,
-    "end": 107.1
-  },
-  {
-    "id": "w275",
-    "text": "bind",
-    "start": 107.1,
-    "end": 107.48
-  },
-  {
-    "id": "w276",
     "text": "the",
-    "start": 107.48,
-    "end": 107.66
+    "start": 106.81,
+    "end": 106.94
   },
   {
-    "id": "w277",
-    "text": "replacements,",
-    "start": 107.66,
-    "end": 108.04
+    "text": "product",
+    "start": 106.94,
+    "end": 107.31
   },
   {
-    "id": "w278",
-    "text": "deterministic",
-    "start": 108.56,
-    "end": 108.98
+    "text": "says",
+    "start": 107.31,
+    "end": 107.52
   },
   {
-    "id": "w279",
-    "text": "checks",
-    "start": 108.98,
-    "end": 109.38
+    "text": "exactly",
+    "start": 107.52,
+    "end": 107.89
   },
   {
-    "id": "w280",
-    "text": "were",
-    "start": 109.38,
-    "end": 109.66
+    "text": "that.",
+    "start": 107.89,
+    "end": 108.26
   },
   {
-    "id": "w281",
-    "text": "run,",
-    "start": 109.66,
-    "end": 109.88
+    "text": "It",
+    "start": 108.31,
+    "end": 108.35
   },
   {
-    "id": "w282",
-    "text": "and",
-    "start": 110.08,
-    "end": 110.1
+    "text": "does",
+    "start": 108.42,
+    "end": 108.62
   },
   {
-    "id": "w283",
-    "text": "the",
-    "start": 110.1,
-    "end": 110.2
+    "text": "not",
+    "start": 108.7,
+    "end": 108.9
   },
   {
-    "id": "w284",
-    "text": "final",
-    "start": 110.2,
-    "end": 110.5
+    "text": "invent",
+    "start": 108.96,
+    "end": 109.33
   },
   {
-    "id": "w285",
-    "text": "gate",
-    "start": 110.5,
-    "end": 110.78
+    "text": "a",
+    "start": 109.33,
+    "end": 109.4
   },
   {
-    "id": "w286",
-    "text": "returns",
-    "start": 110.78,
-    "end": 111.26
+    "text": "green",
+    "start": 109.4,
+    "end": 109.68
   },
   {
-    "id": "w287",
-    "text": "pass.",
-    "start": 111.26,
-    "end": 111.62
+    "text": "gate.",
+    "start": 109.75,
+    "end": 110.26
   },
   {
-    "id": "w288",
     "text": "Codex",
-    "start": 112.14,
-    "end": 112.52
+    "start": 110.29,
+    "end": 110.56
   },
   {
-    "id": "w289",
-    "text": "built",
-    "start": 112.52,
-    "end": 113.02
+    "text": "was",
+    "start": 110.56,
+    "end": 110.71
   },
   {
-    "id": "w290",
     "text": "the",
-    "start": 113.02,
-    "end": 113.18
+    "start": 110.78,
+    "end": 110.88
   },
   {
-    "id": "w291",
-    "text": "majority",
-    "start": 113.18,
+    "text": "implementation",
+    "start": 110.94,
+    "end": 111.73
+  },
+  {
+    "text": "environment",
+    "start": 111.78,
+    "end": 112.44
+  },
+  {
+    "text": "that",
+    "start": 112.47,
+    "end": 112.68
+  },
+  {
+    "text": "helped",
+    "start": 112.68,
+    "end": 113.04
+  },
+  {
+    "text": "design,",
+    "start": 113.04,
     "end": 113.52
   },
   {
-    "id": "w292",
-    "text": "of",
+    "text": "build,",
     "start": 113.52,
-    "end": 113.74
+    "end": 113.91
   },
   {
-    "id": "w293",
+    "text": "test,",
+    "start": 113.96,
+    "end": 114.32
+  },
+  {
+    "text": "and",
+    "start": 114.32,
+    "end": 114.43
+  },
+  {
+    "text": "adversarially",
+    "start": 114.48,
+    "end": 114.92
+  },
+  {
+    "text": "review",
+    "start": 115.23,
+    "end": 115.65
+  },
+  {
     "text": "this",
-    "start": 113.74,
-    "end": 113.86
+    "start": 115.72,
+    "end": 115.96
   },
   {
-    "id": "w294",
-    "text": "project",
-    "start": 113.86,
-    "end": 114.24
+    "text": "product.",
+    "start": 115.97,
+    "end": 116.76
   },
   {
-    "id": "w295",
-    "text": "in",
-    "start": 114.24,
-    "end": 114.52
+    "text": "GPT",
+    "start": 116.79,
+    "end": 116.97
   },
   {
-    "id": "w296",
-    "text": "one",
-    "start": 114.52,
-    "end": 114.7
+    "text": "5.6",
+    "start": 116.97,
+    "end": 117.63
   },
   {
-    "id": "w297",
-    "text": "long",
-    "start": 114.7,
-    "end": 114.96
+    "text": "powers",
+    "start": 117.63,
+    "end": 118.07
   },
   {
-    "id": "w298",
-    "text": "-lived",
-    "start": 114.96,
-    "end": 115.26
-  },
-  {
-    "id": "w299",
-    "text": "task.",
-    "start": 115.26,
-    "end": 115.6
-  },
-  {
-    "id": "w300",
-    "text": "Contracts,",
-    "start": 116.06,
-    "end": 116.64
-  },
-  {
-    "id": "w301",
-    "text": "real",
-    "start": 116.78,
-    "end": 116.84
-  },
-  {
-    "id": "w302",
-    "text": "Git",
-    "start": 116.84,
-    "end": 117.14
-  },
-  {
-    "id": "w303",
-    "text": "fixtures,",
-    "start": 117.14,
-    "end": 117.46
-  },
-  {
-    "id": "w304",
-    "text": "deterministic",
-    "start": 117.86,
-    "end": 118.34
-  },
-  {
-    "id": "w305",
-    "text": "semantics,",
-    "start": 118.34,
-    "end": 118.86
-  },
-  {
-    "id": "w306",
     "text": "the",
-    "start": 119.38,
-    "end": 119.4
+    "start": 118.07,
+    "end": 118.29
   },
   {
-    "id": "w307",
-    "text": "server",
-    "start": 119.4,
-    "end": 119.6
+    "text": "separate",
+    "start": 118.29,
+    "end": 118.92
   },
   {
-    "id": "w308",
-    "text": "-side",
-    "start": 119.6,
-    "end": 120.02
+    "text": "planning",
+    "start": 118.92,
+    "end": 119.22
   },
   {
-    "id": "w309",
-    "text": "model",
-    "start": 120.02,
-    "end": 120.26
+    "text": "and",
+    "start": 119.35,
+    "end": 119.48
   },
   {
-    "id": "w310",
-    "text": "seam,",
-    "start": 120.26,
-    "end": 120.62
+    "text": "selective",
+    "start": 119.52,
+    "end": 120.13
   },
   {
-    "id": "w311",
-    "text": "adversarial",
-    "start": 120.96,
+    "text": "replan",
+    "start": 120.13,
+    "end": 120.48
+  },
+  {
+    "text": "layer,",
+    "start": 120.61,
+    "end": 120.88
+  },
+  {
+    "text": "but",
+    "start": 120.91,
+    "end": 121.04
+  },
+  {
+    "text": "it",
+    "start": 121.08,
+    "end": 121.21
+  },
+  {
+    "text": "never",
+    "start": 121.21,
     "end": 121.5
   },
   {
-    "id": "w312",
-    "text": "tests,",
-    "start": 121.5,
-    "end": 121.78
+    "text": "generates",
+    "start": 121.56,
+    "end": 122.04
   },
   {
-    "id": "w313",
-    "text": "and",
-    "start": 122.18,
-    "end": 122.22
-  },
-  {
-    "id": "w314",
     "text": "this",
-    "start": 122.22,
-    "end": 122.34
+    "start": 122.17,
+    "end": 122.36
   },
   {
-    "id": "w315",
-    "text": "synchronized",
-    "start": 122.34,
-    "end": 122.76
+    "text": "deterministic",
+    "start": 122.4,
+    "end": 123.15
   },
   {
-    "id": "w316",
-    "text": "react",
-    "start": 122.76,
-    "end": 123.34
+    "text": "verdict.",
+    "start": 123.23,
+    "end": 123.96
   },
   {
-    "id": "w317",
-    "text": "review.",
-    "start": 123.34,
-    "end": 123.82
+    "text": "Next,",
+    "start": 123.99,
+    "end": 124.77
   },
   {
-    "id": "w318",
-    "text": "In",
-    "start": 124.54,
-    "end": 124.6
+    "text": "DAG",
+    "start": 124.77,
+    "end": 125.12
   },
   {
-    "id": "w319",
-    "text": "the",
-    "start": 124.6,
-    "end": 124.7
+    "text": "stacks",
+    "start": 125.25,
+    "end": 125.95
   },
   {
-    "id": "w320",
-    "text": "finished",
-    "start": 124.7,
-    "end": 125.04
+    "text": "hosted",
+    "start": 126,
+    "end": 126.42
   },
   {
-    "id": "w321",
-    "text": "product.",
-    "start": 125.04,
-    "end": 125.52
+    "text": "SaaS,",
+    "start": 126.87,
+    "end": 127.31
   },
   {
-    "id": "w322",
-    "text": "GPT",
-    "start": 126.1,
-    "end": 126.48
-  },
-  {
-    "id": "w323",
-    "text": "5",
-    "start": 126.48,
-    "end": 127.16
-  },
-  {
-    "id": "w324",
-    "text": ".6",
-    "start": 127.16,
-    "end": 127.74
-  },
-  {
-    "id": "w325",
-    "text": "provides",
-    "start": 127.74,
-    "end": 128.1
-  },
-  {
-    "id": "w326",
-    "text": "semantic",
-    "start": 128.1,
-    "end": 128.5
-  },
-  {
-    "id": "w327",
     "text": "planning",
-    "start": 128.5,
-    "end": 129.14
+    "start": 127.31,
+    "end": 127.5
   },
   {
-    "id": "w328",
-    "text": "and",
-    "start": 129.14,
-    "end": 129.42
+    "text": "in",
+    "start": 127.61,
+    "end": 127.71
   },
   {
-    "id": "w329",
-    "text": "selective",
-    "start": 129.42,
-    "end": 129.74
-  },
-  {
-    "id": "w330",
-    "text": "replan",
-    "start": 129.74,
-    "end": 130.36
-  },
-  {
-    "id": "w331",
-    "text": "proposals.",
-    "start": 130.36,
-    "end": 130.86
-  },
-  {
-    "id": "w332",
-    "text": "Deterministic",
-    "start": 131.72,
-    "end": 132.34
-  },
-  {
-    "id": "w333",
-    "text": "code",
-    "start": 132.34,
-    "end": 132.76
-  },
-  {
-    "id": "w334",
-    "text": "remains",
-    "start": 132.76,
-    "end": 133.16
-  },
-  {
-    "id": "w335",
     "text": "the",
-    "start": 133.16,
-    "end": 133.48
+    "start": 127.71,
+    "end": 127.88
   },
   {
-    "id": "w336",
-    "text": "authority.",
-    "start": 133.48,
-    "end": 133.82
+    "text": "product,",
+    "start": 127.88,
+    "end": 128.39
   },
   {
-    "id": "w337",
-    "text": "Every",
-    "start": 134.52,
-    "end": 134.52
+    "text": "mutual",
+    "start": 128.45,
+    "end": 128.76
   },
   {
-    "id": "w338",
-    "text": "material",
-    "start": 134.52,
-    "end": 134.96
+    "text": "exclusion,",
+    "start": 128.84,
+    "end": 129.58
   },
   {
-    "id": "w339",
-    "text": "claim",
-    "start": 134.96,
-    "end": 135.38
+    "text": "conflict",
+    "start": 129.71,
+    "end": 130.17
   },
   {
-    "id": "w340",
-    "text": "resolves",
-    "start": 135.38,
-    "end": 135.76
+    "text": "avoidance,",
+    "start": 130.17,
+    "end": 130.89
   },
   {
-    "id": "w341",
-    "text": "to",
-    "start": 135.76,
-    "end": 136.12
+    "text": "edit",
+    "start": 130.99,
+    "end": 131.18
   },
   {
-    "id": "w342",
-    "text": "evidence.",
-    "start": 136.12,
-    "end": 136.36
+    "text": "scope",
+    "start": 131.18,
+    "end": 131.41
   },
   {
-    "id": "w343",
+    "text": "enforcement,",
+    "start": 131.48,
+    "end": 132.12
+  },
+  {
+    "text": "and",
+    "start": 132.21,
+    "end": 132.36
+  },
+  {
+    "text": "safe",
+    "start": 132.36,
+    "end": 132.57
+  },
+  {
+    "text": "revert.",
+    "start": 132.59,
+    "end": 133.12
+  },
+  {
     "text": "The",
-    "start": 137.2,
-    "end": 137.26
+    "start": 133.15,
+    "end": 133.33
   },
   {
-    "id": "w344",
-    "text": "portable",
-    "start": 137.26,
-    "end": 137.46
+    "text": "smallest",
+    "start": 133.33,
+    "end": 133.9
   },
   {
-    "id": "w345",
-    "text": "bundle",
-    "start": 137.46,
-    "end": 137.82
+    "text": "useful",
+    "start": 133.9,
+    "end": 134.28
   },
   {
-    "id": "w346",
-    "text": "contains",
-    "start": 137.82,
-    "end": 138.28
+    "text": "product",
+    "start": 134.41,
+    "end": 134.8
   },
   {
-    "id": "w347",
-    "text": "24",
-    "start": 138.28,
-    "end": 138.88
+    "text": "is",
+    "start": 134.84,
+    "end": 134.97
   },
   {
-    "id": "w348",
-    "text": "canonical",
-    "start": 138.88,
-    "end": 139.4
+    "text": "real",
+    "start": 134.97,
+    "end": 135.25
   },
   {
-    "id": "w349",
-    "text": "hashed",
-    "start": 139.4,
-    "end": 140.1
+    "text": "now.",
+    "start": 135.25,
+    "end": 135.59
   },
   {
-    "id": "w350",
-    "text": "artifacts.",
-    "start": 140.1,
-    "end": 140.62
+    "text": "The",
+    "start": 135.75,
+    "end": 135.88
   },
   {
-    "id": "w351",
-    "text": "Exact",
-    "start": 141.0,
-    "end": 141.3
+    "text": "larger",
+    "start": 135.92,
+    "end": 136.3
   },
   {
-    "id": "w352",
-    "text": "model",
-    "start": 141.3,
-    "end": 141.56
+    "text": "system",
+    "start": 136.3,
+    "end": 136.69
   },
   {
-    "id": "w353",
-    "text": "and",
-    "start": 141.56,
-    "end": 141.9
+    "text": "is",
+    "start": 136.69,
+    "end": 136.82
   },
   {
-    "id": "w354",
-    "text": "effort",
-    "start": 141.9,
-    "end": 142.18
+    "text": "on",
+    "start": 136.82,
+    "end": 136.88
   },
   {
-    "id": "w355",
-    "text": "commits",
-    "start": 142.18,
-    "end": 142.54
-  },
-  {
-    "id": "w356",
-    "text": "blueprints,",
-    "start": 142.54,
-    "end": 143.22
-  },
-  {
-    "id": "w357",
-    "text": "policies,",
-    "start": 143.34,
-    "end": 143.66
-  },
-  {
-    "id": "w358",
-    "text": "checks,",
-    "start": 143.94,
-    "end": 144.28
-  },
-  {
-    "id": "w359",
-    "text": "reasons,",
-    "start": 144.6,
-    "end": 144.84
-  },
-  {
-    "id": "w360",
-    "text": "token",
-    "start": 145.26,
-    "end": 145.46
-  },
-  {
-    "id": "w361",
-    "text": "usage,",
-    "start": 145.46,
-    "end": 145.8
-  },
-  {
-    "id": "w362",
-    "text": "and",
-    "start": 146.22,
-    "end": 146.26
-  },
-  {
-    "id": "w363",
-    "text": "redacted",
-    "start": 146.26,
-    "end": 146.58
-  },
-  {
-    "id": "w364",
-    "text": "provenance.",
-    "start": 146.58,
-    "end": 147.48
-  },
-  {
-    "id": "w365",
-    "text": "Judges",
-    "start": 148.06,
-    "end": 148.28
-  },
-  {
-    "id": "w366",
-    "text": "can",
-    "start": 148.28,
-    "end": 148.66
-  },
-  {
-    "id": "w367",
-    "text": "inspect",
-    "start": 148.66,
-    "end": 149.02
-  },
-  {
-    "id": "w368",
     "text": "the",
-    "start": 149.02,
-    "end": 149.28
+    "start": 137.01,
+    "end": 137.12
   },
   {
-    "id": "w369",
-    "text": "full",
-    "start": 149.28,
-    "end": 149.48
-  },
-  {
-    "id": "w370",
-    "text": "path",
-    "start": 149.48,
-    "end": 149.84
-  },
-  {
-    "id": "w371",
-    "text": "locally",
-    "start": 149.84,
-    "end": 150.26
-  },
-  {
-    "id": "w372",
-    "text": "without",
-    "start": 150.26,
-    "end": 150.7
-  },
-  {
-    "id": "w373",
-    "text": "credentials.",
-    "start": 150.7,
-    "end": 151.28
-  },
-  {
-    "id": "w374",
-    "text": "",
-    "start": 152.38,
-    "end": 152.38
-  },
-  {
-    "id": "w375",
-    "text": "GraphReFly",
-    "start": 152.38,
-    "end": 152.92
-  },
-  {
-    "id": "w376",
-    "text": "stack.",
-    "start": 152.92,
-    "end": 153.26
-  },
-  {
-    "id": "w377",
-    "text": "Semantic",
-    "start": 153.94,
-    "end": 154.28
-  },
-  {
-    "id": "w378",
-    "text": "stacked",
-    "start": 154.28,
-    "end": 154.62
-  },
-  {
-    "id": "w379",
-    "text": "diffs",
-    "start": 154.62,
-    "end": 155.28
-  },
-  {
-    "id": "w380",
-    "text": "that",
-    "start": 155.28,
-    "end": 155.42
-  },
-  {
-    "id": "w381",
-    "text": "know",
-    "start": 155.42,
-    "end": 155.64
-  },
-  {
-    "id": "w382",
-    "text": "when",
-    "start": 155.64,
-    "end": 155.92
-  },
-  {
-    "id": "w383",
-    "text": "their",
-    "start": 155.92,
-    "end": 156.02
-  },
-  {
-    "id": "w384",
-    "text": "architectural",
-    "start": 156.02,
-    "end": 156.52
-  },
-  {
-    "id": "w385",
-    "text": "assumptions",
-    "start": 156.52,
-    "end": 157.14
-  },
-  {
-    "id": "w386",
-    "text": "expire.",
-    "start": 157.14,
-    "end": 157.88
+    "text": "roadmap.",
+    "start": 137.19,
+    "end": 137.84
   }
 ]

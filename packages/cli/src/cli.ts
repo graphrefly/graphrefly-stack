@@ -18,6 +18,8 @@ import {
 } from "./codex-plan-provider.js";
 import { exportEvidenceBundle, type LiveRunRecord } from "./exporter.js";
 import { createFlagshipFixture, readRuntimeSuite } from "./fixture.js";
+import { readPortableEvidenceBundle } from "./portable-bundle.js";
+import { createRepositoryReview, RepositoryReviewError } from "./repository-review.js";
 import { startReviewServer } from "./review-server.js";
 import { SystemGitAdapter } from "./system-git.js";
 
@@ -28,7 +30,8 @@ Usage:
   graphrefly-stack plan [--fixture <runtime-suite.json>] [--mode replay|live] --json
   graphrefly-stack gate [--fixture <runtime-suite.json>] [--case <case-id>] --json
   graphrefly-stack replan [--mode replay|live] [--fallback none|replay] --json
-  graphrefly-stack review [--bundle <path>] [--host 127.0.0.1] [--port 4173]
+  graphrefly-stack review --repo <path> --base <revision> --head <revision> [--host 127.0.0.1] [--port 4173] [--json]
+  graphrefly-stack review [--bundle <path>] [--fixture <runtime-suite.json>] [--host 127.0.0.1] [--port 4173]
   graphrefly-stack export [--fixture <runtime-suite.json>] [--plan-run <path>] [--replan-run <path>] [--output <path>] --json
 
 STACK-5 provides deterministic fixture replay, semantic gating, selective replan, and bundle export.
@@ -126,18 +129,29 @@ async function readLiveRun(path: string | undefined, kind: "plan" | "replan") {
 }
 
 async function reviewDataFromBundle(bundle: string) {
-	const root = resolve(bundle);
-	const [plan, gateResult, delta, stack, reviewDecision, checks, manifest, ...rawDiffs] =
-		await Promise.all([
-			readJson(resolve(root, "plan/change-plan.json")),
-			readJson(resolve(root, "gates/after-change.json")),
-			readJson(resolve(root, "blueprints/delta.json")),
-			readJson(resolve(root, "stack.json")),
-			readJson(resolve(root, "review/decision.json")),
-			readJson(resolve(root, "checks/after-rebase.json")),
-			readJson(resolve(root, "manifest.json")),
-			...(["u1", "u2", "u3"] as const).map((unit) => readJson(resolve(root, `diffs/${unit}.json`))),
-		]);
+	const portable = await readPortableEvidenceBundle(bundle);
+	const artifact = (path: string): Record<string, unknown> => {
+		const value = portable.artifacts[path];
+		if (typeof value !== "object" || value === null || Array.isArray(value)) {
+			throw new Error(`Portable evidence artifact is not an object: ${path}`);
+		}
+		return value as Record<string, unknown>;
+	};
+	const plan = artifact("plan/change-plan.json");
+	const gateResult = artifact("gates/after-change.json");
+	const delta = artifact("blueprints/delta.json");
+	const stack = artifact("stack.json");
+	const reviewDecision = artifact("review/decision.json");
+	const checks = portable.artifacts["checks/after-rebase.json"];
+	const manifest = portable.manifest;
+	const rawDiffs = (["u1", "u2", "u3"] as const).map((unit) => artifact(`diffs/${unit}.json`));
+	const blueprintKeys = ["base", "u1", "u2", "u3"] as const;
+	const blueprintArtifacts = blueprintKeys.map((key) => ({
+		workUnitId: key === "base" ? "BASE" : key.toUpperCase(),
+		snapshot: artifact(`blueprints/commits/${key}.json`),
+		diagram: artifact(`blueprints/diagrams/${key}.json`),
+		delta: key === "base" ? null : artifact(`blueprints/deltas/${key}.json`),
+	}));
 	const commits = (stack.commits as Record<string, unknown>[])
 		.filter((commit) => typeof commit.workUnitId === "string")
 		.map((commit) => ({
@@ -148,24 +162,34 @@ async function reviewDataFromBundle(bundle: string) {
 		(commit) => commit.role === "concurrent",
 	);
 	return {
-		source: "redacted-bundle",
-		caseId: "clean-rebase-semantic-stale",
-		baseOid:
-			((concurrent?.oid as Record<string, unknown> | undefined)?.value as string) ?? "unknown",
-		commits,
-		workUnits: plan.workUnits,
-		gateResult,
-		delta,
-		reviewDecision,
-		checks,
-		rawDiffs,
-		manifest: {
-			runId: manifest.runId,
-			model: manifest.model,
-			promptVersion: manifest.promptVersion,
-			artifactCount: (manifest.artifacts as unknown[]).length,
+		path: portable.path,
+		reviewData: {
+			source: "redacted-bundle",
+			caseId: "clean-rebase-semantic-stale",
+			baseOid:
+				((concurrent?.oid as Record<string, unknown> | undefined)?.value as string) ?? "unknown",
+			commits,
+			workUnits: plan.workUnits,
+			gateResult,
+			delta,
+			reviewDecision,
+			checks,
+			rawDiffs,
+			blueprints: blueprintArtifacts.map((blueprintArtifact) => ({
+				...blueprintArtifact,
+				oid: (blueprintArtifact.snapshot.commit as Record<string, unknown>).value as string,
+				parentOid:
+					((blueprintArtifact.snapshot.semanticParent as Record<string, unknown> | null)
+						?.value as string) ?? null,
+			})),
+			manifest: {
+				runId: manifest.runId,
+				model: manifest.model,
+				promptVersion: manifest.promptVersion,
+				artifactCount: manifest.artifacts.length,
+			},
+			bundleAvailable: true,
 		},
-		bundleAvailable: true,
 	};
 }
 
@@ -279,10 +303,59 @@ export async function runCli(argv = process.argv.slice(2)): Promise<number> {
 		return 0;
 	}
 
+	const host = readOption(argv, "--host") ?? "127.0.0.1";
+	if (host !== "127.0.0.1") {
+		return failure(
+			command,
+			json,
+			"REVIEW_HOST_NOT_LOOPBACK",
+			"The local review server only binds to 127.0.0.1",
+		);
+	}
+	const portValue = readOption(argv, "--port") ?? "4173";
+	const port = Number.parseInt(portValue, 10);
+	if (!Number.isInteger(port) || port < 0 || port > 65535) {
+		return failure(command, json, "INVALID_PORT", portValue);
+	}
+
 	let reviewData: unknown;
+	let evidenceBundlePath: string | undefined;
+	const repository = readOption(argv, "--repo");
+	const base = readOption(argv, "--base");
+	const head = readOption(argv, "--head");
+	const hasRepositoryReviewOption = ["--repo", "--base", "--head"].some((option) =>
+		argv.includes(option),
+	);
 	const bundle = readOption(argv, "--bundle");
-	if (bundle !== undefined) {
-		reviewData = await reviewDataFromBundle(bundle);
+	if (hasRepositoryReviewOption) {
+		if (repository === undefined || base === undefined || head === undefined) {
+			return failure(
+				command,
+				json,
+				"REVIEW_RANGE_INCOMPLETE",
+				"--repo, --base, and --head are required together",
+			);
+		}
+		if (bundle !== undefined || argv.includes("--fixture")) {
+			return failure(
+				command,
+				json,
+				"REVIEW_SOURCE_CONFLICT",
+				"Generic repository review cannot be mixed with fixture or bundle input",
+			);
+		}
+		try {
+			reviewData = await createRepositoryReview({ repository, base, head });
+		} catch (error) {
+			if (error instanceof RepositoryReviewError) {
+				return failure(command, json, error.code, error.message);
+			}
+			throw error;
+		}
+	} else if (bundle !== undefined) {
+		const loaded = await reviewDataFromBundle(bundle);
+		reviewData = loaded.reviewData;
+		evidenceBundlePath = loaded.path;
 	} else {
 		const runtime = await readRuntimeSuite(readOption(argv, "--fixture") ?? defaultRuntimeSuite);
 		const fixtureCase = caseFrom(runtime, "clean-rebase-semantic-stale");
@@ -314,23 +387,20 @@ export async function runCli(argv = process.argv.slice(2)): Promise<number> {
 			reviewDecision: { decision: "defer" },
 			checks: runtime.ordinaryChecks,
 			rawDiffs,
+			blueprints: runtime.reviewBlueprints,
 			manifest: null,
 			bundleAvailable: false,
 		};
 	}
-	const host = readOption(argv, "--host") ?? "127.0.0.1";
-	const portValue = readOption(argv, "--port") ?? "4173";
-	const port = Number.parseInt(portValue, 10);
-	if (!Number.isInteger(port) || port < 0 || port > 65535) {
-		process.stderr.write(`INVALID_PORT: ${portValue}\n`);
-		return 1;
+	if (json) {
+		success(command, "deterministic", reviewData, true);
+		return 0;
 	}
-
 	const running = await startReviewServer({
 		host,
 		port,
 		reviewData,
-		evidenceBundlePath: bundle === undefined ? undefined : resolve(bundle, "evidence-bundle.json"),
+		evidenceBundlePath,
 	});
 	process.stderr.write(
 		`GraphReFly Stack review shell (${CORE_ARCHITECTURE.version}) listening at ${running.url}\n`,
@@ -351,7 +421,7 @@ if (import.meta.url === entry) {
 			const argv = process.argv.slice(2);
 			const command = commandFrom(argv);
 			const message = error instanceof Error ? error.message : String(error);
-			if (command !== null && command !== "review" && argv.includes("--json")) {
+			if (command !== null && argv.includes("--json")) {
 				const mode =
 					readOption(argv, "--mode") === "live"
 						? "live"

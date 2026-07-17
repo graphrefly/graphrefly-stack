@@ -1,0 +1,23 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "urn:graphrefly-stack:schema:repository-config:v1",
+	"title": "GraphReFly Stack repository config v1",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["schema", "blueprint"],
+	"properties": {
+		"schema": { "const": "graphrefly.stack.repository.v1" },
+		"blueprint": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["entrypoint"],
+			"properties": {
+				"entrypoint": {
+					"type": "string",
+					"minLength": 1,
+					"pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\)[A-Za-z0-9._/-]+$"
+				}
+			}
+		}
+	}
+}

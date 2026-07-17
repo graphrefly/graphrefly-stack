@@ -1,4 +1,4 @@
 interface:
   display_name: "Stack Design Review"
-  short_description: "Review scenario, contracts, architecture, and UI boundaries"
-  default_prompt: "Use $stack-design-review to review this GraphReFly Stack design before implementation."
+  short_description: "Run a full Q1–Q9 product and architecture review"
+  default_prompt: "Use $stack-design-review to run the complete Q1–Q9 review before locking or implementing this GraphReFly Stack product design."

@@ -1,441 +1,682 @@
-import { useEffect, useMemo, useState } from "react";
+import mermaid from "mermaid";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import fixtureSuite from "../../../fixtures/contracts/v1/golden-suite.json";
+import { GenericRepositoryReview, type GenericReviewData } from "./GenericRepositoryReview";
 
-function required<T>(value: T | undefined, message: string): T {
-	if (value === undefined) throw new Error(message);
-	return value;
+interface GraphNode {
+	id: string;
+	name?: string;
+	factory: string;
+	deps: string[];
+	meta?: Record<string, unknown>;
 }
 
-const contractCase = required(
-	fixtureSuite.cases.find((fixtureCase) => fixtureCase.caseId === "clean-rebase-semantic-stale"),
-	"The semantic-stale golden case is missing",
-);
+interface GraphEdge {
+	from: string;
+	to: string;
+}
 
-const contractDelta = required(
-	fixtureSuite.deltas[contractCase.deltaIndex],
-	"The semantic-stale Blueprint delta is missing",
-);
+interface BlueprintSnapshot {
+	commit: { value: string };
+	semanticParent: { value: string } | null;
+	topologyHash: { value: string };
+	policyRevision: string;
+	blueprint: {
+		version: "graphrefly.blueprint.v1";
+		topology: { name?: string; nodes: GraphNode[]; edges: GraphEdge[] };
+		diagnostics?: { ok: boolean; issues: unknown[] };
+		provenance?: Record<string, unknown>;
+	};
+}
+
+interface BlueprintDelta {
+	structural: {
+		addedNodes: GraphNode[];
+		removedNodeIds: string[];
+		addedEdges: GraphEdge[];
+		removedEdges: GraphEdge[];
+	};
+	claimImpacts: { workUnitId: string; claimId: string; impact: "none" | "affected" }[];
+}
+
+interface ReviewBlueprint {
+	workUnitId: "BASE" | "U1" | "U2" | "U3";
+	oid: string;
+	parentOid: string | null;
+	snapshot: BlueprintSnapshot;
+	delta: BlueprintDelta | null;
+	diagram: {
+		format: "mermaid";
+		source: string;
+		renderer: "@graphrefly/ts/render.describeToMermaid";
+	};
+}
+
+interface RawDiff {
+	workUnitId: string;
+	paths: string[];
+	patch: string;
+}
 
 interface ReviewData {
 	source: "contract-fallback" | "real-git-runtime" | "redacted-bundle";
-	caseId: string;
 	baseOid: string;
 	commits: { workUnitId: string; oid: string }[];
 	workUnits: typeof fixtureSuite.changePlan.workUnits;
-	gateResult: typeof contractCase.expectedGate;
-	delta: typeof contractDelta;
-	reviewDecision: { decision: string; reviewerLabel?: string; identityVerified?: boolean };
+	gateResult: (typeof fixtureSuite.cases)[number]["expectedGate"];
+	reviewDecision: { decision: string };
 	checks: typeof fixtureSuite.checks;
-	rawDiffs: {
-		schema: "urn:graphrefly-stack:schema:raw-diff:v1";
-		workUnitId: string;
-		commit: { algorithm: string; value: string };
-		paths: string[];
-		patch: string;
-	}[];
-	manifest: null | {
-		runId: string;
-		model: { source: string; id: string; reasoningEffort: string };
-		promptVersion: string;
-		artifactCount: number;
-	};
+	rawDiffs: RawDiff[];
+	blueprints: ReviewBlueprint[];
 	bundleAvailable: boolean;
 }
 
-const contractReviewData: ReviewData = {
-	source: "contract-fallback",
-	caseId: contractCase.caseId,
-	baseOid: "contract-only",
-	commits: fixtureSuite.changePlan.workUnits.map((unit, index) => ({
-		workUnitId: unit.id,
-		oid: required(fixtureSuite.stack.commits[index + 1], "Contract commit is missing").oid.value,
-	})),
-	workUnits: fixtureSuite.changePlan.workUnits,
-	gateResult: contractCase.expectedGate,
-	delta: contractDelta,
-	reviewDecision: contractCase.reviewDecision,
-	checks: fixtureSuite.checks,
-	rawDiffs: [],
-	manifest: null,
-	bundleAvailable: false,
-};
+const staleCase = fixtureSuite.cases.find(
+	(fixtureCase) => fixtureCase.caseId === "clean-rebase-semantic-stale",
+);
+
+if (staleCase === undefined) throw new Error("The semantic-stale contract case is missing");
 
 const unitLabels: Record<string, string> = {
 	U1: "Contracts",
-	U2: "Runtime",
+	U2: "Graph runtime",
 	U3: "HTTP adapter",
 };
 
-function shortOid(value: string): string {
-	return value.slice(0, 7);
+function short(value: string, size = 7): string {
+	return value.slice(0, size);
 }
 
-function statusLabel(verdict: string): string {
-	return verdict === "valid" ? "Valid" : "Needs replan";
-}
-
-function reasonExplanation(reason: string): string {
-	if (reason === "DEPENDENCY_INVALID") return "Its required upstream work unit is invalid.";
+function reasonCopy(reason: string): string {
 	if (reason === "BLUEPRINT_WITNESS_STALE")
-		return "The accepted architecture witness predates the current GraphBlueprint.";
+		return "This change was planned against an older GraphReFly Blueprint.";
 	if (reason === "POLICY_SESSION_WRITE_REQUIRES_BROKER")
-		return "session-writes.v2 requires the mutation to pass through sessionMutationBroker.";
-	return "The accepted record no longer matches a deterministic repository witness.";
+		return "The refresh persistence path bypasses the broker required by session-writes.v2.";
+	if (reason === "DEPENDENCY_INVALID") return "Its required upstream runtime change is invalid.";
+	return "A deterministic repository witness no longer matches this change.";
 }
 
-export function App() {
-	const [reviewData, setReviewData] = useState<ReviewData>(contractReviewData);
-	const [selectedUnitId, setSelectedUnitId] = useState("U2");
-	const [reviewDraft, setReviewDraft] = useState<"defer" | "request-replan">("defer");
+interface DiagramModel {
+	aliases: Map<string, string>;
+	edges: { fromAlias: string; toAlias: string; from: string; to: string }[];
+}
+
+function parseGraphReFlyMermaid(source: string): DiagramModel {
+	const aliases = new Map<string, string>();
+	const aliasedEdges: { fromAlias: string; toAlias: string }[] = [];
+	for (const line of source.split("\n")) {
+		const node = line.match(/^\s*([A-Za-z0-9_]+)\[("(?:\\.|[^"])*")\]\s*$/u);
+		if (node?.[1] !== undefined && node[2] !== undefined) {
+			aliases.set(node[1], JSON.parse(node[2]) as string);
+		}
+		const edge = line.match(/^\s*([A-Za-z0-9_]+)\s*-->\s*([A-Za-z0-9_]+)\s*$/u);
+		if (edge?.[1] !== undefined && edge[2] !== undefined) {
+			aliasedEdges.push({ fromAlias: edge[1], toAlias: edge[2] });
+		}
+	}
+	return {
+		aliases,
+		edges: aliasedEdges.flatMap((edge) => {
+			const from = aliases.get(edge.fromAlias);
+			const to = aliases.get(edge.toAlias);
+			return from === undefined || to === undefined ? [] : [{ ...edge, from, to }];
+		}),
+	};
+}
+
+function styledGraphReFlyMermaid(blueprint: ReviewBlueprint, blockedReasons: string[]): string {
+	const parsed = parseGraphReFlyMermaid(blueprint.diagram.source);
+	const aliasByNode = new Map([...parsed.aliases].map(([alias, node]) => [node, alias]));
+	const addedNodes =
+		blueprint.delta?.structural.addedNodes
+			.map((node) => aliasByNode.get(node.id))
+			.filter((alias): alias is string => alias !== undefined) ?? [];
+	const addedEdges = new Set(
+		blueprint.delta?.structural.addedEdges.map((edge) => `${edge.from}\u0000${edge.to}`) ?? [],
+	);
+	const addedEdgeIndexes = parsed.edges.flatMap((edge, index) =>
+		addedEdges.has(`${edge.from}\u0000${edge.to}`) ? [index] : [],
+	);
+	const blockedAlias = blockedReasons.includes("POLICY_SESSION_WRITE_REQUIRES_BROKER")
+		? aliasByNode.get("session.persist.refresh")
+		: undefined;
+	const styles = [
+		"classDef added fill:#dff2e8,stroke:#25845d,stroke-width:3px,color:#132f27;",
+		"classDef blocked fill:#fff0ed,stroke:#c74332,stroke-width:4px,color:#4f1912;",
+	];
+	if (addedNodes.length > 0) styles.push(`class ${addedNodes.join(",")} added;`);
+	if (blockedAlias !== undefined) styles.push(`class ${blockedAlias} blocked;`);
+	if (addedEdgeIndexes.length > 0) {
+		styles.push(`linkStyle ${addedEdgeIndexes.join(",")} stroke:#25845d,stroke-width:3px;`);
+	}
+	return `${blueprint.diagram.source}\n${styles.join("\n")}`;
+}
+
+mermaid.initialize({
+	startOnLoad: false,
+	securityLevel: "strict",
+	theme: "base",
+	fontFamily: '"SFMono-Regular", Consolas, monospace',
+	themeVariables: {
+		primaryColor: "#fbfcfd",
+		primaryTextColor: "#18313f",
+		primaryBorderColor: "#718b99",
+		lineColor: "#8197a3",
+	},
+	flowchart: { curve: "basis", htmlLabels: false, useMaxWidth: true },
+});
+
+let diagramSequence = 0;
+
+function nextDiagramId(): string {
+	diagramSequence += 1;
+	return `graphrefly-blueprint-${diagramSequence}`;
+}
+
+function mountMermaidSvg(target: HTMLDivElement, value: string): void {
+	const parsed = new DOMParser().parseFromString(value, "image/svg+xml");
+	const root = parsed.documentElement;
+	if (root.localName !== "svg" || root.namespaceURI !== "http://www.w3.org/2000/svg") {
+		throw new Error("Mermaid did not return an SVG document");
+	}
+	for (const unsafe of root.querySelectorAll("script, foreignObject")) unsafe.remove();
+	for (const element of root.querySelectorAll("*")) {
+		for (const attribute of [...element.attributes]) {
+			if (attribute.name.toLowerCase().startsWith("on")) element.removeAttribute(attribute.name);
+		}
+	}
+	target.replaceChildren(document.importNode(root, true));
+}
+
+function BlueprintDiagram({
+	blueprint,
+	blockedReasons,
+}: {
+	blueprint: ReviewBlueprint;
+	blockedReasons: string[];
+}) {
+	const policyBlocked = blockedReasons.includes("POLICY_SESSION_WRITE_REQUIRES_BROKER");
+	const [renderId] = useState(nextDiagramId);
+	const output = useRef<HTMLDivElement>(null);
+	const [rendering, setRendering] = useState(true);
+	const [renderError, setRenderError] = useState(false);
+
 	useEffect(() => {
-		const controller = new AbortController();
-		fetch("/api/review-data", { signal: controller.signal })
-			.then((response) => {
-				if (!response.ok) throw new Error(`Review data unavailable: ${response.status}`);
-				return response.json() as Promise<ReviewData>;
+		let current = true;
+		setRendering(true);
+		setRenderError(false);
+		output.current?.replaceChildren();
+		void mermaid
+			.render(
+				`${renderId}-${short(blueprint.oid)}`,
+				styledGraphReFlyMermaid(blueprint, blockedReasons),
+			)
+			.then((result) => {
+				if (current && output.current !== null) {
+					mountMermaidSvg(output.current, result.svg);
+					setRendering(false);
+				}
 			})
-			.then(setReviewData)
-			.catch((error: unknown) => {
-				if (!(error instanceof DOMException && error.name === "AbortError")) {
-					console.info("Using the checked-in contract fallback; run review with runtime evidence.");
+			.catch(() => {
+				if (current) {
+					setRendering(false);
+					setRenderError(true);
 				}
 			});
-		return () => controller.abort();
-	}, []);
-	const selectedUnit = useMemo(
-		() =>
-			reviewData.workUnits.find((unit) => unit.id === selectedUnitId) ?? reviewData.workUnits[0],
-		[reviewData, selectedUnitId],
+		return () => {
+			current = false;
+		};
+	}, [blockedReasons, blueprint, renderId]);
+
+	return (
+		<div className="diagram-stage">
+			<div
+				ref={output}
+				className="blueprint-svg mermaid-output"
+				role="img"
+				aria-busy={rendering}
+				aria-label={`GraphReFly Blueprint for ${blueprint.workUnitId}`}
+			/>
+			{rendering || renderError ? (
+				<output className="diagram-status">
+					{renderError
+						? "GraphReFly diagram could not be rendered."
+						: "Rendering GraphReFly diagram…"}
+				</output>
+			) : null}
+			<div className="diagram-legend">
+				<span>
+					<i className="legend-swatch added" />
+					Added in this commit
+				</span>
+				<span>
+					<i className="legend-swatch current" />
+					Existing GraphReFly node
+				</span>
+				{policyBlocked ? (
+					<span>
+						<i className="legend-swatch blocked" />
+						Policy violation
+					</span>
+				) : null}
+			</div>
+			{(blueprint.delta?.structural.removedNodeIds.length ?? 0) > 0 ? (
+				<p className="removed-note">
+					Removed: {blueprint.delta?.structural.removedNodeIds.join(", ")}
+				</p>
+			) : null}
+		</div>
 	);
+}
+
+type DiffLine = {
+	kind: "context" | "delete" | "add";
+	content: string;
+	oldNo?: number;
+	newNo?: number;
+};
+type DiffHunk = { header: string; lines: DiffLine[] };
+type FileDiff = {
+	oldPath: string;
+	newPath: string;
+	hunks: DiffHunk[];
+	additions: number;
+	deletions: number;
+};
+
+function parsePatch(patch: string): FileDiff[] {
+	const files: FileDiff[] = [];
+	let file: FileDiff | undefined;
+	let hunk: DiffHunk | undefined;
+	let oldNo = 0;
+	let newNo = 0;
+	for (const line of patch.split("\n")) {
+		const fileHeader = line.match(/^diff --git a\/(.+) b\/(.+)$/u);
+		if (fileHeader?.[1] !== undefined && fileHeader[2] !== undefined) {
+			file = {
+				oldPath: fileHeader[1],
+				newPath: fileHeader[2],
+				hunks: [],
+				additions: 0,
+				deletions: 0,
+			};
+			files.push(file);
+			hunk = undefined;
+			continue;
+		}
+		if (file === undefined) continue;
+		const hunkHeader = line.match(/^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/u);
+		if (hunkHeader?.[1] !== undefined && hunkHeader[2] !== undefined) {
+			oldNo = Number(hunkHeader[1]);
+			newNo = Number(hunkHeader[2]);
+			hunk = { header: line, lines: [] };
+			file.hunks.push(hunk);
+			continue;
+		}
+		if (hunk === undefined || line.startsWith("\\ No newline")) continue;
+		if (line.startsWith("-")) {
+			hunk.lines.push({ kind: "delete", content: line.slice(1), oldNo });
+			oldNo += 1;
+			file.deletions += 1;
+		} else if (line.startsWith("+")) {
+			hunk.lines.push({ kind: "add", content: line.slice(1), newNo });
+			newNo += 1;
+			file.additions += 1;
+		} else if (line.startsWith(" ")) {
+			hunk.lines.push({ kind: "context", content: line.slice(1), oldNo, newNo });
+			oldNo += 1;
+			newNo += 1;
+		}
+	}
+	return files;
+}
+
+function splitRows(lines: DiffLine[]) {
+	const rows: { left?: DiffLine; right?: DiffLine }[] = [];
+	let index = 0;
+	while (index < lines.length) {
+		const line = lines[index];
+		if (line?.kind === "context") {
+			rows.push({ left: line, right: line });
+			index += 1;
+			continue;
+		}
+		const group: DiffLine[] = [];
+		while (index < lines.length && lines[index]?.kind !== "context") {
+			const current = lines[index];
+			if (current !== undefined) group.push(current);
+			index += 1;
+		}
+		const deleted = group.filter((entry) => entry.kind === "delete");
+		const added = group.filter((entry) => entry.kind === "add");
+		for (let row = 0; row < Math.max(deleted.length, added.length); row += 1) {
+			rows.push({ left: deleted[row], right: added[row] });
+		}
+	}
+	return rows;
+}
+
+function CodeDiff({ diff }: { diff: RawDiff | undefined }) {
+	const files = useMemo(() => parsePatch(diff?.patch ?? ""), [diff]);
+	if (diff === undefined)
+		return <p className="empty-state">No real Git diff is available for this commit.</p>;
+	return (
+		<div className="file-diffs">
+			{files.map((file) => (
+				<details className="file-diff" open key={file.newPath}>
+					<summary>
+						<span className="file-icon">▱</span>
+						<strong>{file.newPath}</strong>
+						<span className="diff-stat">
+							<b>+{file.additions}</b>
+							<i>−{file.deletions}</i>
+						</span>
+					</summary>
+					<div className="diff-scroll">
+						<table className="split-diff">
+							<tbody>
+								{file.hunks.flatMap((hunk) => [
+									<tr className="hunk-row" key={`${file.newPath}-${hunk.header}`}>
+										<td colSpan={4}>{hunk.header}</td>
+									</tr>,
+									...splitRows(hunk.lines).map((row) => (
+										<tr
+											key={`${file.newPath}-${hunk.header}-${row.left?.oldNo ?? "x"}-${row.right?.newNo ?? "x"}-${row.left?.content ?? ""}-${row.right?.content ?? ""}`}
+										>
+											<td className={`line-number ${row.left?.kind === "delete" ? "delete" : ""}`}>
+												{row.left?.oldNo ?? ""}
+											</td>
+											<td
+												className={`code-line ${row.left?.kind === "delete" ? "delete" : row.left ? "context" : "empty"}`}
+											>
+												<span>{row.left?.kind === "delete" ? "−" : " "}</span>
+												{row.left?.content ?? ""}
+											</td>
+											<td className={`line-number ${row.right?.kind === "add" ? "add" : ""}`}>
+												{row.right?.newNo ?? ""}
+											</td>
+											<td
+												className={`code-line ${row.right?.kind === "add" ? "add" : row.right ? "context" : "empty"}`}
+											>
+												<span>{row.right?.kind === "add" ? "+" : " "}</span>
+												{row.right?.content ?? ""}
+											</td>
+										</tr>
+									)),
+								])}
+							</tbody>
+						</table>
+					</div>
+				</details>
+			))}
+		</div>
+	);
+}
+
+function LegacyReview({ reviewData }: { reviewData: ReviewData }) {
+	const [selectedUnitId, setSelectedUnitId] = useState("U2");
+
+	const selectedUnit =
+		reviewData.workUnits.find((unit) => unit.id === selectedUnitId) ?? reviewData.workUnits[0];
 	const selectedGate = reviewData.gateResult.units.find(
 		(unit) => unit.workUnitId === selectedUnit?.id,
 	);
-	const selectedImpact = reviewData.delta.claimImpacts.find(
-		(impact) => impact.workUnitId === selectedUnit?.id,
+	const selectedCommit = reviewData.commits.find(
+		(commit) => commit.workUnitId === selectedUnit?.id,
 	);
-	const selectedDiff = reviewData.rawDiffs.find(
-		(rawDiff) => rawDiff.workUnitId === selectedUnit?.id,
+	const selectedBlueprint = reviewData.blueprints.find(
+		(blueprint) => blueprint.workUnitId === selectedUnit?.id,
 	);
+	const selectedDiff = reviewData.rawDiffs.find((diff) => diff.workUnitId === selectedUnit?.id);
 	const selectedChecks = reviewData.checks.filter((check) =>
 		selectedUnit?.requiredChecks.includes(check.checkId),
 	);
-	const addedNode = reviewData.delta.structural.addedNodes[0];
-	const incomingEdge = reviewData.delta.structural.addedEdges.find(
-		(edge) => edge.to === addedNode?.id,
-	);
-	const outgoingEdge = reviewData.delta.structural.addedEdges.find(
-		(edge) => edge.from === addedNode?.id,
-	);
 
-	if (selectedUnit === undefined || selectedGate === undefined) {
-		throw new Error("The selected fixture work unit is incomplete");
+	if (selectedUnit === undefined || selectedGate === undefined || selectedCommit === undefined) {
+		throw new Error("The selected work unit is incomplete");
 	}
 
+	const structural = selectedBlueprint?.delta?.structural;
 	return (
 		<div className="app-shell">
-			<header className="masthead">
-				<div className="brand-lockup">
-					<div className="brand-mark" aria-hidden="true">
-						<span />
-						<span />
-					</div>
+			<header className="product-header">
+				<div className="brand">
+					<span className="brand-glyph" aria-hidden="true">
+						G
+					</span>
 					<div>
-						<p className="eyebrow">GraphReFly Stack / local review</p>
-						<p className="brand-name">Semantic validity above Git</p>
+						<strong>GraphReFly Stack</strong>
+						<small>refresh-token-rotation / local repository</small>
 					</div>
 				</div>
-				<div className="mode-chip">
-					<span className="mode-dot" />
-					{reviewData.manifest?.model.source === "codex"
-						? `${reviewData.manifest.model.id} · ${reviewData.manifest.model.reasoningEffort}`
-						: "Deterministic replay"}
-				</div>
+				<span className="runtime-badge">
+					<i />
+					Real Git · GraphReFly runtime
+				</span>
 			</header>
 
-			<section className="thesis" aria-labelledby="page-title">
+			<section className="selection-heading">
 				<div>
-					<p className="section-code">CASE 02 · CLEAN REBASE / STALE WITNESS</p>
-					<h1 id="page-title">Git is clean. The plan is not.</h1>
+					<p className="kicker">
+						{selectedUnit.id} · {unitLabels[selectedUnit.id]}
+					</p>
+					<h1>{selectedUnit.title}</h1>
+					<p>{selectedUnit.intent}</p>
 				</div>
-				<p className="thesis-copy">
-					The stack rebased without a text conflict, but the session-write architecture changed
-					under U2. Select a work unit to inspect the exact deterministic reason.
-				</p>
+				<div className={`gate-summary is-${selectedGate.verdict}`}>
+					<span>{selectedGate.verdict === "valid" ? "Valid" : "Needs replan"}</span>
+					<code>{short(selectedCommit.oid, 12)}</code>
+				</div>
 			</section>
 
-			<div className="proof-strip" role="note">
-				<span>STACK-7 synchronized review</span>
-				<span>Source: {reviewData.source}</span>
-				<span>
-					{reviewData.source === "contract-fallback"
-						? "Contract OIDs only"
-						: "Real Git objects · computed GateResult"}
-				</span>
-			</div>
-
-			<nav className="review-path" aria-label="90-second review path">
-				<span>90-second path</span>
-				<a href="#stack-title">1 · Select commit</a>
-				<a href="#blueprint-title">2 · Read impact</a>
-				<a href="#gate-title">3 · Verify gate</a>
-				<a href="#evidence-title">4 · Inspect evidence</a>
-			</nav>
-
-			<main className="workbench">
-				<section className="panel stack-panel" aria-labelledby="stack-title">
-					<div className="panel-heading">
-						<div>
-							<p className="section-code">GIT STACK</p>
-							<h2 id="stack-title">Rebased lineage</h2>
-						</div>
-						<span className="quiet-label">0 conflicts</span>
+			<main className="review-workbench">
+				<aside className="stack-column" aria-label="Git stack">
+					<div className="column-heading">
+						<span>Git stack</span>
+						<small>0 text conflicts</small>
 					</div>
-
-					<div className="commit-list">
-						{reviewData.workUnits.map((unit, index) => {
-							const gate = reviewData.gateResult.units[index];
-							const commit = reviewData.commits[index];
+					<div className="commit-stack">
+						{[...reviewData.workUnits].reverse().map((unit) => {
+							const gate = reviewData.gateResult.units.find(
+								(entry) => entry.workUnitId === unit.id,
+							);
+							const commit = reviewData.commits.find((entry) => entry.workUnitId === unit.id);
+							const blueprint = reviewData.blueprints.find((entry) => entry.workUnitId === unit.id);
 							if (gate === undefined || commit === undefined) return null;
-							const selected = unit.id === selectedUnit.id;
 							return (
 								<button
-									className={`commit-row ${selected ? "is-selected" : ""}`}
+									className={`commit-card ${unit.id === selectedUnit.id ? "is-selected" : ""}`}
 									type="button"
 									onClick={() => setSelectedUnitId(unit.id)}
-									aria-pressed={selected}
 									key={unit.id}
 								>
-									<span className={`commit-node status-${gate.verdict}`} aria-hidden="true" />
-									<span className="commit-copy">
+									<span className={`commit-dot is-${gate.verdict}`} />
+									<span className="commit-main">
 										<strong>
 											{unit.id} · {unitLabels[unit.id]}
 										</strong>
 										<small>
-											{shortOid(commit.oid)} · {unit.title}
+											{short(commit.oid)} · {unit.title}
 										</small>
 									</span>
-									<span className={`verdict-pill status-${gate.verdict}`}>
-										{statusLabel(gate.verdict)}
+									<span className="commit-meta">
+										<b>{gate.verdict === "valid" ? "Valid" : "Blocked"}</b>
+										<small>
+											BP {blueprint ? short(blueprint.snapshot.topologyHash.value) : "—"}
+										</small>
 									</span>
 								</button>
 							);
 						})}
-						<div className="base-row">
-							<span className="base-node" />
-							<span>
-								<strong>{shortOid(reviewData.baseOid)} · session broker policy</strong>
-								<small>Concurrent architecture change</small>
-							</span>
+						<div className="base-commit">
+							<span className="base-square" />
+							<div>
+								<strong>{short(reviewData.baseOid)} · A1</strong>
+								<small>Session broker architecture</small>
+							</div>
 						</div>
 					</div>
-				</section>
+				</aside>
 
-				<section className="panel blueprint-panel" aria-labelledby="blueprint-title">
-					<div className="panel-heading">
+				<section className="blueprint-column" aria-labelledby="blueprint-title">
+					<div className="column-heading blueprint-heading">
 						<div>
-							<p className="section-code">BLUEPRINT DELTA</p>
-							<h2 id="blueprint-title">The architecture moved</h2>
+							<span>GraphReFly Blueprint</span>
+							<small id="blueprint-title">
+								{selectedBlueprint
+									? `Generated at ${short(selectedBlueprint.oid)}`
+									: "Runtime data required"}
+							</small>
 						</div>
-						<span className="hash-label">{shortOid(reviewData.delta.to.value)}</span>
+						{selectedBlueprint ? (
+							<code>
+								{selectedBlueprint.diagram.renderer.replace("@graphrefly/ts/render.", "")}
+							</code>
+						) : null}
 					</div>
-
-					<div className="blueprint-rail" role="img" aria-label="Blueprint structural delta">
-						<div className="blueprint-node source-node">
-							{incomingEdge?.from ?? "architecture source"}
+					{selectedBlueprint ? (
+						<BlueprintDiagram
+							blueprint={selectedBlueprint}
+							blockedReasons={selectedGate.reasonCodes}
+						/>
+					) : (
+						<p className="empty-state">
+							Start the review command with a real fixture to generate the Blueprint diagram.
+						</p>
+					)}
+					<div className="delta-bar">
+						<div>
+							<span>Parent delta</span>
+							<strong>
+								{structural
+									? `${structural.addedNodes.length} nodes added · ${structural.addedEdges.length} edges added`
+									: "Architecture base"}
+							</strong>
 						</div>
-						<div className="blueprint-arrow" aria-hidden="true">
-							→
-						</div>
-						<div className="blueprint-node added-node">
-							<span>+ added</span>
-							{addedNode?.factory ?? "no added node"}
-							<small>{addedNode?.id}</small>
-						</div>
-						<div className="blueprint-arrow" aria-hidden="true">
-							→
-						</div>
-						<div className="blueprint-node target-node">
-							{outgoingEdge?.to ?? "architecture target"}
-						</div>
-					</div>
-
-					<div className="delta-facts">
 						<div>
 							<span>Policy</span>
-							<strong>session-writes.v1 → v2</strong>
+							<strong>{selectedBlueprint?.snapshot.policyRevision ?? "—"}</strong>
 						</div>
 						<div>
-							<span>Selected claim</span>
+							<span>Gate</span>
 							<strong>
-								{selectedImpact?.impact === "affected" ? "Affected" : "No structural impact"}
-							</strong>
-						</div>
-						<div>
-							<span>GraphReFly delta</span>
-							<strong>
-								{reviewData.delta.structural.addedNodes.length} node ·{" "}
-								{reviewData.delta.structural.addedEdges.length} edges
+								{selectedGate.reasonCodes.length === 0
+									? "No blocking reasons"
+									: `${selectedGate.reasonCodes.length} blocking reasons`}
 							</strong>
 						</div>
 					</div>
-				</section>
-
-				<section className="panel gate-panel" aria-labelledby="gate-title">
-					<div className="panel-heading">
-						<div>
-							<p className="section-code">DETERMINISTIC GATE</p>
-							<h2 id="gate-title">
-								{selectedUnit.id} / {statusLabel(selectedGate.verdict)}
-							</h2>
-						</div>
-						<span className={`large-status status-${selectedGate.verdict}`}>
-							{selectedGate.verdict === "valid" ? "✓" : "!"}
-						</span>
-					</div>
-
-					<div className="reason-stack" aria-live="polite">
-						{selectedGate.reasonCodes.length === 0 ? (
-							<div className="reason-card valid-reason">
-								<strong>No blocking reasons</strong>
-								<p>The accepted record remains bound to current deterministic witnesses.</p>
-							</div>
-						) : (
-							selectedGate.reasonCodes.map((reason) => (
-								<div className="reason-card" key={reason}>
+					{selectedGate.reasonCodes.length > 0 ? (
+						<div className="reason-list">
+							{selectedGate.reasonCodes.map((reason) => (
+								<div key={reason}>
 									<strong>{reason}</strong>
-									<p>{reasonExplanation(reason)}</p>
+									<span>{reasonCopy(reason)}</span>
 								</div>
-							))
-						)}
-					</div>
-
-					<div className="trust-separator">
-						<span>GateResult · read only</span>
-						<span>Human decision · {reviewData.reviewDecision.decision}</span>
-					</div>
+							))}
+						</div>
+					) : null}
 				</section>
 			</main>
 
-			<section className="detail-grid">
-				<article className="detail-card">
-					<p className="section-code">SEMANTIC CHANGE CARD</p>
-					<h2>{selectedUnit.title}</h2>
-					<p className="intent-copy">{selectedUnit.intent}</p>
-					<dl>
-						<div>
-							<dt>Dependencies</dt>
-							<dd>{selectedUnit.dependencies.join(" · ") || "None"}</dd>
-						</div>
-						<div>
-							<dt>Claim impact</dt>
-							<dd>
-								{selectedImpact?.claimId ?? "No claim"} · {selectedImpact?.impact ?? "none"}
-							</dd>
-						</div>
-						<div>
-							<dt>Allowed scope</dt>
-							<dd>{selectedUnit.allowedSourceScopes.join(" · ")}</dd>
-						</div>
-						<div>
-							<dt>Required checks</dt>
-							<dd>{selectedUnit.requiredChecks.join(" · ")}</dd>
-						</div>
-					</dl>
-				</article>
-
-				<article className="detail-card evidence-card" id="evidence-title">
-					<p className="section-code">TRUST BOUNDARY</p>
-					<h2>Claim ≠ evidence ≠ verdict</h2>
-					<div className="trust-flow">
-						<span>Model or human claim</span>
-						<b>→</b>
-						<span>Validated evidence</span>
-						<b>→</b>
-						<span>GateResult</span>
+			<section className="code-review" aria-labelledby="code-title">
+				<div className="section-heading">
+					<div>
+						<p className="kicker">Code changes</p>
+						<h2 id="code-title">{selectedDiff?.paths.length ?? 0} files changed</h2>
 					</div>
-					<p className="fixture-note">
-						{reviewData.source === "contract-fallback"
-							? "Checked-in contract fallback only; start review with runtime evidence for real Git proof."
-							: "Real Git evidence is projected read-only. The browser cannot edit the gate, approve a merge, or claim live model provenance."}
-					</p>
-					{reviewData.manifest ? (
-						<p className="manifest-line">
-							{reviewData.manifest.runId} · {reviewData.manifest.artifactCount} hashed artifacts ·{" "}
-							{reviewData.manifest.promptVersion}
-						</p>
-					) : null}
-				</article>
+					<span className="compare-label">Split diff · parent ↔ {selectedUnit.id}</span>
+				</div>
+				<CodeDiff diff={selectedDiff} />
+			</section>
 
-				<article className="detail-card diff-card">
-					<p className="section-code">RAW DIFF · ON DEMAND</p>
-					<h2>{selectedUnit.id} source patch</h2>
-					<p className="intent-copy">
-						Architecture review stays primary. Open the exact real-Git patch only when needed.
-					</p>
-					<details>
-						<summary>
-							Inspect {selectedDiff?.paths.length ?? 0} changed path
-							{selectedDiff?.paths.length === 1 ? "" : "s"}
-						</summary>
-						{selectedDiff ? (
-							<>
-								<p className="diff-paths">{selectedDiff.paths.join(" · ")}</p>
-								<pre>{selectedDiff.patch}</pre>
-							</>
-						) : (
-							<p className="fixture-note">
-								Raw diff is unavailable in contract-only fallback mode.
-							</p>
-						)}
-					</details>
-				</article>
-
-				<article className="detail-card review-card">
-					<p className="section-code">CHECKS & REVIEW ACTION</p>
-					<h2>Evidence can inform; it cannot self-approve</h2>
-					<ul className="check-list" aria-label={`${selectedUnit.id} required checks`}>
+			<section className="secondary-details">
+				<details>
+					<summary>
+						<span>Change contract</span>
+						<small>Scope, dependency, and claim</small>
+					</summary>
+					<div className="detail-grid">
+						<div>
+							<span>Depends on</span>
+							<strong>{selectedUnit.dependencies.join(", ") || "Nothing"}</strong>
+						</div>
+						<div>
+							<span>Allowed files</span>
+							<strong>{selectedUnit.allowedSourceScopes.join(" · ")}</strong>
+						</div>
+						<div>
+							<span>Blueprint claim</span>
+							<strong>
+								{selectedUnit.blueprintClaims.map((claim) => claim.id).join(", ") ||
+									"No structural claim"}
+							</strong>
+						</div>
+					</div>
+				</details>
+				<details>
+					<summary>
+						<span>Checks and review state</span>
+						<small>Deterministic evidence</small>
+					</summary>
+					<div className="check-grid">
 						{selectedChecks.map((check) => (
-							<li key={check.checkId}>
-								<span className="check-dot" aria-hidden="true" />
+							<div key={check.checkId}>
+								<i />
 								<strong>{check.checkId}</strong>
-								<small>
-									exit {check.exitCode} · stdout {shortOid(check.stdoutDigest.value)}
-								</small>
-							</li>
+								<code>
+									exit {check.exitCode} · {short(check.stdoutDigest.value)}
+								</code>
+							</div>
 						))}
-					</ul>
-					<fieldset className="review-actions" aria-label="Local review draft">
-						<button
-							type="button"
-							aria-pressed={reviewDraft === "defer"}
-							onClick={() => setReviewDraft("defer")}
-						>
-							Keep deferred
-						</button>
-						<button
-							type="button"
-							aria-pressed={reviewDraft === "request-replan"}
-							onClick={() => setReviewDraft("request-replan")}
-						>
-							Request replan
-						</button>
-					</fieldset>
-					<p className="fixture-note">
-						Local draft: {reviewDraft}. No action edits GateResult, writes evidence, approves, or
-						merges.
-					</p>
-					{reviewData.bundleAvailable ? (
-						<a className="export-link" href="/api/evidence-bundle" download>
-							Download redacted evidence bundle
-						</a>
-					) : (
-						<span className="export-link is-disabled">
-							Export available with bundle-backed review
-						</span>
-					)}
-				</article>
+						<div>
+							<i className="neutral" />
+							<strong>Human review</strong>
+							<code>{reviewData.reviewDecision.decision}</code>
+						</div>
+					</div>
+				</details>
+				{reviewData.bundleAvailable ? (
+					<a className="bundle-link" href="/api/evidence-bundle" download>
+						Download evidence bundle
+					</a>
+				) : null}
 			</section>
 		</div>
 	);
+}
+
+type RuntimeReview = ReviewData | GenericReviewData;
+
+export function App() {
+	const [reviewData, setReviewData] = useState<RuntimeReview | null>(null);
+	const [error, setError] = useState<string | null>(null);
+
+	useEffect(() => {
+		const controller = new AbortController();
+		fetch("/api/review-data", { signal: controller.signal })
+			.then((response) => {
+				if (!response.ok) throw new Error(`Review data unavailable (${response.status})`);
+				return response.json() as Promise<RuntimeReview>;
+			})
+			.then(setReviewData)
+			.catch((reason: unknown) => {
+				if (!(reason instanceof DOMException && reason.name === "AbortError")) {
+					setError(reason instanceof Error ? reason.message : "Review data unavailable");
+				}
+			});
+		return () => controller.abort();
+	}, []);
+
+	if (error !== null) {
+		return <main className="load-state is-error">{error}</main>;
+	}
+	if (reviewData === null) {
+		return <main className="load-state">Loading repository evidence…</main>;
+	}
+	if ("schema" in reviewData && reviewData.schema === "graphrefly.stack.review.v1") {
+		return <GenericRepositoryReview review={reviewData} />;
+	}
+	return <LegacyReview reviewData={reviewData as ReviewData} />;
 }

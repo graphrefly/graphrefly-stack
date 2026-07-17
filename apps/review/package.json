@@ -8,6 +8,7 @@
 		"dev": "vite --host 127.0.0.1"
 	},
 	"dependencies": {
+		"mermaid": "11.16.0",
 		"react": "19.2.7",
 		"react-dom": "19.2.7"
 	},

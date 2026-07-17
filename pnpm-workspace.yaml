@@ -4,3 +4,4 @@ packages:
   - packages/*
 minimumReleaseAgeExclude:
   - vite@8.1.5
+  - '@graphrefly/ts@0.3.0'

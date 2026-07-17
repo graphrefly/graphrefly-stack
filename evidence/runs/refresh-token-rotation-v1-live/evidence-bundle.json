@@ -6,11 +6,11 @@
 		"recordedAt": "2026-07-16T00:00:00Z",
 		"sourceCommit": {
 			"algorithm": "sha1",
-			"value": "3d8696c74e3bf1458079c0b69f63086e808c03f3"
+			"value": "3aca5ae979ae7a69bf296ec6ec7dce75f589b733"
 		},
 		"canonicalInputDigest": {
 			"algorithm": "sha256",
-			"value": "72f073c6ef14c508b4f89b3d1624b51c0ce9610318d89f87c9cdcfb600c63e44"
+			"value": "a7643027399dd283ce344d4e84312bd8ac4b8358e4b902ded84bec7d56f2c6a2"
 		},
 		"schemaVersion": "v1",
 		"promptVersion": "stack.plan.v1",
@@ -49,98 +49,98 @@
 				"path": "stack.json",
 				"hash": {
 					"algorithm": "sha256",
-					"value": "407ca624e2e61fa732e60dea2c8f5a1499e37a46a072c8cc4ce5d0e19dc1bc53"
+					"value": "b48b1821a51bfdfb3a896f8d6b040dae358fa577dc9609bab8871fe49411fc10"
 				}
 			},
 			{
 				"path": "blueprints/base.json",
 				"hash": {
 					"algorithm": "sha256",
-					"value": "52c8883699da7851e3cb2ccae91a41f1815b184669f93d6825dcec4d14912760"
+					"value": "9fee95fa408602362f7a7f1fdfb10700d9ace664bab055b3aeb9c22f686a2a52"
 				}
 			},
 			{
 				"path": "blueprints/current.json",
 				"hash": {
 					"algorithm": "sha256",
-					"value": "14611f4937ded262e8ee99fa7a672c50f6533f529baf3eda333ff1c09d35cea2"
+					"value": "c321274320b4e7024e4cb1a06773edee99e610484f67fe644c5842d2ae8215c3"
 				}
 			},
 			{
 				"path": "blueprints/delta.json",
 				"hash": {
 					"algorithm": "sha256",
-					"value": "e6c1844fa66b5a24fd16b595e1e18a0f9504f4b8f63a0e172cc5df2ba491f3bb"
+					"value": "a5e862d91fae4e3da1de80c2cc16b262f3b1cb8865d58ca4433b4831eae56484"
 				}
 			},
 			{
 				"path": "plan/change-plan.json",
 				"hash": {
 					"algorithm": "sha256",
-					"value": "7c9b131a15f81399d8358410458b0fbff7d02ac80e60af044f96d7d071ee8dd5"
+					"value": "6766093f73b328b732b622348dd5234fc1676ed29d274533fa3e439851749b9c"
 				}
 			},
 			{
 				"path": "semantic-changes/u1.json",
 				"hash": {
 					"algorithm": "sha256",
-					"value": "a9a36fdcbd09f11655fabc9a0788a95a68ebca6e6a3db54bb1454c72286b2794"
+					"value": "dd52a92377ebf13837737ca3c2460ecb069d83cb21c29ee785d8917657f5d70f"
 				}
 			},
 			{
 				"path": "semantic-changes/u2.json",
 				"hash": {
 					"algorithm": "sha256",
-					"value": "d2aea80e2cdf201494303a16c5a45126f2fb2f9df2435c5f58af5bc35be20fa3"
+					"value": "d519604862a6088116e1accf11b430a4bde33f6f9ba26b02de9ad6ab6e5b29ca"
 				}
 			},
 			{
 				"path": "semantic-changes/u3.json",
 				"hash": {
 					"algorithm": "sha256",
-					"value": "56a8d7e99dc2278bd99495260502de6629bb1fa8b4c297825369fd7accbb8b6c"
+					"value": "6132b62ce98bde1cb5df4d5b173c1569322f149fc65e7dc93672562568f4b410"
 				}
 			},
 			{
 				"path": "semantic-changes/final/u1.json",
 				"hash": {
 					"algorithm": "sha256",
-					"value": "b4fa991c54fcc307ad6aaedffdfcf1553ad7c0ea33ec50a57833c89ad944e44f"
+					"value": "9c5b26dd9e30777a577014e09aae20479b9fa6a84fcd38393568d08a4960fb48"
 				}
 			},
 			{
 				"path": "semantic-changes/final/u2.json",
 				"hash": {
 					"algorithm": "sha256",
-					"value": "0a55379ef2342257c7e8c8848a0be86346d036942350c032d5974c138e2dd07b"
+					"value": "bb9cc937589c3436ae02af8083271c25b28352c568dab469f573d7e9a01aa422"
 				}
 			},
 			{
 				"path": "semantic-changes/final/u3.json",
 				"hash": {
 					"algorithm": "sha256",
-					"value": "5c45013ee32bcd6830620add74254576f3c024c0b6fab2a9b9aa3669c36812b7"
+					"value": "63145c3db0485e62856560f54181d97b4e467115c2da54fbf2e836873cf4d85a"
 				}
 			},
 			{
 				"path": "gates/before-change.json",
 				"hash": {
 					"algorithm": "sha256",
-					"value": "707fb13365d1ed4d76f845cdbf95aaa066c28016b7cdd0697fa07e53c95ab32f"
+					"value": "c1cbf65c6e9d255abd43708126015b477f21c4929a2ab709659af708abcf4da8"
 				}
 			},
 			{
 				"path": "gates/after-change.json",
 				"hash": {
 					"algorithm": "sha256",
-					"value": "6bd4c2e97ce4ff5ad7c8210843f3d4103549de431377b982357c52fee73a9964"
+					"value": "1be189442cb73f6a11408d17890f38417cc7b76dd31281d0d3796889f9a38294"
 				}
 			},
 			{
 				"path": "replan/affected.json",
 				"hash": {
 					"algorithm": "sha256",
-					"value": "fcbedf7fb9a86c74fb8c1b82656be876eca5fe7043c27710526ef083fe235a02"
+					"value": "a68ed8d38e6ec7c081fe8ea3968a941aa4b6197448b679f9542cc9fbbc0a186c"
 				}
 			},
 			{
@@ -161,49 +161,126 @@
 				"path": "gates/final.json",
 				"hash": {
 					"algorithm": "sha256",
-					"value": "287c5fcbe6ac4aec9d82a1fb4c59a28cb58055bb717a99cc6124b786334227f3"
+					"value": "d2511e188df809b43d76f1e2e5fbdebc994941c93892902d2cd4c3df248e3fac"
 				}
 			},
 			{
 				"path": "review/decision.json",
 				"hash": {
 					"algorithm": "sha256",
-					"value": "33f0edd166a6c17a7770fb84ac64cbcd43e861f2357a81838dffc95c96251e7f"
+					"value": "b50134bddbfd07683d4fb2bf7dd4d49225691a96d220bbf463976252f4338f1e"
+				}
+			},
+			{
+				"path": "blueprints/commits/base.json",
+				"hash": {
+					"algorithm": "sha256",
+					"value": "2944a9d2d24eccac5b6d07c380c9658e228a2dde3a6e102f773ea9509a19debb"
+				}
+			},
+			{
+				"path": "blueprints/diagrams/base.json",
+				"hash": {
+					"algorithm": "sha256",
+					"value": "341183952fd5ced4e59d221a8e9e1790637430f67ddbc5834363b222fc2ceb69"
+				}
+			},
+			{
+				"path": "blueprints/commits/u1.json",
+				"hash": {
+					"algorithm": "sha256",
+					"value": "6c2791c95bdaee70684c92394a3e0edea53a95f1b868ac9f33927def794a3573"
+				}
+			},
+			{
+				"path": "blueprints/diagrams/u1.json",
+				"hash": {
+					"algorithm": "sha256",
+					"value": "341183952fd5ced4e59d221a8e9e1790637430f67ddbc5834363b222fc2ceb69"
+				}
+			},
+			{
+				"path": "blueprints/deltas/u1.json",
+				"hash": {
+					"algorithm": "sha256",
+					"value": "ca29977be11f2ea816fe216e33a1ab40256df694a21f938d5ec7f47c820748c1"
+				}
+			},
+			{
+				"path": "blueprints/commits/u2.json",
+				"hash": {
+					"algorithm": "sha256",
+					"value": "099639e0723ed58a30f454dddcbddd31658476dd5587259ed3406496d1048dee"
+				}
+			},
+			{
+				"path": "blueprints/diagrams/u2.json",
+				"hash": {
+					"algorithm": "sha256",
+					"value": "e61002867f28e540c7453c060cad411b5075228d095294f5ccc7e0828babec7c"
+				}
+			},
+			{
+				"path": "blueprints/deltas/u2.json",
+				"hash": {
+					"algorithm": "sha256",
+					"value": "4e847b7dec6d2dd2e92152699c7197e790ddb8ec2634a2687854e6fd566db3a6"
+				}
+			},
+			{
+				"path": "blueprints/commits/u3.json",
+				"hash": {
+					"algorithm": "sha256",
+					"value": "c321274320b4e7024e4cb1a06773edee99e610484f67fe644c5842d2ae8215c3"
+				}
+			},
+			{
+				"path": "blueprints/diagrams/u3.json",
+				"hash": {
+					"algorithm": "sha256",
+					"value": "e61002867f28e540c7453c060cad411b5075228d095294f5ccc7e0828babec7c"
+				}
+			},
+			{
+				"path": "blueprints/deltas/u3.json",
+				"hash": {
+					"algorithm": "sha256",
+					"value": "bf7561ca7e27c1d68b493bd7bf3d6bef0a802a4c3ab2bd09ccb644d6e456ebb2"
 				}
 			},
 			{
 				"path": "diffs/u1.json",
 				"hash": {
 					"algorithm": "sha256",
-					"value": "076abeb7507b54ec3db8a12fa4ec40cc9f6c0cc8f58776a9ec132bbdc35622f6"
+					"value": "b845678c21df442bcdc15ddf0ff51e41c881676c6b81ef33323e06e061c69463"
 				}
 			},
 			{
 				"path": "diffs/u2.json",
 				"hash": {
 					"algorithm": "sha256",
-					"value": "7d450fcbca0dfb25b6aa61f96a799e770d9ee16654903822c83e75484e5581a6"
+					"value": "f89285a2e1f8842956dc701242a237744fc30194896857c3d8488b0277959e62"
 				}
 			},
 			{
 				"path": "diffs/u3.json",
 				"hash": {
 					"algorithm": "sha256",
-					"value": "c5d08cf6aab45a49634f5fa73693001adc2232515bb1dd9bb0db6e3adb7d1574"
+					"value": "cee6e306a4134da1d722620ccfc9ff73ecf302753188a612a88680ed704250fa"
 				}
 			},
 			{
 				"path": "provenance/live-plan.json",
 				"hash": {
 					"algorithm": "sha256",
-					"value": "953fafc29fec0a6e9ad37d98ef27a6b58dcb7710792796b630589ab1b4dcc20a"
+					"value": "28d10374c81b8ec18c3261fb1a0df16aa66e9cb52c8d483e9c6c36cce8c19ed8"
 				}
 			},
 			{
 				"path": "provenance/live-replan.json",
 				"hash": {
 					"algorithm": "sha256",
-					"value": "550faab10768e91fedddb1f7a4e33ea0342390841be9566013d151574648e34e"
+					"value": "cb6d5716d232361cabe5abc40e926a3172f7b2d59bca2954c405544b08402527"
 				}
 			}
 		]
@@ -219,17 +296,17 @@
 			"linearity": "linear",
 			"base": {
 				"algorithm": "sha1",
-				"value": "7a91c600853db1e6a8762d8434da2a3f6037070f"
+				"value": "e8c9e09d03071b8f82bf555e60047968cf3dc8ce"
 			},
 			"head": {
 				"algorithm": "sha1",
-				"value": "08a3f4403cbcf115aeee42890fe8da91fad58a75"
+				"value": "763e566fcc0bd8836b1f5f0d67e055ab5670930d"
 			},
 			"commits": [
 				{
 					"oid": {
 						"algorithm": "sha1",
-						"value": "7a91c600853db1e6a8762d8434da2a3f6037070f"
+						"value": "e8c9e09d03071b8f82bf555e60047968cf3dc8ce"
 					},
 					"parent": null,
 					"role": "base",
@@ -238,11 +315,11 @@
 				{
 					"oid": {
 						"algorithm": "sha1",
-						"value": "250005e73c04ddada45ba29b6ba458a86198e058"
+						"value": "c63c13717fd39d140196f37214ad88c2cb568b76"
 					},
 					"parent": {
 						"algorithm": "sha1",
-						"value": "7a91c600853db1e6a8762d8434da2a3f6037070f"
+						"value": "e8c9e09d03071b8f82bf555e60047968cf3dc8ce"
 					},
 					"role": "concurrent",
 					"workUnitId": null
@@ -250,11 +327,11 @@
 				{
 					"oid": {
 						"algorithm": "sha1",
-						"value": "3d8696c74e3bf1458079c0b69f63086e808c03f3"
+						"value": "3aca5ae979ae7a69bf296ec6ec7dce75f589b733"
 					},
 					"parent": {
 						"algorithm": "sha1",
-						"value": "250005e73c04ddada45ba29b6ba458a86198e058"
+						"value": "c63c13717fd39d140196f37214ad88c2cb568b76"
 					},
 					"role": "work-unit",
 					"workUnitId": "U1"
@@ -262,11 +339,11 @@
 				{
 					"oid": {
 						"algorithm": "sha1",
-						"value": "acc8c32a2ff2fd5fe44b87bb352ee2b831af8a38"
+						"value": "249d6a676cbce123a3a3327e7e003112c61ea647"
 					},
 					"parent": {
 						"algorithm": "sha1",
-						"value": "3d8696c74e3bf1458079c0b69f63086e808c03f3"
+						"value": "3aca5ae979ae7a69bf296ec6ec7dce75f589b733"
 					},
 					"role": "work-unit",
 					"workUnitId": "U2"
@@ -274,11 +351,11 @@
 				{
 					"oid": {
 						"algorithm": "sha1",
-						"value": "08a3f4403cbcf115aeee42890fe8da91fad58a75"
+						"value": "763e566fcc0bd8836b1f5f0d67e055ab5670930d"
 					},
 					"parent": {
 						"algorithm": "sha1",
-						"value": "acc8c32a2ff2fd5fe44b87bb352ee2b831af8a38"
+						"value": "249d6a676cbce123a3a3327e7e003112c61ea647"
 					},
 					"role": "work-unit",
 					"workUnitId": "U3"
@@ -289,11 +366,11 @@
 			"schema": "urn:graphrefly-stack:schema:blueprint-snapshot:v1",
 			"commit": {
 				"algorithm": "sha1",
-				"value": "ff5297fca08f731825cf85a7f3b5db12f2e1bc28"
+				"value": "9089e0e8ac21319378f7cd95215ad6c7596645a7"
 			},
 			"semanticParent": {
 				"algorithm": "sha1",
-				"value": "ea9de0043e54097cbf5464e1e1c0abfaec1719f3"
+				"value": "966557e7b13b892166b5412133c829b954f652e8"
 			},
 			"provider": {
 				"schema": "urn:graphrefly-stack:schema:blueprint-provider-capabilities:v1",
@@ -313,48 +390,47 @@
 			},
 			"blueprint": {
 				"version": "graphrefly.blueprint.v1",
-				"provenance": {
-					"revision": "S3",
-					"entrypoint": "graphrefly-fixture.mjs",
-					"isolation": "detached-worktree-node-permission-read-only",
-					"timeoutMs": 5000
-				},
 				"topology": {
-					"name": "session",
 					"nodes": [
 						{
 							"id": "password-reset.intent",
 							"factory": "state",
-							"deps": []
+							"deps": [],
+							"name": "password-reset.intent"
+						},
+						{
+							"id": "refresh.request",
+							"factory": "state",
+							"deps": [],
+							"name": "refresh.request"
+						},
+						{
+							"id": "refresh.rotate",
+							"factory": "derived",
+							"deps": ["refresh.validate"],
+							"name": "refresh.rotate"
+						},
+						{
+							"id": "refresh.validate",
+							"factory": "derived",
+							"deps": ["refresh.request"],
+							"name": "refresh.validate"
 						},
 						{
 							"id": "session.persist.password-reset",
 							"factory": "effect",
 							"deps": ["password-reset.intent"],
+							"name": "session.persist.password-reset",
 							"meta": {
 								"capability": "session-mutation",
 								"mode": "online"
 							}
 						},
 						{
-							"id": "refresh.request",
-							"factory": "state",
-							"deps": []
-						},
-						{
-							"id": "refresh.validate",
-							"factory": "derived",
-							"deps": ["refresh.request"]
-						},
-						{
-							"id": "refresh.rotate",
-							"factory": "derived",
-							"deps": ["refresh.validate"]
-						},
-						{
 							"id": "session.persist.refresh",
 							"factory": "effect",
 							"deps": ["refresh.rotate"],
+							"name": "session.persist.refresh",
 							"meta": {
 								"capability": "session-mutation",
 								"mode": "online"
@@ -371,29 +447,37 @@
 							"to": "refresh.validate"
 						},
 						{
-							"from": "refresh.validate",
-							"to": "refresh.rotate"
-						},
-						{
 							"from": "refresh.rotate",
 							"to": "session.persist.refresh"
+						},
+						{
+							"from": "refresh.validate",
+							"to": "refresh.rotate"
 						}
-					]
+					],
+					"name": "session"
 				},
 				"diagnostics": {
 					"ok": true,
 					"issues": []
 				},
+				"provenance": {
+					"api": "graph.blueprint()",
+					"entrypoint": "graphrefly-fixture.mjs",
+					"isolation": "detached-worktree-node-permission-read-only",
+					"revision": "S3",
+					"source": "@graphrefly/ts"
+				},
 				"hash": {
 					"kind": "topology",
 					"algorithm": "sha256",
 					"input": "strictCanonicalTopologyBytes",
-					"value": "3a0ba3f92aa16f569b286722da86af052ec891b789cf8477a231d1e18abb53fb"
+					"value": "43ca738edc8669f499488c56d7928530f5ae20e39851e3347de239fa8aec7c75"
 				}
 			},
 			"topologyHash": {
 				"algorithm": "sha256",
-				"value": "3a0ba3f92aa16f569b286722da86af052ec891b789cf8477a231d1e18abb53fb"
+				"value": "43ca738edc8669f499488c56d7928530f5ae20e39851e3347de239fa8aec7c75"
 			},
 			"policyRevision": "session-writes.v1"
 		},
@@ -401,11 +485,11 @@
 			"schema": "urn:graphrefly-stack:schema:blueprint-snapshot:v1",
 			"commit": {
 				"algorithm": "sha1",
-				"value": "08a3f4403cbcf115aeee42890fe8da91fad58a75"
+				"value": "763e566fcc0bd8836b1f5f0d67e055ab5670930d"
 			},
 			"semanticParent": {
 				"algorithm": "sha1",
-				"value": "acc8c32a2ff2fd5fe44b87bb352ee2b831af8a38"
+				"value": "249d6a676cbce123a3a3327e7e003112c61ea647"
 			},
 			"provider": {
 				"schema": "urn:graphrefly-stack:schema:blueprint-provider-capabilities:v1",
@@ -426,17 +510,36 @@
 			"blueprint": {
 				"version": "graphrefly.blueprint.v1",
 				"topology": {
-					"name": "session",
 					"nodes": [
 						{
 							"id": "password-reset.intent",
 							"factory": "state",
-							"deps": []
+							"deps": [],
+							"name": "password-reset.intent"
+						},
+						{
+							"id": "refresh.request",
+							"factory": "state",
+							"deps": [],
+							"name": "refresh.request"
+						},
+						{
+							"id": "refresh.rotate",
+							"factory": "derived",
+							"deps": ["refresh.validate"],
+							"name": "refresh.rotate"
+						},
+						{
+							"id": "refresh.validate",
+							"factory": "derived",
+							"deps": ["refresh.request"],
+							"name": "refresh.validate"
 						},
 						{
 							"id": "session.mutation-broker.password-reset",
 							"factory": "sessionMutationBroker",
 							"deps": ["password-reset.intent"],
+							"name": "session.mutation-broker.password-reset",
 							"meta": {
 								"capability": "session-mutation-broker"
 							}
@@ -445,30 +548,17 @@
 							"id": "session.persist.password-reset",
 							"factory": "effect",
 							"deps": ["session.mutation-broker.password-reset"],
+							"name": "session.persist.password-reset",
 							"meta": {
 								"capability": "session-mutation",
 								"mode": "online"
 							}
 						},
 						{
-							"id": "refresh.request",
-							"factory": "state",
-							"deps": []
-						},
-						{
-							"id": "refresh.validate",
-							"factory": "derived",
-							"deps": ["refresh.request"]
-						},
-						{
-							"id": "refresh.rotate",
-							"factory": "derived",
-							"deps": ["refresh.validate"]
-						},
-						{
 							"id": "session.persist.refresh",
 							"factory": "effect",
 							"deps": ["refresh.rotate"],
+							"name": "session.persist.refresh",
 							"meta": {
 								"capability": "session-mutation",
 								"mode": "online"
@@ -481,43 +571,45 @@
 							"to": "session.mutation-broker.password-reset"
 						},
 						{
-							"from": "session.mutation-broker.password-reset",
-							"to": "session.persist.password-reset"
-						},
-						{
 							"from": "refresh.request",
 							"to": "refresh.validate"
+						},
+						{
+							"from": "refresh.rotate",
+							"to": "session.persist.refresh"
 						},
 						{
 							"from": "refresh.validate",
 							"to": "refresh.rotate"
 						},
 						{
-							"from": "refresh.rotate",
-							"to": "session.persist.refresh"
+							"from": "session.mutation-broker.password-reset",
+							"to": "session.persist.password-reset"
 						}
-					]
+					],
+					"name": "session"
 				},
 				"diagnostics": {
 					"ok": true,
 					"issues": []
 				},
+				"provenance": {
+					"api": "graph.blueprint()",
+					"entrypoint": "graphrefly-fixture.mjs",
+					"isolation": "detached-worktree-node-permission-read-only",
+					"revision": "R3",
+					"source": "@graphrefly/ts"
+				},
 				"hash": {
 					"kind": "topology",
 					"algorithm": "sha256",
 					"input": "strictCanonicalTopologyBytes",
-					"value": "1c6fc861bddebcb328bb7af25cbba707f1eb51c62b0482b3dfe30dfc5501c594"
-				},
-				"provenance": {
-					"revision": "R3",
-					"entrypoint": "graphrefly-fixture.mjs",
-					"isolation": "detached-worktree-node-permission-read-only",
-					"timeoutMs": 5000
+					"value": "b39ded119703f040a3f946bda644d7a1f74c5646abe675a62379423c2f3a8cb4"
 				}
 			},
 			"topologyHash": {
 				"algorithm": "sha256",
-				"value": "1c6fc861bddebcb328bb7af25cbba707f1eb51c62b0482b3dfe30dfc5501c594"
+				"value": "b39ded119703f040a3f946bda644d7a1f74c5646abe675a62379423c2f3a8cb4"
 			},
 			"policyRevision": "session-writes.v2"
 		},
@@ -525,21 +617,35 @@
 			"schema": "urn:graphrefly-stack:schema:blueprint-delta:v1",
 			"from": {
 				"algorithm": "sha256",
-				"value": "3a0ba3f92aa16f569b286722da86af052ec891b789cf8477a231d1e18abb53fb"
+				"value": "43ca738edc8669f499488c56d7928530f5ae20e39851e3347de239fa8aec7c75"
 			},
 			"to": {
 				"algorithm": "sha256",
-				"value": "1c6fc861bddebcb328bb7af25cbba707f1eb51c62b0482b3dfe30dfc5501c594"
+				"value": "b39ded119703f040a3f946bda644d7a1f74c5646abe675a62379423c2f3a8cb4"
 			},
 			"structural": {
 				"addedNodes": [
 					{
 						"id": "session.mutation-broker.password-reset",
 						"factory": "sessionMutationBroker",
-						"deps": ["password-reset.intent"]
+						"deps": ["password-reset.intent"],
+						"name": "session.mutation-broker.password-reset",
+						"meta": {
+							"capability": "session-mutation-broker"
+						}
+					},
+					{
+						"id": "session.persist.password-reset",
+						"factory": "effect",
+						"deps": ["session.mutation-broker.password-reset"],
+						"name": "session.persist.password-reset",
+						"meta": {
+							"capability": "session-mutation",
+							"mode": "online"
+						}
 					}
 				],
-				"removedNodeIds": [],
+				"removedNodeIds": ["session.persist.password-reset"],
 				"addedEdges": [
 					{
 						"from": "password-reset.intent",
@@ -584,19 +690,19 @@
 			},
 			"baseCommit": {
 				"algorithm": "sha1",
-				"value": "7a91c600853db1e6a8762d8434da2a3f6037070f"
+				"value": "e8c9e09d03071b8f82bf555e60047968cf3dc8ce"
 			},
 			"baseBlueprintHash": {
 				"algorithm": "sha256",
-				"value": "3a0ba3f92aa16f569b286722da86af052ec891b789cf8477a231d1e18abb53fb"
+				"value": "43ca738edc8669f499488c56d7928530f5ae20e39851e3347de239fa8aec7c75"
 			},
 			"policyRevision": "session-writes.v1",
 			"source": "codex",
 			"workUnits": [
 				{
 					"id": "U1",
-					"title": "Define refresh-token rotation contracts",
-					"intent": "Define contracts for preserving token-family identity, returning replacement tokens, and rejecting replayed tokens without affecting password-reset behavior.",
+					"title": "Rotate the refresh-token signer with an explicit migration boundary",
+					"intent": "Define token-family and replay-rejection contracts.",
 					"dependencies": [],
 					"allowedSourceScopes": ["src/session/contracts.ts", "tests/session/contracts.test.ts"],
 					"blueprintClaims": [],
@@ -604,8 +710,8 @@
 				},
 				{
 					"id": "U2",
-					"title": "Implement refresh-token rotation in the GraphReFly flow",
-					"intent": "After each successful refresh, preserve the token-family ID, invalidate the previous token, and persist its replacement without changing password-reset behavior.",
+					"title": "Implement the GraphReFly refresh rotation flow",
+					"intent": "Rotate and persist the replacement refresh token.",
 					"dependencies": ["U1"],
 					"allowedSourceScopes": [
 						"src/session/flows/refresh-flow.ts",
@@ -614,21 +720,21 @@
 					"blueprintClaims": [
 						{
 							"id": "session-write-path",
-							"statement": "Under session-writes.v1, the online session mutation may directly persist the replacement refresh token and invalidate its predecessor."
+							"statement": "The online session mutation may persist directly under session-writes.v1."
 						}
 					],
 					"requiredChecks": ["refresh-runtime"]
 				},
 				{
 					"id": "U3",
-					"title": "Expose refresh-token rotation through the HTTP adapter",
-					"intent": "Return the replacement refresh token after a successful request and reject replay of the preceding token.",
+					"title": "Expose the refresh HTTP adapter",
+					"intent": "Return the replacement token and reject replay.",
 					"dependencies": ["U2"],
 					"allowedSourceScopes": ["src/http/refresh-route.ts", "tests/http/refresh-route.test.ts"],
 					"blueprintClaims": [
 						{
 							"id": "refresh-runtime",
-							"statement": "The HTTP adapter depends on the accepted U2 refresh-rotation runtime."
+							"statement": "The adapter depends on an accepted U2 runtime."
 						}
 					],
 					"requiredChecks": ["refresh-api"]
@@ -637,11 +743,11 @@
 		},
 		"semantic-changes/u1.json": {
 			"schema": "urn:graphrefly-stack:schema:semantic-change-record:v1",
-			"recordId": "stale.u1.3d8696c74e3b",
+			"recordId": "stale.u1.3aca5ae979ae",
 			"workUnitId": "U1",
 			"commit": {
 				"algorithm": "sha1",
-				"value": "3d8696c74e3bf1458079c0b69f63086e808c03f3"
+				"value": "3aca5ae979ae7a69bf296ec6ec7dce75f589b733"
 			},
 			"stablePatchId": "87875072ad3d4c5ebad634209dfd536bf1bb36e0",
 			"diffDigest": {
@@ -651,7 +757,7 @@
 			"semanticParentRecordId": null,
 			"semanticParentCommit": {
 				"algorithm": "sha1",
-				"value": "250005e73c04ddada45ba29b6ba458a86198e058"
+				"value": "c63c13717fd39d140196f37214ad88c2cb568b76"
 			},
 			"allowedSourceScopes": ["src/session/contracts.ts", "tests/session/contracts.test.ts"],
 			"sourceScopeDigest": {
@@ -663,7 +769,7 @@
 			"requiredChecks": ["contracts"],
 			"blueprintHash": {
 				"algorithm": "sha256",
-				"value": "3a0ba3f92aa16f569b286722da86af052ec891b789cf8477a231d1e18abb53fb"
+				"value": "43ca738edc8669f499488c56d7928530f5ae20e39851e3347de239fa8aec7c75"
 			},
 			"policyRevision": "session-writes.v1",
 			"providerId": "graphrefly",
@@ -673,21 +779,21 @@
 		},
 		"semantic-changes/u2.json": {
 			"schema": "urn:graphrefly-stack:schema:semantic-change-record:v1",
-			"recordId": "stale.u2.acc8c32a2ff2",
+			"recordId": "stale.u2.249d6a676cbc",
 			"workUnitId": "U2",
 			"commit": {
 				"algorithm": "sha1",
-				"value": "acc8c32a2ff2fd5fe44b87bb352ee2b831af8a38"
+				"value": "249d6a676cbce123a3a3327e7e003112c61ea647"
 			},
-			"stablePatchId": "6d685577159e7b6f55792ffb816b71b7a4637a30",
+			"stablePatchId": "1c6256f94bb9adfea9ea7aa2f23e4d0fbb897dd2",
 			"diffDigest": {
 				"algorithm": "sha256",
-				"value": "f2461302fb2a3b214cd2ac8b298a9b3c2b8e8474e01a007073a2334a0a3baaca"
+				"value": "a8f4cc03a6628425f8fb127c0b3cc54eba461c42aaa33b3afa310e94d57c232b"
 			},
-			"semanticParentRecordId": "stale.u1.3d8696c74e3b",
+			"semanticParentRecordId": "stale.u1.3aca5ae979ae",
 			"semanticParentCommit": {
 				"algorithm": "sha1",
-				"value": "3d8696c74e3bf1458079c0b69f63086e808c03f3"
+				"value": "3aca5ae979ae7a69bf296ec6ec7dce75f589b733"
 			},
 			"allowedSourceScopes": [
 				"src/session/flows/refresh-flow.ts",
@@ -702,7 +808,7 @@
 			"requiredChecks": ["refresh-runtime"],
 			"blueprintHash": {
 				"algorithm": "sha256",
-				"value": "3a0ba3f92aa16f569b286722da86af052ec891b789cf8477a231d1e18abb53fb"
+				"value": "43ca738edc8669f499488c56d7928530f5ae20e39851e3347de239fa8aec7c75"
 			},
 			"policyRevision": "session-writes.v1",
 			"providerId": "graphrefly",
@@ -712,21 +818,21 @@
 		},
 		"semantic-changes/u3.json": {
 			"schema": "urn:graphrefly-stack:schema:semantic-change-record:v1",
-			"recordId": "stale.u3.08a3f4403cbc",
+			"recordId": "stale.u3.763e566fcc0b",
 			"workUnitId": "U3",
 			"commit": {
 				"algorithm": "sha1",
-				"value": "08a3f4403cbcf115aeee42890fe8da91fad58a75"
+				"value": "763e566fcc0bd8836b1f5f0d67e055ab5670930d"
 			},
 			"stablePatchId": "20613120c36519501f65e25360435a23137e5b62",
 			"diffDigest": {
 				"algorithm": "sha256",
 				"value": "4c0c2b2665c2858a44f1ec59a1d12766c7f507cacf6b709874a1c94980bf226f"
 			},
-			"semanticParentRecordId": "stale.u2.acc8c32a2ff2",
+			"semanticParentRecordId": "stale.u2.249d6a676cbc",
 			"semanticParentCommit": {
 				"algorithm": "sha1",
-				"value": "acc8c32a2ff2fd5fe44b87bb352ee2b831af8a38"
+				"value": "249d6a676cbce123a3a3327e7e003112c61ea647"
 			},
 			"allowedSourceScopes": ["src/http/refresh-route.ts", "tests/http/refresh-route.test.ts"],
 			"sourceScopeDigest": {
@@ -738,7 +844,7 @@
 			"requiredChecks": ["refresh-api"],
 			"blueprintHash": {
 				"algorithm": "sha256",
-				"value": "3a0ba3f92aa16f569b286722da86af052ec891b789cf8477a231d1e18abb53fb"
+				"value": "43ca738edc8669f499488c56d7928530f5ae20e39851e3347de239fa8aec7c75"
 			},
 			"policyRevision": "session-writes.v1",
 			"providerId": "graphrefly",
@@ -748,11 +854,11 @@
 		},
 		"semantic-changes/final/u1.json": {
 			"schema": "urn:graphrefly-stack:schema:semantic-change-record:v1",
-			"recordId": "fresh.u1.3d8696c74e3b",
+			"recordId": "fresh.u1.3aca5ae979ae",
 			"workUnitId": "U1",
 			"commit": {
 				"algorithm": "sha1",
-				"value": "3d8696c74e3bf1458079c0b69f63086e808c03f3"
+				"value": "3aca5ae979ae7a69bf296ec6ec7dce75f589b733"
 			},
 			"stablePatchId": "87875072ad3d4c5ebad634209dfd536bf1bb36e0",
 			"diffDigest": {
@@ -762,7 +868,7 @@
 			"semanticParentRecordId": null,
 			"semanticParentCommit": {
 				"algorithm": "sha1",
-				"value": "250005e73c04ddada45ba29b6ba458a86198e058"
+				"value": "c63c13717fd39d140196f37214ad88c2cb568b76"
 			},
 			"allowedSourceScopes": ["src/session/contracts.ts", "tests/session/contracts.test.ts"],
 			"sourceScopeDigest": {
@@ -774,7 +880,7 @@
 			"requiredChecks": ["contracts"],
 			"blueprintHash": {
 				"algorithm": "sha256",
-				"value": "3a0ba3f92aa16f569b286722da86af052ec891b789cf8477a231d1e18abb53fb"
+				"value": "43ca738edc8669f499488c56d7928530f5ae20e39851e3347de239fa8aec7c75"
 			},
 			"policyRevision": "session-writes.v1",
 			"providerId": "graphrefly",
@@ -784,21 +890,21 @@
 		},
 		"semantic-changes/final/u2.json": {
 			"schema": "urn:graphrefly-stack:schema:semantic-change-record:v1",
-			"recordId": "fresh.u2.5e74a1713eef",
+			"recordId": "fresh.u2.056fab4823d7",
 			"workUnitId": "U2",
 			"commit": {
 				"algorithm": "sha1",
-				"value": "5e74a1713eef0ee1b57cc5c0efd1f29ba8ecb5b8"
+				"value": "056fab4823d7c40204839b22fed4642b6f8c1a74"
 			},
-			"stablePatchId": "dfb655af7d51b0db23d32faf9a29ae29bfa17f92",
+			"stablePatchId": "662526972b3d989d5b2c9b4a80381cd23486c08f",
 			"diffDigest": {
 				"algorithm": "sha256",
-				"value": "efbaf1d317f609db8a890cf481c20c8d435d4a4b594425737f08bb5fdc4d01a0"
+				"value": "eaa33fcd32ad7244ee632732ab8aae564a4d6ee6c581f310fa38e664847559d8"
 			},
-			"semanticParentRecordId": "fresh.u1.3d8696c74e3b",
+			"semanticParentRecordId": "fresh.u1.3aca5ae979ae",
 			"semanticParentCommit": {
 				"algorithm": "sha1",
-				"value": "3d8696c74e3bf1458079c0b69f63086e808c03f3"
+				"value": "3aca5ae979ae7a69bf296ec6ec7dce75f589b733"
 			},
 			"allowedSourceScopes": [
 				"src/session/flows/refresh-flow.ts",
@@ -813,7 +919,7 @@
 			"requiredChecks": ["refresh-runtime"],
 			"blueprintHash": {
 				"algorithm": "sha256",
-				"value": "9b81eabbb143fae9bea3380ac3c457244a31bdb124fa13eecd687a3a7b83fd64"
+				"value": "6c679b21a7bbfc05fdb6a02628db946d1e443adf54bacfbe27d1d8ef148d24b3"
 			},
 			"policyRevision": "session-writes.v2",
 			"providerId": "graphrefly",
@@ -823,21 +929,21 @@
 		},
 		"semantic-changes/final/u3.json": {
 			"schema": "urn:graphrefly-stack:schema:semantic-change-record:v1",
-			"recordId": "fresh.u3.5bf6b8b5654f",
+			"recordId": "fresh.u3.458660a4ee46",
 			"workUnitId": "U3",
 			"commit": {
 				"algorithm": "sha1",
-				"value": "5bf6b8b5654f10819cbb4f015451c0c258600907"
+				"value": "458660a4ee464b415969fac861ec42b8d1b76747"
 			},
 			"stablePatchId": "fd5f09e211af6db5fc497932866c7eb9d30ec3fb",
 			"diffDigest": {
 				"algorithm": "sha256",
 				"value": "9bc5e822c144c32e0db19483822f313033a31ee15b9ca72d81d65736fb5e16b5"
 			},
-			"semanticParentRecordId": "fresh.u2.5e74a1713eef",
+			"semanticParentRecordId": "fresh.u2.056fab4823d7",
 			"semanticParentCommit": {
 				"algorithm": "sha1",
-				"value": "5e74a1713eef0ee1b57cc5c0efd1f29ba8ecb5b8"
+				"value": "056fab4823d7c40204839b22fed4642b6f8c1a74"
 			},
 			"allowedSourceScopes": ["src/http/refresh-route.ts", "tests/http/refresh-route.test.ts"],
 			"sourceScopeDigest": {
@@ -849,7 +955,7 @@
 			"requiredChecks": ["refresh-api"],
 			"blueprintHash": {
 				"algorithm": "sha256",
-				"value": "9b81eabbb143fae9bea3380ac3c457244a31bdb124fa13eecd687a3a7b83fd64"
+				"value": "6c679b21a7bbfc05fdb6a02628db946d1e443adf54bacfbe27d1d8ef148d24b3"
 			},
 			"policyRevision": "session-writes.v2",
 			"providerId": "graphrefly",
@@ -862,7 +968,7 @@
 			"gateVersion": "v1",
 			"inputDigest": {
 				"algorithm": "sha256",
-				"value": "13dbb2bbacae449c2da5a479757d8feb8f43da4270043407024b56ee2be37f3f"
+				"value": "088e6a3c7af27b14ce79597ea0bd3658e1826e76e907005fe2a2194426b52bf8"
 			},
 			"verdict": "pass",
 			"units": [
@@ -892,7 +998,7 @@
 			"gateVersion": "v1",
 			"inputDigest": {
 				"algorithm": "sha256",
-				"value": "3f6f30adbe2e188c020c8670fa8827081059d58f0c09552e5cb07532ca2750f6"
+				"value": "d7ade7face36ffe73cee5587d0e5ac14555a770925f4a058e5e39738e862aca5"
 			},
 			"verdict": "blocked",
 			"units": [
@@ -927,41 +1033,41 @@
 					"workUnitId": "U2",
 					"fromCommit": {
 						"algorithm": "sha1",
-						"value": "acc8c32a2ff2fd5fe44b87bb352ee2b831af8a38"
+						"value": "249d6a676cbce123a3a3327e7e003112c61ea647"
 					},
 					"toCommit": {
 						"algorithm": "sha1",
-						"value": "5e74a1713eef0ee1b57cc5c0efd1f29ba8ecb5b8"
+						"value": "056fab4823d7c40204839b22fed4642b6f8c1a74"
 					}
 				},
 				{
 					"workUnitId": "U3",
 					"fromCommit": {
 						"algorithm": "sha1",
-						"value": "08a3f4403cbcf115aeee42890fe8da91fad58a75"
+						"value": "763e566fcc0bd8836b1f5f0d67e055ab5670930d"
 					},
 					"toCommit": {
 						"algorithm": "sha1",
-						"value": "5bf6b8b5654f10819cbb4f015451c0c258600907"
+						"value": "458660a4ee464b415969fac861ec42b8d1b76747"
 					}
 				}
 			],
 			"finalLineage": [
 				{
 					"algorithm": "sha1",
-					"value": "250005e73c04ddada45ba29b6ba458a86198e058"
+					"value": "c63c13717fd39d140196f37214ad88c2cb568b76"
 				},
 				{
 					"algorithm": "sha1",
-					"value": "3d8696c74e3bf1458079c0b69f63086e808c03f3"
+					"value": "3aca5ae979ae7a69bf296ec6ec7dce75f589b733"
 				},
 				{
 					"algorithm": "sha1",
-					"value": "5e74a1713eef0ee1b57cc5c0efd1f29ba8ecb5b8"
+					"value": "056fab4823d7c40204839b22fed4642b6f8c1a74"
 				},
 				{
 					"algorithm": "sha1",
-					"value": "5bf6b8b5654f10819cbb4f015451c0c258600907"
+					"value": "458660a4ee464b415969fac861ec42b8d1b76747"
 				}
 			]
 		},
@@ -1058,7 +1164,7 @@
 			"gateVersion": "v1",
 			"inputDigest": {
 				"algorithm": "sha256",
-				"value": "72f073c6ef14c508b4f89b3d1624b51c0ce9610318d89f87c9cdcfb600c63e44"
+				"value": "a7643027399dd283ce344d4e84312bd8ac4b8358e4b902ded84bec7d56f2c6a2"
 			},
 			"verdict": "pass",
 			"units": [
@@ -1087,16 +1193,598 @@
 			"schema": "urn:graphrefly-stack:schema:review-decision:v1",
 			"decision": "defer",
 			"reviewerLabel": "local-reviewer",
-			"recordIds": ["stale.u1.3d8696c74e3b", "stale.u2.acc8c32a2ff2", "stale.u3.08a3f4403cbc"],
+			"recordIds": ["stale.u1.3aca5ae979ae", "stale.u2.249d6a676cbc", "stale.u3.763e566fcc0b"],
 			"recordedAt": "2026-07-16T00:00:00Z",
 			"identityVerified": false
+		},
+		"blueprints/commits/base.json": {
+			"schema": "urn:graphrefly-stack:schema:blueprint-snapshot:v1",
+			"commit": {
+				"algorithm": "sha1",
+				"value": "c63c13717fd39d140196f37214ad88c2cb568b76"
+			},
+			"semanticParent": {
+				"algorithm": "sha1",
+				"value": "e8c9e09d03071b8f82bf555e60047968cf3dc8ce"
+			},
+			"provider": {
+				"schema": "urn:graphrefly-stack:schema:blueprint-provider-capabilities:v1",
+				"providerId": "graphrefly",
+				"providerVersion": "0.1.1",
+				"blueprintVersion": "graphrefly.blueprint.v1",
+				"capabilities": {
+					"commitSnapshot": true,
+					"canonicalTopologyBytes": true,
+					"nodeMetadata": true,
+					"subgraphs": true,
+					"diagnostics": true,
+					"structuralDelta": true,
+					"mergeParentSelection": false,
+					"claimImpact": false
+				}
+			},
+			"blueprint": {
+				"version": "graphrefly.blueprint.v1",
+				"topology": {
+					"nodes": [
+						{
+							"id": "password-reset.intent",
+							"factory": "state",
+							"deps": [],
+							"name": "password-reset.intent"
+						},
+						{
+							"id": "session.mutation-broker.password-reset",
+							"factory": "sessionMutationBroker",
+							"deps": ["password-reset.intent"],
+							"name": "session.mutation-broker.password-reset",
+							"meta": {
+								"capability": "session-mutation-broker"
+							}
+						},
+						{
+							"id": "session.persist.password-reset",
+							"factory": "effect",
+							"deps": ["session.mutation-broker.password-reset"],
+							"name": "session.persist.password-reset",
+							"meta": {
+								"capability": "session-mutation",
+								"mode": "online"
+							}
+						}
+					],
+					"edges": [
+						{
+							"from": "password-reset.intent",
+							"to": "session.mutation-broker.password-reset"
+						},
+						{
+							"from": "session.mutation-broker.password-reset",
+							"to": "session.persist.password-reset"
+						}
+					],
+					"name": "session"
+				},
+				"diagnostics": {
+					"ok": true,
+					"issues": []
+				},
+				"provenance": {
+					"api": "graph.blueprint()",
+					"entrypoint": "graphrefly-fixture.mjs",
+					"isolation": "detached-worktree-node-permission-read-only",
+					"revision": "A1",
+					"source": "@graphrefly/ts"
+				},
+				"hash": {
+					"kind": "topology",
+					"algorithm": "sha256",
+					"input": "strictCanonicalTopologyBytes",
+					"value": "6d3fa1770ff60fcf63bfeb3a20b98d30e5deef8e8075f411959a9fccc21e51d4"
+				}
+			},
+			"topologyHash": {
+				"algorithm": "sha256",
+				"value": "6d3fa1770ff60fcf63bfeb3a20b98d30e5deef8e8075f411959a9fccc21e51d4"
+			},
+			"policyRevision": "session-writes.v2"
+		},
+		"blueprints/diagrams/base.json": {
+			"format": "mermaid",
+			"source": "flowchart LR\n  n0[\"password-reset.intent\"]\n  n1[\"session.mutation-broker.password-reset\"]\n  n2[\"session.persist.password-reset\"]\n  n0 --> n1\n  n1 --> n2",
+			"renderer": "@graphrefly/ts/render.describeToMermaid"
+		},
+		"blueprints/commits/u1.json": {
+			"schema": "urn:graphrefly-stack:schema:blueprint-snapshot:v1",
+			"commit": {
+				"algorithm": "sha1",
+				"value": "3aca5ae979ae7a69bf296ec6ec7dce75f589b733"
+			},
+			"semanticParent": {
+				"algorithm": "sha1",
+				"value": "c63c13717fd39d140196f37214ad88c2cb568b76"
+			},
+			"provider": {
+				"schema": "urn:graphrefly-stack:schema:blueprint-provider-capabilities:v1",
+				"providerId": "graphrefly",
+				"providerVersion": "0.1.1",
+				"blueprintVersion": "graphrefly.blueprint.v1",
+				"capabilities": {
+					"commitSnapshot": true,
+					"canonicalTopologyBytes": true,
+					"nodeMetadata": true,
+					"subgraphs": true,
+					"diagnostics": true,
+					"structuralDelta": true,
+					"mergeParentSelection": false,
+					"claimImpact": false
+				}
+			},
+			"blueprint": {
+				"version": "graphrefly.blueprint.v1",
+				"topology": {
+					"nodes": [
+						{
+							"id": "password-reset.intent",
+							"factory": "state",
+							"deps": [],
+							"name": "password-reset.intent"
+						},
+						{
+							"id": "session.mutation-broker.password-reset",
+							"factory": "sessionMutationBroker",
+							"deps": ["password-reset.intent"],
+							"name": "session.mutation-broker.password-reset",
+							"meta": {
+								"capability": "session-mutation-broker"
+							}
+						},
+						{
+							"id": "session.persist.password-reset",
+							"factory": "effect",
+							"deps": ["session.mutation-broker.password-reset"],
+							"name": "session.persist.password-reset",
+							"meta": {
+								"capability": "session-mutation",
+								"mode": "online"
+							}
+						}
+					],
+					"edges": [
+						{
+							"from": "password-reset.intent",
+							"to": "session.mutation-broker.password-reset"
+						},
+						{
+							"from": "session.mutation-broker.password-reset",
+							"to": "session.persist.password-reset"
+						}
+					],
+					"name": "session"
+				},
+				"diagnostics": {
+					"ok": true,
+					"issues": []
+				},
+				"provenance": {
+					"api": "graph.blueprint()",
+					"entrypoint": "graphrefly-fixture.mjs",
+					"isolation": "detached-worktree-node-permission-read-only",
+					"revision": "R1",
+					"source": "@graphrefly/ts"
+				},
+				"hash": {
+					"kind": "topology",
+					"algorithm": "sha256",
+					"input": "strictCanonicalTopologyBytes",
+					"value": "6d3fa1770ff60fcf63bfeb3a20b98d30e5deef8e8075f411959a9fccc21e51d4"
+				}
+			},
+			"topologyHash": {
+				"algorithm": "sha256",
+				"value": "6d3fa1770ff60fcf63bfeb3a20b98d30e5deef8e8075f411959a9fccc21e51d4"
+			},
+			"policyRevision": "session-writes.v2"
+		},
+		"blueprints/diagrams/u1.json": {
+			"format": "mermaid",
+			"source": "flowchart LR\n  n0[\"password-reset.intent\"]\n  n1[\"session.mutation-broker.password-reset\"]\n  n2[\"session.persist.password-reset\"]\n  n0 --> n1\n  n1 --> n2",
+			"renderer": "@graphrefly/ts/render.describeToMermaid"
+		},
+		"blueprints/deltas/u1.json": {
+			"schema": "urn:graphrefly-stack:schema:blueprint-delta:v1",
+			"from": {
+				"algorithm": "sha256",
+				"value": "6d3fa1770ff60fcf63bfeb3a20b98d30e5deef8e8075f411959a9fccc21e51d4"
+			},
+			"to": {
+				"algorithm": "sha256",
+				"value": "6d3fa1770ff60fcf63bfeb3a20b98d30e5deef8e8075f411959a9fccc21e51d4"
+			},
+			"structural": {
+				"addedNodes": [],
+				"removedNodeIds": [],
+				"addedEdges": [],
+				"removedEdges": []
+			},
+			"claimImpacts": [
+				{
+					"workUnitId": "U1",
+					"claimId": "contracts",
+					"impact": "none"
+				}
+			]
+		},
+		"blueprints/commits/u2.json": {
+			"schema": "urn:graphrefly-stack:schema:blueprint-snapshot:v1",
+			"commit": {
+				"algorithm": "sha1",
+				"value": "249d6a676cbce123a3a3327e7e003112c61ea647"
+			},
+			"semanticParent": {
+				"algorithm": "sha1",
+				"value": "3aca5ae979ae7a69bf296ec6ec7dce75f589b733"
+			},
+			"provider": {
+				"schema": "urn:graphrefly-stack:schema:blueprint-provider-capabilities:v1",
+				"providerId": "graphrefly",
+				"providerVersion": "0.1.1",
+				"blueprintVersion": "graphrefly.blueprint.v1",
+				"capabilities": {
+					"commitSnapshot": true,
+					"canonicalTopologyBytes": true,
+					"nodeMetadata": true,
+					"subgraphs": true,
+					"diagnostics": true,
+					"structuralDelta": true,
+					"mergeParentSelection": false,
+					"claimImpact": false
+				}
+			},
+			"blueprint": {
+				"version": "graphrefly.blueprint.v1",
+				"topology": {
+					"nodes": [
+						{
+							"id": "password-reset.intent",
+							"factory": "state",
+							"deps": [],
+							"name": "password-reset.intent"
+						},
+						{
+							"id": "refresh.request",
+							"factory": "state",
+							"deps": [],
+							"name": "refresh.request"
+						},
+						{
+							"id": "refresh.rotate",
+							"factory": "derived",
+							"deps": ["refresh.validate"],
+							"name": "refresh.rotate"
+						},
+						{
+							"id": "refresh.validate",
+							"factory": "derived",
+							"deps": ["refresh.request"],
+							"name": "refresh.validate"
+						},
+						{
+							"id": "session.mutation-broker.password-reset",
+							"factory": "sessionMutationBroker",
+							"deps": ["password-reset.intent"],
+							"name": "session.mutation-broker.password-reset",
+							"meta": {
+								"capability": "session-mutation-broker"
+							}
+						},
+						{
+							"id": "session.persist.password-reset",
+							"factory": "effect",
+							"deps": ["session.mutation-broker.password-reset"],
+							"name": "session.persist.password-reset",
+							"meta": {
+								"capability": "session-mutation",
+								"mode": "online"
+							}
+						},
+						{
+							"id": "session.persist.refresh",
+							"factory": "effect",
+							"deps": ["refresh.rotate"],
+							"name": "session.persist.refresh",
+							"meta": {
+								"capability": "session-mutation",
+								"mode": "online"
+							}
+						}
+					],
+					"edges": [
+						{
+							"from": "password-reset.intent",
+							"to": "session.mutation-broker.password-reset"
+						},
+						{
+							"from": "refresh.request",
+							"to": "refresh.validate"
+						},
+						{
+							"from": "refresh.rotate",
+							"to": "session.persist.refresh"
+						},
+						{
+							"from": "refresh.validate",
+							"to": "refresh.rotate"
+						},
+						{
+							"from": "session.mutation-broker.password-reset",
+							"to": "session.persist.password-reset"
+						}
+					],
+					"name": "session"
+				},
+				"diagnostics": {
+					"ok": true,
+					"issues": []
+				},
+				"provenance": {
+					"api": "graph.blueprint()",
+					"entrypoint": "graphrefly-fixture.mjs",
+					"isolation": "detached-worktree-node-permission-read-only",
+					"revision": "R2",
+					"source": "@graphrefly/ts"
+				},
+				"hash": {
+					"kind": "topology",
+					"algorithm": "sha256",
+					"input": "strictCanonicalTopologyBytes",
+					"value": "b39ded119703f040a3f946bda644d7a1f74c5646abe675a62379423c2f3a8cb4"
+				}
+			},
+			"topologyHash": {
+				"algorithm": "sha256",
+				"value": "b39ded119703f040a3f946bda644d7a1f74c5646abe675a62379423c2f3a8cb4"
+			},
+			"policyRevision": "session-writes.v2"
+		},
+		"blueprints/diagrams/u2.json": {
+			"format": "mermaid",
+			"source": "flowchart LR\n  n0[\"password-reset.intent\"]\n  n1[\"refresh.request\"]\n  n2[\"refresh.rotate\"]\n  n3[\"refresh.validate\"]\n  n4[\"session.mutation-broker.password-reset\"]\n  n5[\"session.persist.password-reset\"]\n  n6[\"session.persist.refresh\"]\n  n0 --> n4\n  n1 --> n3\n  n2 --> n6\n  n3 --> n2\n  n4 --> n5",
+			"renderer": "@graphrefly/ts/render.describeToMermaid"
+		},
+		"blueprints/deltas/u2.json": {
+			"schema": "urn:graphrefly-stack:schema:blueprint-delta:v1",
+			"from": {
+				"algorithm": "sha256",
+				"value": "6d3fa1770ff60fcf63bfeb3a20b98d30e5deef8e8075f411959a9fccc21e51d4"
+			},
+			"to": {
+				"algorithm": "sha256",
+				"value": "b39ded119703f040a3f946bda644d7a1f74c5646abe675a62379423c2f3a8cb4"
+			},
+			"structural": {
+				"addedNodes": [
+					{
+						"id": "refresh.request",
+						"factory": "state",
+						"deps": [],
+						"name": "refresh.request"
+					},
+					{
+						"id": "refresh.rotate",
+						"factory": "derived",
+						"deps": ["refresh.validate"],
+						"name": "refresh.rotate"
+					},
+					{
+						"id": "refresh.validate",
+						"factory": "derived",
+						"deps": ["refresh.request"],
+						"name": "refresh.validate"
+					},
+					{
+						"id": "session.persist.refresh",
+						"factory": "effect",
+						"deps": ["refresh.rotate"],
+						"name": "session.persist.refresh",
+						"meta": {
+							"capability": "session-mutation",
+							"mode": "online"
+						}
+					}
+				],
+				"removedNodeIds": [],
+				"addedEdges": [
+					{
+						"from": "refresh.request",
+						"to": "refresh.validate"
+					},
+					{
+						"from": "refresh.rotate",
+						"to": "session.persist.refresh"
+					},
+					{
+						"from": "refresh.validate",
+						"to": "refresh.rotate"
+					}
+				],
+				"removedEdges": []
+			},
+			"claimImpacts": [
+				{
+					"workUnitId": "U2",
+					"claimId": "session-write-path",
+					"impact": "affected"
+				}
+			]
+		},
+		"blueprints/commits/u3.json": {
+			"schema": "urn:graphrefly-stack:schema:blueprint-snapshot:v1",
+			"commit": {
+				"algorithm": "sha1",
+				"value": "763e566fcc0bd8836b1f5f0d67e055ab5670930d"
+			},
+			"semanticParent": {
+				"algorithm": "sha1",
+				"value": "249d6a676cbce123a3a3327e7e003112c61ea647"
+			},
+			"provider": {
+				"schema": "urn:graphrefly-stack:schema:blueprint-provider-capabilities:v1",
+				"providerId": "graphrefly",
+				"providerVersion": "0.1.1",
+				"blueprintVersion": "graphrefly.blueprint.v1",
+				"capabilities": {
+					"commitSnapshot": true,
+					"canonicalTopologyBytes": true,
+					"nodeMetadata": true,
+					"subgraphs": true,
+					"diagnostics": true,
+					"structuralDelta": true,
+					"mergeParentSelection": false,
+					"claimImpact": false
+				}
+			},
+			"blueprint": {
+				"version": "graphrefly.blueprint.v1",
+				"topology": {
+					"nodes": [
+						{
+							"id": "password-reset.intent",
+							"factory": "state",
+							"deps": [],
+							"name": "password-reset.intent"
+						},
+						{
+							"id": "refresh.request",
+							"factory": "state",
+							"deps": [],
+							"name": "refresh.request"
+						},
+						{
+							"id": "refresh.rotate",
+							"factory": "derived",
+							"deps": ["refresh.validate"],
+							"name": "refresh.rotate"
+						},
+						{
+							"id": "refresh.validate",
+							"factory": "derived",
+							"deps": ["refresh.request"],
+							"name": "refresh.validate"
+						},
+						{
+							"id": "session.mutation-broker.password-reset",
+							"factory": "sessionMutationBroker",
+							"deps": ["password-reset.intent"],
+							"name": "session.mutation-broker.password-reset",
+							"meta": {
+								"capability": "session-mutation-broker"
+							}
+						},
+						{
+							"id": "session.persist.password-reset",
+							"factory": "effect",
+							"deps": ["session.mutation-broker.password-reset"],
+							"name": "session.persist.password-reset",
+							"meta": {
+								"capability": "session-mutation",
+								"mode": "online"
+							}
+						},
+						{
+							"id": "session.persist.refresh",
+							"factory": "effect",
+							"deps": ["refresh.rotate"],
+							"name": "session.persist.refresh",
+							"meta": {
+								"capability": "session-mutation",
+								"mode": "online"
+							}
+						}
+					],
+					"edges": [
+						{
+							"from": "password-reset.intent",
+							"to": "session.mutation-broker.password-reset"
+						},
+						{
+							"from": "refresh.request",
+							"to": "refresh.validate"
+						},
+						{
+							"from": "refresh.rotate",
+							"to": "session.persist.refresh"
+						},
+						{
+							"from": "refresh.validate",
+							"to": "refresh.rotate"
+						},
+						{
+							"from": "session.mutation-broker.password-reset",
+							"to": "session.persist.password-reset"
+						}
+					],
+					"name": "session"
+				},
+				"diagnostics": {
+					"ok": true,
+					"issues": []
+				},
+				"provenance": {
+					"api": "graph.blueprint()",
+					"entrypoint": "graphrefly-fixture.mjs",
+					"isolation": "detached-worktree-node-permission-read-only",
+					"revision": "R3",
+					"source": "@graphrefly/ts"
+				},
+				"hash": {
+					"kind": "topology",
+					"algorithm": "sha256",
+					"input": "strictCanonicalTopologyBytes",
+					"value": "b39ded119703f040a3f946bda644d7a1f74c5646abe675a62379423c2f3a8cb4"
+				}
+			},
+			"topologyHash": {
+				"algorithm": "sha256",
+				"value": "b39ded119703f040a3f946bda644d7a1f74c5646abe675a62379423c2f3a8cb4"
+			},
+			"policyRevision": "session-writes.v2"
+		},
+		"blueprints/diagrams/u3.json": {
+			"format": "mermaid",
+			"source": "flowchart LR\n  n0[\"password-reset.intent\"]\n  n1[\"refresh.request\"]\n  n2[\"refresh.rotate\"]\n  n3[\"refresh.validate\"]\n  n4[\"session.mutation-broker.password-reset\"]\n  n5[\"session.persist.password-reset\"]\n  n6[\"session.persist.refresh\"]\n  n0 --> n4\n  n1 --> n3\n  n2 --> n6\n  n3 --> n2\n  n4 --> n5",
+			"renderer": "@graphrefly/ts/render.describeToMermaid"
+		},
+		"blueprints/deltas/u3.json": {
+			"schema": "urn:graphrefly-stack:schema:blueprint-delta:v1",
+			"from": {
+				"algorithm": "sha256",
+				"value": "b39ded119703f040a3f946bda644d7a1f74c5646abe675a62379423c2f3a8cb4"
+			},
+			"to": {
+				"algorithm": "sha256",
+				"value": "b39ded119703f040a3f946bda644d7a1f74c5646abe675a62379423c2f3a8cb4"
+			},
+			"structural": {
+				"addedNodes": [],
+				"removedNodeIds": [],
+				"addedEdges": [],
+				"removedEdges": []
+			},
+			"claimImpacts": [
+				{
+					"workUnitId": "U3",
+					"claimId": "refresh-runtime",
+					"impact": "none"
+				}
+			]
 		},
 		"diffs/u1.json": {
 			"schema": "urn:graphrefly-stack:schema:raw-diff:v1",
 			"workUnitId": "U1",
 			"commit": {
 				"algorithm": "sha1",
-				"value": "3d8696c74e3bf1458079c0b69f63086e808c03f3"
+				"value": "3aca5ae979ae7a69bf296ec6ec7dce75f589b733"
 			},
 			"paths": ["src/session/contracts.ts", "tests/session/contracts.test.ts"],
 			"patch": "diff --git a/src/session/contracts.ts b/src/session/contracts.ts\nnew file mode 100644\nindex 0000000..6acd119\n--- /dev/null\n+++ b/src/session/contracts.ts\n@@ -0,0 +1 @@\n+export interface RefreshResult { token: string; familyId: string }\ndiff --git a/tests/session/contracts.test.ts b/tests/session/contracts.test.ts\nnew file mode 100644\nindex 0000000..609d6bd\n--- /dev/null\n+++ b/tests/session/contracts.test.ts\n@@ -0,0 +1 @@\n+// token-family and replay-rejection contract\n"
@@ -1106,17 +1794,17 @@
 			"workUnitId": "U2",
 			"commit": {
 				"algorithm": "sha1",
-				"value": "acc8c32a2ff2fd5fe44b87bb352ee2b831af8a38"
+				"value": "249d6a676cbce123a3a3327e7e003112c61ea647"
 			},
 			"paths": ["src/session/flows/refresh-flow.ts", "tests/session/refresh-flow.test.ts"],
-			"patch": "diff --git a/src/session/flows/refresh-flow.ts b/src/session/flows/refresh-flow.ts\nindex 3f88df7..9c7d510 100644\n--- a/src/session/flows/refresh-flow.ts\n+++ b/src/session/flows/refresh-flow.ts\n@@ -1 +1,6 @@\n-export function refresh(token: string) { return { token, familyId: 'family-1' }; }\n+const used = new Set<string>();\n+export function refresh(token: string) {\n+  if (used.has(token)) throw new Error('replay');\n+  used.add(token);\n+  return { token: token + '-rotated', familyId: 'family-1' };\n+}\ndiff --git a/tests/session/refresh-flow.test.ts b/tests/session/refresh-flow.test.ts\nnew file mode 100644\nindex 0000000..a20461c\n--- /dev/null\n+++ b/tests/session/refresh-flow.test.ts\n@@ -0,0 +1 @@\n+// replacement token, stable family, and replay rejection\n"
+			"patch": "diff --git a/src/session/flows/refresh-flow.ts b/src/session/flows/refresh-flow.ts\nindex 6cdaad1..544dc32 100644\n--- a/src/session/flows/refresh-flow.ts\n+++ b/src/session/flows/refresh-flow.ts\n@@ -1,2 +1,12 @@\n-export function addRefreshGraph() {}\n-export function refresh(token: string) { return { token, familyId: 'family-1' }; }\n+const used = new Set<string>();\n+export function addRefreshGraph(graph) {\n+  const request = graph.state(null, { name: 'refresh.request' });\n+  const validate = graph.derived([request], (token) => token, { name: 'refresh.validate' });\n+  const rotate = graph.derived([validate], (token) => token, { name: 'refresh.rotate' });\n+  graph.effect([rotate], () => undefined, { name: 'session.persist.refresh', meta: { capability: 'session-mutation', mode: 'online' } });\n+}\n+export function refresh(token: string) {\n+  if (used.has(token)) throw new Error('replay');\n+  used.add(token);\n+  return { token: token + '-rotated', familyId: 'family-1' };\n+}\ndiff --git a/tests/session/refresh-flow.test.ts b/tests/session/refresh-flow.test.ts\nnew file mode 100644\nindex 0000000..a20461c\n--- /dev/null\n+++ b/tests/session/refresh-flow.test.ts\n@@ -0,0 +1 @@\n+// replacement token, stable family, and replay rejection\n"
 		},
 		"diffs/u3.json": {
 			"schema": "urn:graphrefly-stack:schema:raw-diff:v1",
 			"workUnitId": "U3",
 			"commit": {
 				"algorithm": "sha1",
-				"value": "08a3f4403cbcf115aeee42890fe8da91fad58a75"
+				"value": "763e566fcc0bd8836b1f5f0d67e055ab5670930d"
 			},
 			"paths": ["src/http/refresh-route.ts", "tests/http/refresh-route.test.ts"],
 			"patch": "diff --git a/src/http/refresh-route.ts b/src/http/refresh-route.ts\nindex 4fcf305..9b37dd7 100644\n--- a/src/http/refresh-route.ts\n+++ b/src/http/refresh-route.ts\n@@ -1,2 +1,2 @@\n import { refresh } from '../session/flows/refresh-flow.js';\n-export const postRefresh = refresh;\n+export function postRefresh(token: string) { return { status: 200, body: refresh(token) }; }\ndiff --git a/tests/http/refresh-route.test.ts b/tests/http/refresh-route.test.ts\nnew file mode 100644\nindex 0000000..6003740\n--- /dev/null\n+++ b/tests/http/refresh-route.test.ts\n@@ -0,0 +1 @@\n+// HTTP adapter returns replacement token\n"
@@ -1134,19 +1822,19 @@
 				},
 				"baseCommit": {
 					"algorithm": "sha1",
-					"value": "7a91c600853db1e6a8762d8434da2a3f6037070f"
+					"value": "e8c9e09d03071b8f82bf555e60047968cf3dc8ce"
 				},
 				"baseBlueprintHash": {
 					"algorithm": "sha256",
-					"value": "3a0ba3f92aa16f569b286722da86af052ec891b789cf8477a231d1e18abb53fb"
+					"value": "43ca738edc8669f499488c56d7928530f5ae20e39851e3347de239fa8aec7c75"
 				},
 				"policyRevision": "session-writes.v1",
 				"source": "codex",
 				"workUnits": [
 					{
 						"id": "U1",
-						"title": "Define refresh-token rotation contracts",
-						"intent": "Define contracts for preserving token-family identity, returning replacement tokens, and rejecting replayed tokens without affecting password-reset behavior.",
+						"title": "Rotate the refresh-token signer with an explicit migration boundary",
+						"intent": "Define token-family and replay-rejection contracts.",
 						"dependencies": [],
 						"allowedSourceScopes": ["src/session/contracts.ts", "tests/session/contracts.test.ts"],
 						"blueprintClaims": [],
@@ -1154,8 +1842,8 @@
 					},
 					{
 						"id": "U2",
-						"title": "Implement refresh-token rotation in the GraphReFly flow",
-						"intent": "After each successful refresh, preserve the token-family ID, invalidate the previous token, and persist its replacement without changing password-reset behavior.",
+						"title": "Implement the GraphReFly refresh rotation flow",
+						"intent": "Rotate and persist the replacement refresh token.",
 						"dependencies": ["U1"],
 						"allowedSourceScopes": [
 							"src/session/flows/refresh-flow.ts",
@@ -1164,15 +1852,15 @@
 						"blueprintClaims": [
 							{
 								"id": "session-write-path",
-								"statement": "Under session-writes.v1, the online session mutation may directly persist the replacement refresh token and invalidate its predecessor."
+								"statement": "The online session mutation may persist directly under session-writes.v1."
 							}
 						],
 						"requiredChecks": ["refresh-runtime"]
 					},
 					{
 						"id": "U3",
-						"title": "Expose refresh-token rotation through the HTTP adapter",
-						"intent": "Return the replacement refresh token after a successful request and reject replay of the preceding token.",
+						"title": "Expose the refresh HTTP adapter",
+						"intent": "Return the replacement token and reject replay.",
 						"dependencies": ["U2"],
 						"allowedSourceScopes": [
 							"src/http/refresh-route.ts",
@@ -1181,7 +1869,7 @@
 						"blueprintClaims": [
 							{
 								"id": "refresh-runtime",
-								"statement": "The HTTP adapter depends on the accepted U2 refresh-rotation runtime."
+								"statement": "The adapter depends on an accepted U2 runtime."
 							}
 						],
 						"requiredChecks": ["refresh-api"]
@@ -1194,24 +1882,24 @@
 				"model": "gpt-5.6-sol",
 				"reasoningEffort": "high",
 				"promptVersion": "stack.plan.v1",
-				"threadId": "019f6bab-cf3b-7283-8033-7dae0da12706",
+				"threadId": "thread_fixture",
 				"codexRuntime": {
-					"source": "override",
-					"version": "codex-cli 0.144.5"
+					"source": "sdk-bundled",
+					"version": null
 				},
 				"usage": {
-					"input_tokens": 14030,
-					"cached_input_tokens": 0,
-					"output_tokens": 370,
-					"reasoning_output_tokens": 52
+					"input_tokens": 100,
+					"cached_input_tokens": 20,
+					"output_tokens": 30,
+					"reasoning_output_tokens": 10
 				},
 				"responseDigest": {
 					"algorithm": "sha256",
-					"value": "fcc40a517c0483e91a7de72e39ae564696e42b65b5d9210ca5112a6abbb4910d"
+					"value": "5dcf07119f396d046a3c1e56062354d5f77a97011a75affbdbde599752d8f37b"
 				},
 				"outputDigest": {
 					"algorithm": "sha256",
-					"value": "7c9b131a15f81399d8358410458b0fbff7d02ac80e60af044f96d7d071ee8dd5"
+					"value": "6766093f73b328b732b622348dd5234fc1676ed29d274533fa3e439851749b9c"
 				}
 			}
 		},
@@ -1229,48 +1917,48 @@
 						"workUnitId": "U2",
 						"fromCommit": {
 							"algorithm": "sha1",
-							"value": "acc8c32a2ff2fd5fe44b87bb352ee2b831af8a38"
+							"value": "249d6a676cbce123a3a3327e7e003112c61ea647"
 						},
 						"toCommit": {
 							"algorithm": "sha1",
-							"value": "5e74a1713eef0ee1b57cc5c0efd1f29ba8ecb5b8"
+							"value": "056fab4823d7c40204839b22fed4642b6f8c1a74"
 						}
 					},
 					{
 						"workUnitId": "U3",
 						"fromCommit": {
 							"algorithm": "sha1",
-							"value": "08a3f4403cbcf115aeee42890fe8da91fad58a75"
+							"value": "763e566fcc0bd8836b1f5f0d67e055ab5670930d"
 						},
 						"toCommit": {
 							"algorithm": "sha1",
-							"value": "5bf6b8b5654f10819cbb4f015451c0c258600907"
+							"value": "458660a4ee464b415969fac861ec42b8d1b76747"
 						}
 					}
 				],
 				"finalLineage": [
 					{
 						"algorithm": "sha1",
-						"value": "250005e73c04ddada45ba29b6ba458a86198e058"
+						"value": "c63c13717fd39d140196f37214ad88c2cb568b76"
 					},
 					{
 						"algorithm": "sha1",
-						"value": "3d8696c74e3bf1458079c0b69f63086e808c03f3"
+						"value": "3aca5ae979ae7a69bf296ec6ec7dce75f589b733"
 					},
 					{
 						"algorithm": "sha1",
-						"value": "5e74a1713eef0ee1b57cc5c0efd1f29ba8ecb5b8"
+						"value": "056fab4823d7c40204839b22fed4642b6f8c1a74"
 					},
 					{
 						"algorithm": "sha1",
-						"value": "5bf6b8b5654f10819cbb4f015451c0c258600907"
+						"value": "458660a4ee464b415969fac861ec42b8d1b76747"
 					}
 				],
 				"proposedWorkUnits": [
 					{
 						"id": "U2",
-						"title": "Implement the brokered GraphReFly refresh rotation flow",
-						"intent": "Rotate the refresh token and persist its replacement through sessionMutationBroker under session-writes.v2.",
+						"title": "Implement the GraphReFly refresh rotation flow",
+						"intent": "Rotate and persist the replacement refresh token.",
 						"dependencies": ["U1"],
 						"allowedSourceScopes": [
 							"src/session/flows/refresh-flow.ts",
@@ -1286,8 +1974,8 @@
 					},
 					{
 						"id": "U3",
-						"title": "Expose the broker-backed refresh HTTP adapter",
-						"intent": "Return the replacement token from the broker-backed refresh runtime and reject replay.",
+						"title": "Expose the refresh HTTP adapter",
+						"intent": "Return the replacement token and reject replay.",
 						"dependencies": ["U2"],
 						"allowedSourceScopes": [
 							"src/http/refresh-route.ts",
@@ -1296,7 +1984,7 @@
 						"blueprintClaims": [
 							{
 								"id": "refresh-runtime",
-								"statement": "The adapter depends on an accepted U2 runtime that routes session persistence through sessionMutationBroker."
+								"statement": "The adapter depends on an accepted U2 runtime."
 							}
 						],
 						"requiredChecks": ["refresh-api"]
@@ -1309,24 +1997,24 @@
 				"model": "gpt-5.6-sol",
 				"reasoningEffort": "high",
 				"promptVersion": "stack.replan.v1",
-				"threadId": "019f6bad-591b-7132-9874-5f796044d4a1",
+				"threadId": "thread_fixture",
 				"codexRuntime": {
-					"source": "override",
-					"version": "codex-cli 0.144.5"
+					"source": "sdk-bundled",
+					"version": null
 				},
 				"usage": {
-					"input_tokens": 14351,
-					"cached_input_tokens": 0,
-					"output_tokens": 360,
-					"reasoning_output_tokens": 105
+					"input_tokens": 100,
+					"cached_input_tokens": 20,
+					"output_tokens": 30,
+					"reasoning_output_tokens": 10
 				},
 				"responseDigest": {
 					"algorithm": "sha256",
-					"value": "a9ff537748db9e0506aab3ac126d5b7a1b58f9fddf8045a4bacf283ec215e1f7"
+					"value": "a68d106376f1c0c8029f93d204e9413d63078e0bd0357ea8c510c42c4c6f9c52"
 				},
 				"outputDigest": {
 					"algorithm": "sha256",
-					"value": "915b1fbe92286d16eee587f2cb6d96d0a8cd71d2edeba3ae095fd097c805dab2"
+					"value": "64aa1e9a20f78570a018f26a394ad0ebe7166b51581c1a8793737600a1fbb3dd"
 				}
 			}
 		}

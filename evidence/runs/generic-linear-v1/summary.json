@@ -1,0 +1,37 @@
+{
+	"schema": "graphrefly.stack.product-proof.v1",
+	"repository": {
+		"label": "generic-linear-v1",
+		"graphreflyVersion": "0.3.0",
+		"entrypoint": "graphrefly-stack.blueprint.mjs",
+		"baseOid": "f4d683db80aa071f6032edc4604eec286dcc3544",
+		"headOid": "3cb0e4daba2afa4fd145cc1837d7ba76c47125d7"
+	},
+	"commits": [
+		{
+			"oid": "64ebc55f34b07d5db23002c35559b6f99c7aa0f9",
+			"parentOid": "f4d683db80aa071f6032edc4604eec286dcc3544",
+			"subject": "derive projected value",
+			"blueprintHash": "0d8925826e0347426c6470baf2355de018b2b75a0417203ad7d333cefac27258",
+			"deltaTypes": ["node-added", "edge-added"],
+			"paths": ["graph.mjs"]
+		},
+		{
+			"oid": "7a32a7f16ced7771fcdf56cc9153acd4af2d28e4",
+			"parentOid": "64ebc55f34b07d5db23002c35559b6f99c7aa0f9",
+			"subject": "mount audit graph",
+			"blueprintHash": "ad83d0b9b78ff38d60eab7770617b7a4b7a2fb14fb228e7e251f6577251e9610",
+			"deltaTypes": ["subgraph-added", "node-added"],
+			"paths": ["graph.mjs"]
+		},
+		{
+			"oid": "3cb0e4daba2afa4fd145cc1837d7ba76c47125d7",
+			"parentOid": "7a32a7f16ced7771fcdf56cc9153acd4af2d28e4",
+			"subject": "mark audit metadata validated",
+			"blueprintHash": "a535cb14aa052fd432549b4869259b32907a7cebeabf5e40c8982ea40824d41e",
+			"deltaTypes": ["node-changed"],
+			"paths": ["graph.mjs"]
+		}
+	],
+	"semanticStatus": "not-configured"
+}
