@@ -1,14 +1,13 @@
 import { mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { dirname, resolve, sep } from "node:path";
-import { fileURLToPath } from "node:url";
 import { createStrictAjv, sha256Jcs } from "@graphrefly-stack/contracts";
 import { computeGate } from "@graphrefly-stack/core";
 
 import type { RuntimeSuite } from "./fixture.js";
+import { runtimeAssetPath } from "./runtime-paths.js";
 import { SystemGitAdapter } from "./system-git.js";
 
 const recordedAt = "2026-07-16T00:00:00Z";
-const workspaceRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 
 export interface LiveRunRecord {
 	schema: "urn:graphrefly-stack:live-run:v1";
@@ -48,7 +47,7 @@ async function validateLiveRuns(
 	liveRuns: { plan?: LiveRunRecord; replan?: LiveRunRecord },
 ): Promise<void> {
 	const schema = JSON.parse(
-		await readFile(resolve(workspaceRoot, "contracts/v1/schemas/artifacts.schema.json"), "utf8"),
+		await readFile(runtimeAssetPath("contracts/v1/schemas/artifacts.schema.json"), "utf8"),
 	) as object;
 	const ajv = createStrictAjv();
 	ajv.addSchema(schema);

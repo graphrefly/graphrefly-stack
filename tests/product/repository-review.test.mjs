@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
 import test from "node:test";
@@ -15,7 +15,7 @@ const packageJson = `${JSON.stringify(
 		name: "graphrefly-stack-conformance-repository",
 		private: true,
 		type: "module",
-		dependencies: { "@graphrefly/ts": "0.3.0" },
+		dependencies: { "@graphrefly/ts": "0.3.x" },
 	},
 	null,
 	2,
@@ -32,7 +32,7 @@ importers:
   .:
     dependencies:
       '@graphrefly/ts':
-        specifier: 0.3.0
+        specifier: 0.3.x
         version: 0.3.0
 
 packages:
@@ -298,7 +298,62 @@ test("generic review fails closed on incomplete input and missing repository con
 	assert.equal(JSON.parse(failed.stdout).error.code, "CONFIG_MISSING");
 });
 
-test("generic review rejects entrypoint escape, dependency transitions, and unsupported runtimes", async (context) => {
+test("grfs init generates a reviewable config and Blueprint adapter", async (context) => {
+	const temporary = await mkdtemp(resolve(tmpdir(), "graphrefly-stack-init-"));
+	context.after(() => rm(temporary, { recursive: true, force: true }));
+	const repository = resolve(temporary, "initialized-repository");
+	await mkdir(repository);
+	run(repository, "git", ["init", "-b", "main"]);
+	await Promise.all([
+		write(repository, "package.json", packageJson),
+		write(repository, "pnpm-lock.yaml", lockfile),
+		write(repository, "src/application-graph.mjs", flatGraph),
+		symlink(workspaceNodeModules, resolve(repository, "node_modules"), "dir"),
+	]);
+	const initialized = spawnSync(
+		process.execPath,
+		[cli, "init", "--repo", repository, "--graph-module", "src/application-graph.mjs", "--json"],
+		{ cwd: workspace, encoding: "utf8" },
+	);
+	assert.equal(initialized.status, 0, initialized.stderr || initialized.stdout);
+	assert.equal(JSON.parse(initialized.stdout).data.entrypoint, "graphrefly-stack.blueprint.mjs");
+	const config = JSON.parse(await readFile(resolve(repository, ".graphrefly-stack.json"), "utf8"));
+	assert.equal(config.blueprint.entrypoint, "graphrefly-stack.blueprint.mjs");
+	assert.match(
+		await readFile(resolve(repository, "graphrefly-stack.blueprint.mjs"), "utf8"),
+		/src\/application-graph\.mjs/u,
+	);
+	const duplicateInit = spawnSync(
+		process.execPath,
+		[cli, "init", "--repo", repository, "--graph-module", "src/application-graph.mjs", "--json"],
+		{ cwd: workspace, encoding: "utf8" },
+	);
+	assert.equal(duplicateInit.status, 1);
+	assert.equal(JSON.parse(duplicateInit.stdout).error.code, "INIT_ALREADY_EXISTS");
+	const escapingInit = spawnSync(
+		process.execPath,
+		[cli, "init", "--repo", repository, "--graph-module", "../outside.mjs", "--json"],
+		{ cwd: workspace, encoding: "utf8" },
+	);
+	assert.equal(escapingInit.status, 1);
+	assert.equal(JSON.parse(escapingInit.stdout).error.code, "INIT_PATH_INVALID");
+	const base = commit(repository, "initialize GraphReFly Stack");
+	await write(
+		repository,
+		"src/application-graph.mjs",
+		flatGraph.replace(
+			'application.state(1, { name: "source" });',
+			'const source = application.state(1, { name: "source" });\n  application.derived([source], (value) => value + 1, { name: "projection" });',
+		),
+	);
+	const head = commit(repository, "derive projected value");
+	assert.deepEqual(
+		review(repository, base, head).commits[0].delta.events.map((event) => event.type),
+		["node-added", "edge-added"],
+	);
+});
+
+test("generic review permits ordinary dependency changes and rejects incompatible runtime ranges", async (context) => {
 	const temporary = await mkdtemp(resolve(tmpdir(), "graphrefly-stack-contract-failures-"));
 	context.after(() => rm(temporary, { recursive: true, force: true }));
 
@@ -315,15 +370,24 @@ test("generic review rejects entrypoint escape, dependency transitions, and unsu
 
 	const transitionRepo = await createRepository(temporary, "dependency-transition", flatGraph);
 	const transitionBase = commit(transitionRepo, "base");
-	await write(transitionRepo, "pnpm-lock.yaml", `${lockfile}\n# changed in stack\n`);
-	const transitionHead = commit(transitionRepo, "change dependency lock");
-	assert.equal(
-		failedReview(transitionRepo, transitionBase, transitionHead),
-		"DEPENDENCY_TRANSITION_UNSUPPORTED",
+	const changedPackage = JSON.parse(packageJson);
+	changedPackage.scripts = { check: "node --check graph.mjs" };
+	await write(transitionRepo, "package.json", `${JSON.stringify(changedPackage, null, 2)}\n`);
+	await rm(resolve(transitionRepo, "pnpm-lock.yaml"));
+	await write(
+		transitionRepo,
+		"package-lock.json",
+		'{"name":"dependency-transition","lockfileVersion":3}\n',
 	);
+	const transitionHead = commit(transitionRepo, "change ordinary dependency metadata");
+	assert.deepEqual(review(transitionRepo, transitionBase, transitionHead).commits[0].diff.paths, [
+		"package-lock.json",
+		"package.json",
+		"pnpm-lock.yaml",
+	]);
 
 	const unsupportedRepo = await createRepository(temporary, "unsupported-runtime", flatGraph);
-	await write(unsupportedRepo, "package.json", packageJson.replace('"0.3.0"', '"0.2.1"'));
+	await write(unsupportedRepo, "package.json", packageJson.replace('"0.3.x"', '"0.2.x"'));
 	await write(unsupportedRepo, "pnpm-lock.yaml", lockfile.replaceAll("0.3.0", "0.2.1"));
 	const unsupportedBase = commit(unsupportedRepo, "base on unsupported runtime");
 	await write(unsupportedRepo, "README.md", "head\n");

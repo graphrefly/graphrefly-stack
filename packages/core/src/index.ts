@@ -6,7 +6,7 @@ export * from "./gate.js";
 
 export const CORE_ARCHITECTURE = {
 	version: "D17",
-	canonicalCommands: ["fixture create", "plan", "gate", "replan", "review", "export"],
+	canonicalCommands: ["init", "fixture create", "plan", "gate", "replan", "review", "export"],
 	defaultPlanMode: "replay",
 	graphreflyBlueprintVersion: GRAPH_BLUEPRINT_VERSION,
 	processModel: "single-local-cli-process",

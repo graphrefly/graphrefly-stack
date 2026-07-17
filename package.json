@@ -1,7 +1,7 @@
 {
-	"name": "graphrefly-stack",
-	"version": "0.0.0",
-	"private": true,
+	"name": "@graphrefly/stack",
+	"version": "0.1.0",
+	"private": false,
 	"description": "Semantic stacked diffs with commit-indexed GraphBlueprint validity gates.",
 	"license": "MIT",
 	"type": "module",
@@ -14,9 +14,21 @@
 		"pnpm": ">=11.7 <12"
 	},
 	"packageManager": "pnpm@11.7.0+sha512.19cc852c120c7125760f2443ee6be0ca5b40f9f50598de1a09a1f177503e010e57c23c77646e01e761de59bf874fb22a3398c33ab9691fc13eb946b6f0f4d620",
+	"bin": {
+		"grfs": "./dist/grfs.js"
+	},
+	"files": [
+		"dist",
+		"README.md",
+		"LICENSE"
+	],
+	"publishConfig": {
+		"access": "public"
+	},
 	"scripts": {
 		"build": "pnpm --filter @graphrefly-stack/contracts build && pnpm --filter @graphrefly-stack/core build && pnpm --filter @graphrefly-stack/review build && pnpm --filter @graphrefly-stack/cli build",
-		"check": "pnpm docs:check && pnpm skills:check && pnpm test:compatibility && pnpm test:contracts && pnpm test:architecture && pnpm test:semantic && pnpm test:product && pnpm test:live && biome check .",
+		"build:package": "pnpm build && node scripts/build-package.mjs",
+		"check": "pnpm docs:check && pnpm skills:check && pnpm test:compatibility && pnpm test:contracts && pnpm test:architecture && pnpm test:semantic && pnpm test:product && pnpm test:package && pnpm test:live && biome check .",
 		"cli": "node packages/cli/dist/cli.js",
 		"docs:check": "node scripts/check-docs.mjs",
 		"product:sample": "node scripts/create-generic-sample.mjs",
@@ -27,16 +39,26 @@
 		"test:compatibility": "node --test tests/compatibility/*.test.mjs",
 		"test:contracts": "pnpm --filter @graphrefly-stack/contracts build && node --test tests/contracts/*.test.mjs",
 		"test:live": "pnpm --filter @graphrefly-stack/contracts build && pnpm --filter @graphrefly-stack/core build && pnpm --filter @graphrefly-stack/cli build && node --test tests/live/*.test.mjs",
+		"test:package": "node --test tests/package/*.test.mjs",
 		"test:product": "pnpm build && node --test tests/product/*.test.mjs",
 		"test:semantic": "pnpm --filter @graphrefly-stack/contracts build && pnpm --filter @graphrefly-stack/core build && pnpm --filter @graphrefly-stack/cli build && node --test tests/semantic/*.test.mjs",
 		"lint": "biome lint .",
 		"format": "biome format --write .",
-		"format:check": "biome format ."
+		"format:check": "biome format .",
+		"prepack": "pnpm build:package"
+	},
+	"dependencies": {
+		"@openai/codex-sdk": "0.143.0"
+	},
+	"peerDependencies": {
+		"@graphrefly/ts": ">=0.3.0 <0.4.0"
 	},
 	"devDependencies": {
-		"@graphrefly/ts": "0.3.0",
 		"@biomejs/biome": "2.4.6",
+		"@graphrefly/ts": "0.3.0",
 		"@types/node": "26.1.1",
+		"@types/semver": "7.7.1",
+		"esbuild": "0.28.1",
 		"typescript": "7.0.2"
 	}
 }

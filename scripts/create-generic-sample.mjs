@@ -41,7 +41,7 @@ const packageJson = {
 	name: "graphrefly-stack-generic-sample",
 	private: true,
 	type: "module",
-	dependencies: { "@graphrefly/ts": "0.3.0" },
+	dependencies: { "@graphrefly/ts": "0.3.x" },
 };
 const lockfile = `lockfileVersion: '9.0'
 
@@ -54,7 +54,7 @@ importers:
   .:
     dependencies:
       '@graphrefly/ts':
-        specifier: 0.3.0
+        specifier: 0.3.x
         version: 0.3.0
 
 packages:
@@ -65,16 +65,6 @@ packages:
 snapshots:
 
   '@graphrefly/ts@0.3.0': {}
-`;
-const entrypoint = `import { createHash } from "node:crypto";
-import { withBlueprintHash } from "@graphrefly/ts/graph";
-import { createApplicationGraph } from "./graph.mjs";
-
-const blueprint = withBlueprintHash(
-  createApplicationGraph().blueprint({ diagnostics: true }),
-  { algorithm: "sha256", hash: (bytes) => createHash("sha256").update(bytes).digest("hex") },
-);
-process.stdout.write(JSON.stringify(blueprint));
 `;
 const states = [
 	{
@@ -133,34 +123,32 @@ await mkdir(repository, { recursive: true });
 run("git", ["init", "-b", "main"]);
 await Promise.all([
 	put(".gitignore", "node_modules\n"),
-	put(
-		".graphrefly-stack.json",
-		`${JSON.stringify(
-			{
-				schema: "graphrefly.stack.repository.v1",
-				blueprint: { entrypoint: "graphrefly-stack.blueprint.mjs" },
-			},
-			null,
-			2,
-		)}\n`,
-	),
 	put("package.json", `${JSON.stringify(packageJson, null, 2)}\n`),
 	put("pnpm-lock.yaml", lockfile),
-	put("graphrefly-stack.blueprint.mjs", entrypoint),
+]);
+await put("graph.mjs", states[0].source);
+await symlink(resolve(root, "node_modules"), resolve(repository, "node_modules"), "dir");
+run(process.execPath, [
+	resolve(root, "packages/cli/dist/cli.js"),
+	"init",
+	"--repo",
+	repository,
+	"--graph-module",
+	"graph.mjs",
+	"--json",
 ]);
 const commits = [];
 for (const state of states) {
 	await put("graph.mjs", state.source);
 	commits.push({ subject: state.subject, oid: commit(state.subject) });
 }
-await symlink(resolve(root, "node_modules"), resolve(repository, "node_modules"), "dir");
 
 const result = {
 	repository,
 	base: commits[0].oid,
 	head: commits.at(-1).oid,
 	commits,
-	command: `pnpm cli review --repo ${repository} --base ${commits[0].oid} --head ${commits.at(-1).oid}`,
+	command: `node ${resolve(root, "dist/grfs.js")} review --repo ${repository} --base ${commits[0].oid} --head ${commits.at(-1).oid}`,
 };
 await writeFile(
 	resolve(repository, ".graphrefly-stack-sample.json"),

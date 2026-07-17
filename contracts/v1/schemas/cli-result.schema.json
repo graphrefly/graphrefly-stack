@@ -30,7 +30,7 @@
 	],
 	"definitions": {
 		"Command": {
-			"enum": ["fixture-create", "plan", "gate", "replan", "review", "export"]
+			"enum": ["init", "fixture-create", "plan", "gate", "replan", "review", "export"]
 		},
 		"Mode": {
 			"enum": ["deterministic", "replay", "live", "replay-fallback"]

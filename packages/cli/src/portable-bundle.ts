@@ -1,9 +1,8 @@
 import { readFile, stat } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 import { createStrictAjv, sha256Jcs } from "@graphrefly-stack/contracts";
 
-const workspaceRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
+import { runtimeAssetPath } from "./runtime-paths.js";
 
 interface ManifestArtifact {
 	path: string;
@@ -32,7 +31,7 @@ export async function readPortableEvidenceBundle(
 	const path = await portableEvidenceBundlePath(input);
 	const value = JSON.parse(await readFile(path, "utf8")) as unknown;
 	const schema = JSON.parse(
-		await readFile(resolve(workspaceRoot, "contracts/v1/schemas/artifacts.schema.json"), "utf8"),
+		await readFile(runtimeAssetPath("contracts/v1/schemas/artifacts.schema.json"), "utf8"),
 	) as object;
 	const ajv = createStrictAjv();
 	ajv.addSchema(schema);

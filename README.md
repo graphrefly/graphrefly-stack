@@ -12,57 +12,78 @@ architecture it was planned against. GraphReFly Stack makes that mismatch visibl
 work green, and asks GPT-5.6 to replan only the stale work. GPT-5.6 proposes; deterministic code
 decides validity.
 
-## Judge the usable product in 90 seconds — no credentials required
+## Install and review a GraphReFly repository
 
-Requirements: macOS or Linux, Node.js 24, pnpm 11.7, Git, and
-[mise](https://mise.jdx.dev/). Clean-room evidence covers macOS and a Linux Node 24 container. The
-CLI and local web review shell use no hosted service or database.
+Requirements: macOS or Linux, Node.js 24, pnpm 11.7, and Git. The CLI and local web review shell use
+no hosted service, database, or credentials. Once the package is published, install it in the
+GraphReFly repository you want to review:
 
 ```bash
-mise install
-mise run bootstrap
-pnpm build
-pnpm product:sample
-REPO=.private/fixtures/generic-linear-v1
-BASE=$(git -C "$REPO" rev-list --max-parents=0 HEAD)
-pnpm cli review --repo "$REPO" --base "$BASE" --head HEAD
+pnpm add -D @graphrefly/stack
+pnpm exec grfs init --graph-module src/application-graph.ts
+git add .graphrefly-stack.json graphrefly-stack.blueprint.mjs
+git commit -m "configure GraphReFly Stack"
+
+BASE=<the commit immediately before your stack>
+pnpm exec grfs review --repo . --base "$BASE" --head HEAD
 ```
 
 Open <http://127.0.0.1:4173>, then:
 
-1. Select each discovered commit in the real four-commit Git repository.
-2. See the Blueprint and parent delta produced by the sample repository's pinned
-   `@graphrefly/ts@0.3.0` runtime: node/edge addition, mounted-subgraph addition, then metadata-only
-   `node-changed`.
+1. Select each commit discovered from the real linear Git range.
+2. See the Blueprint and parent delta produced by the repository's installed GraphReFly 0.3.x
+   runtime.
 3. Verify that commit OID, Blueprint hash, upstream Mermaid diagram, delta events, and split code diff
    move together.
 4. Expand repository evidence or commit lineage only when needed. No session, delivery, fixture, or
    fake semantic-gate state appears in the generic review.
 
-`product:sample` creates the small repository and its commits for real under `.private/`; it does not
-feed checked-in Blueprint or delta output to the review command. The CLI executes the configured
-entrypoint at the base and every commit in permission-limited detached worktrees, then parses,
-verifies, renders, and diffs only with the target runtime's public GraphReFly APIs.
+`grfs init` does not guess how an arbitrary application assembles its graph. You point it at the
+module and export that already build the repository's root Graph. It generates the strict
+`.graphrefly-stack.json` config and a small deterministic `graphrefly-stack.blueprint.mjs` adapter;
+both are ordinary source files that should be committed. Use `--graph-export <name>` when the module
+does not export `createApplicationGraph`.
+
+The CLI executes that generated adapter at the base and every commit in permission-limited detached
+worktrees. Each invocation calls the real GraphReFly `graph.blueprint()` API; Stack then parses,
+verifies, renders, and diffs only with the installed runtime's public GraphReFly APIs.
 
 ## Generic repository contract
 
 A supported repository is a local, merge-free linear Git range with:
 
 - a strict `.graphrefly-stack.json` selecting one repository-relative Blueprint entrypoint;
-- an exact `@graphrefly/ts` 0.3.0 pin and matching installed package;
-- one root pnpm, npm, or Yarn lockfile; and
-- unchanged `package.json` and lockfile across the reviewed range.
+- an installed `@graphrefly/ts` version in `>=0.3.0 <0.4.0`;
+- a dependency or devDependency range at every reviewed revision that accepts that installed exact
+  version; and
+- one recognized root pnpm, npm, or Yarn lockfile at every revision.
+
+Normal package and lockfile changes are allowed inside the stack. This first version deliberately
+uses one installed GraphReFly runtime for the whole review, so it fails closed if a historical
+revision declares a range incompatible with that runtime. Installing and caching a different runtime
+for every revision is roadmap work.
 
 The entrypoint must emit one hashed GraphBlueprint v2 JSON value without credentials, writes,
 network access, or child processes. To inspect the same product facts without starting the web UI:
 
 ```bash
-pnpm cli review --repo "$REPO" --base "$BASE" --head HEAD --json
+pnpm exec grfs review --repo . --base "$BASE" --head HEAD --json
 ```
 
 The generic payload is commit-centric. When a repository has not adopted semantic change records,
 the UI says `Semantic gate not configured`; it never turns missing semantic evidence into a passing
 `GateResult`.
+
+Before registry publication, the same install path is exercised from the packed tarball rather than
+from workspace imports:
+
+```bash
+pnpm test:package
+```
+
+That test packs `@graphrefly/stack`, installs it with GraphReFly 0.3.x in a temporary independent Git
+repository, runs `pnpm exec grfs init`, creates a real two-commit stack, verifies its Blueprint delta
+and structured code diff, and fetches the embedded review UI plus its review-data endpoint.
 
 ## Historical semantic flagship and CLI cases
 
@@ -149,12 +170,12 @@ work, or generate its own verdict.
 
 ## Build Week work and prior work
 
-GraphReFly itself is a pre-existing external dependency. The generic product pins the published
-`@graphrefly/ts` 0.3.0 Blueprint v2 API; the historical flagship preserves its earlier v1 evidence. The
-GraphReFly Stack product, contracts, real-Git flagship fixture, deterministic semantic gate, Codex
-integration, evidence exporter, and review UI were created or materially implemented during the
-Build Week submission period beginning July 13, 2026. The repository's dated Git history and
-canonical milestones in `docs/evidence/milestones.jsonl` distinguish that work.
+GraphReFly itself is a pre-existing external dependency. The generic product targets the published
+`@graphrefly/ts` 0.3.x Blueprint v2 API surface; the historical flagship preserves its earlier v1
+evidence. The GraphReFly Stack product, contracts, real-Git flagship fixture, deterministic semantic
+gate, Codex integration, evidence exporter, and review UI were created or materially implemented
+during the Build Week submission period beginning July 13, 2026. The repository's dated Git history
+and canonical milestones in `docs/evidence/milestones.jsonl` distinguish that work.
 
 ## Evidence, security, and limitations
 

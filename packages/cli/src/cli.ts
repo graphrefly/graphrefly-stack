@@ -19,22 +19,22 @@ import {
 import { exportEvidenceBundle, type LiveRunRecord } from "./exporter.js";
 import { createFlagshipFixture, readRuntimeSuite } from "./fixture.js";
 import { readPortableEvidenceBundle } from "./portable-bundle.js";
+import { initializeRepository, RepositoryInitError } from "./repository-init.js";
 import { createRepositoryReview, RepositoryReviewError } from "./repository-review.js";
 import { startReviewServer } from "./review-server.js";
 import { SystemGitAdapter } from "./system-git.js";
 
-const help = `GraphReFly Stack
+const help = `GraphReFly Stack (grfs)
 
 Usage:
-  graphrefly-stack fixture create [--output <path>] [--force] [--json]
-  graphrefly-stack plan [--fixture <runtime-suite.json>] [--mode replay|live] --json
-  graphrefly-stack gate [--fixture <runtime-suite.json>] [--case <case-id>] --json
-  graphrefly-stack replan [--mode replay|live] [--fallback none|replay] --json
-  graphrefly-stack review --repo <path> --base <revision> --head <revision> [--host 127.0.0.1] [--port 4173] [--json]
-  graphrefly-stack review [--bundle <path>] [--fixture <runtime-suite.json>] [--host 127.0.0.1] [--port 4173]
-  graphrefly-stack export [--fixture <runtime-suite.json>] [--plan-run <path>] [--replan-run <path>] [--output <path>] --json
-
-STACK-5 provides deterministic fixture replay, semantic gating, selective replan, and bundle export.
+  grfs init [--repo <path>] --graph-module <path> [--graph-export <name>] [--force] [--json]
+  grfs review --repo <path> --base <revision> --head <revision> [--host 127.0.0.1] [--port 4173] [--json]
+  grfs fixture create [--output <path>] [--force] [--json]
+  grfs plan [--fixture <runtime-suite.json>] [--mode replay|live] --json
+  grfs gate [--fixture <runtime-suite.json>] [--case <case-id>] --json
+  grfs replan [--mode replay|live] [--fallback none|replay] --json
+  grfs review [--bundle <path>] [--fixture <runtime-suite.json>] [--host 127.0.0.1] [--port 4173]
+  grfs export [--fixture <runtime-suite.json>] [--plan-run <path>] [--replan-run <path>] [--output <path>] --json
 `;
 
 const defaultFixtureOutput = resolve(".private/fixtures/refresh-token-rotation-v1");
@@ -49,6 +49,7 @@ function isWithin(root: string, candidate: string): boolean {
 }
 
 function commandFrom(argv: readonly string[]): CliCommand | null {
+	if (argv[0] === "init") return "init";
 	if (argv[0] === "fixture" && argv[1] === "create") return "fixture-create";
 	if (["plan", "gate", "replan", "review", "export"].includes(argv[0] ?? "")) {
 		return argv[0] as CliCommand;
@@ -216,6 +217,27 @@ export async function runCli(argv = process.argv.slice(2)): Promise<number> {
 	const fallback = readOption(argv, "--fallback") ?? "none";
 	if (fallback !== "none" && fallback !== "replay") {
 		return failure(command, json, "INVALID_FALLBACK", fallback, requestedMode);
+	}
+	if (command === "init") {
+		const graphModule = readOption(argv, "--graph-module");
+		if (graphModule === undefined) {
+			return failure(command, json, "INIT_GRAPH_MODULE_REQUIRED", "--graph-module is required");
+		}
+		try {
+			const result = await initializeRepository({
+				repository: readOption(argv, "--repo") ?? ".",
+				graphModule,
+				graphExport: readOption(argv, "--graph-export") ?? "createApplicationGraph",
+				force: argv.includes("--force"),
+			});
+			success(command, "deterministic", result, json);
+			return 0;
+		} catch (error) {
+			if (error instanceof RepositoryInitError) {
+				return failure(command, json, error.code, error.message);
+			}
+			throw error;
+		}
 	}
 
 	if (command === "fixture-create") {

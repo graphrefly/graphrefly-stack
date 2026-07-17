@@ -1,6 +1,6 @@
 export const REPOSITORY_CONFIG_SCHEMA = "graphrefly.stack.repository.v1" as const;
 export const REPOSITORY_REVIEW_SCHEMA = "graphrefly.stack.review.v1" as const;
-export const SUPPORTED_GRAPHREFLY_VERSION = "0.3.0" as const;
+export const SUPPORTED_GRAPHREFLY_RANGE = ">=0.3.0 <0.4.0" as const;
 
 export interface RepositoryConfig {
 	readonly schema: typeof REPOSITORY_CONFIG_SCHEMA;
@@ -59,7 +59,7 @@ export interface RepositoryReview {
 	readonly source: "generic-repository";
 	readonly repository: {
 		readonly label: string;
-		readonly graphreflyVersion: typeof SUPPORTED_GRAPHREFLY_VERSION;
+		readonly graphreflyVersion: string;
 		readonly entrypoint: string;
 		readonly baseOid: string;
 		readonly headOid: string;

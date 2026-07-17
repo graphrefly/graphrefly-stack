@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { mkdir, realpath, rm } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { basename, dirname, resolve } from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { pathToFileURL } from "node:url";
 import { graphreflyTopologyHash } from "@graphrefly-stack/core";
 
 import { gitText } from "./system-git.js";
@@ -37,11 +37,18 @@ function digest(value: string) {
 	return { algorithm: "sha256" as const, value: createHash("sha256").update(value).digest("hex") };
 }
 
-const moduleDirectory = dirname(fileURLToPath(import.meta.url));
-const workspaceRoot = resolve(moduleDirectory, "../../..");
-const graphreflyRequire = createRequire(resolve(workspaceRoot, "packages/core/package.json"));
+const packageRequire = createRequire(import.meta.url);
+
+function historicalGraphReFlyRequire(): NodeRequire {
+	try {
+		return createRequire(packageRequire.resolve("@graphrefly-stack/core"));
+	} catch {
+		return packageRequire;
+	}
+}
 
 function graphreflyRuntime() {
+	const graphreflyRequire = historicalGraphReFlyRequire();
 	const graph = graphreflyRequire.resolve("@graphrefly/ts/graph");
 	const operators = graphreflyRequire.resolve("@graphrefly/ts/operators");
 	const render = graphreflyRequire.resolve("@graphrefly/ts/render");

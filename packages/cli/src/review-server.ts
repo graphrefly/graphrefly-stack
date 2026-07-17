@@ -2,11 +2,11 @@ import { createReadStream } from "node:fs";
 import { stat } from "node:fs/promises";
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
-import { dirname, extname, resolve, sep } from "node:path";
-import { fileURLToPath } from "node:url";
+import { extname, resolve, sep } from "node:path";
 
-const moduleDirectory = dirname(fileURLToPath(import.meta.url));
-export const defaultReviewDist = resolve(moduleDirectory, "../../../apps/review/dist");
+import { runtimeReviewDist } from "./runtime-paths.js";
+
+export const defaultReviewDist = runtimeReviewDist();
 
 const contentTypes: Record<string, string> = {
 	".css": "text/css; charset=utf-8",

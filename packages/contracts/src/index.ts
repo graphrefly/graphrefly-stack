@@ -6,7 +6,14 @@ export * from "./repository-review.js";
 export const CONTRACT_VERSION = "v1" as const;
 export const CLI_RESULT_SCHEMA = "urn:graphrefly-stack:schema:cli-result:v1" as const;
 
-export type CliCommand = "fixture-create" | "plan" | "gate" | "replan" | "review" | "export";
+export type CliCommand =
+	| "init"
+	| "fixture-create"
+	| "plan"
+	| "gate"
+	| "replan"
+	| "review"
+	| "export";
 export type ExecutionMode = "deterministic" | "replay" | "live" | "replay-fallback";
 
 export interface CliError {

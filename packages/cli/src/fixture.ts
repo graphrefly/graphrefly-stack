@@ -1,7 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { dirname, resolve, sep } from "node:path";
-import { fileURLToPath } from "node:url";
 import { createStrictAjv, sha256Jcs } from "@graphrefly-stack/contracts";
 import { type GateInput, graphreflyTopologyHash, type HashValue } from "@graphrefly-stack/core";
 
@@ -11,13 +10,12 @@ import {
 	type FixtureCheckResult,
 	runFixtureChecks,
 } from "./graphrefly-provider.js";
+import { runtimeAssetPath } from "./runtime-paths.js";
 import { SystemGitAdapter } from "./system-git.js";
 
-const moduleDirectory = dirname(fileURLToPath(import.meta.url));
-const workspaceRoot = resolve(moduleDirectory, "../../..");
-const templatePath = resolve(workspaceRoot, "fixtures/flagship/v1/repository-template.json");
-const goldenPath = resolve(workspaceRoot, "fixtures/contracts/v1/golden-suite.json");
-const artifactsSchemaPath = resolve(workspaceRoot, "contracts/v1/schemas/artifacts.schema.json");
+const templatePath = runtimeAssetPath("fixtures/flagship/v1/repository-template.json");
+const goldenPath = runtimeAssetPath("fixtures/contracts/v1/golden-suite.json");
+const artifactsSchemaPath = runtimeAssetPath("contracts/v1/schemas/artifacts.schema.json");
 
 interface RepositoryTemplate {
 	scenario: string;

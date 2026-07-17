@@ -15,6 +15,7 @@ test("D17 package boundaries remain the composition authority", () => {
 	assert.equal(CORE_ARCHITECTURE.processModel, "single-local-cli-process");
 	assert.equal(CORE_ARCHITECTURE.defaultPlanMode, "replay");
 	assert.deepEqual(CORE_ARCHITECTURE.canonicalCommands, [
+		"init",
 		"fixture create",
 		"plan",
 		"gate",

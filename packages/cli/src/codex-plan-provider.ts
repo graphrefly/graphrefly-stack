@@ -2,26 +2,21 @@ import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 import { createStrictAjv, sha256Jcs } from "@graphrefly-stack/contracts";
 import { Codex, type ModelReasoningEffort, type Usage } from "@openai/codex-sdk";
 
 import type { RuntimeSuite } from "./fixture.js";
+import { runtimeAssetPath, runtimeStateRoot } from "./runtime-paths.js";
 
-const moduleDirectory = dirname(fileURLToPath(import.meta.url));
-const workspaceRoot = resolve(moduleDirectory, "../../..");
-const artifactsSchemaPath = resolve(workspaceRoot, "contracts/v1/schemas/artifacts.schema.json");
-const planProposalSchemaPath = resolve(
-	workspaceRoot,
-	"contracts/v1/schemas/plan-proposal.schema.json",
-);
-const replanProposalSchemaPath = resolve(
-	workspaceRoot,
+const stateRoot = runtimeStateRoot();
+const artifactsSchemaPath = runtimeAssetPath("contracts/v1/schemas/artifacts.schema.json");
+const planProposalSchemaPath = runtimeAssetPath("contracts/v1/schemas/plan-proposal.schema.json");
+const replanProposalSchemaPath = runtimeAssetPath(
 	"contracts/v1/schemas/replan-proposal.schema.json",
 );
-const rawResponseRoot = resolve(workspaceRoot, ".private/live-responses");
-const liveRunRoot = resolve(workspaceRoot, ".private/live-runs");
+const rawResponseRoot = resolve(stateRoot, ".private/live-responses");
+const liveRunRoot = resolve(stateRoot, ".private/live-runs");
 const CODEX_SDK_VERSION = "0.143.0";
 
 interface ProposalWorkUnit {
@@ -353,7 +348,7 @@ export function replayFallback(kind: "plan" | "replan", runtime: RuntimeSuite, e
 
 export function redactProviderError(error: unknown): string {
 	return (error instanceof Error ? error.message : String(error))
-		.replaceAll(workspaceRoot, "<workspace>")
+		.replaceAll(stateRoot, "<workspace>")
 		.replaceAll(homedir(), "<home>")
 		.replace(/\b(?:sk|sess|key)-[A-Za-z0-9_-]{12,}\b/g, "<redacted-credential>")
 		.slice(0, 400);

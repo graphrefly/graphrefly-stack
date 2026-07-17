@@ -4,7 +4,7 @@
 	"private": true,
 	"type": "module",
 	"bin": {
-		"graphrefly-stack": "./dist/cli.js"
+		"grfs": "./dist/cli.js"
 	},
 	"exports": {
 		".": "./dist/cli.js",
@@ -16,6 +16,7 @@
 	"dependencies": {
 		"@graphrefly-stack/contracts": "workspace:*",
 		"@graphrefly-stack/core": "workspace:*",
-		"@openai/codex-sdk": "0.143.0"
+		"@openai/codex-sdk": "0.143.0",
+		"semver": "7.8.5"
 	}
 }

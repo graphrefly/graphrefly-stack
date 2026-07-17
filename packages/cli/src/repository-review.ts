@@ -2,7 +2,7 @@ import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { access, mkdir, readFile, realpath, rm, symlink } from "node:fs/promises";
 import { createRequire } from "node:module";
-import { basename, dirname, resolve, sep } from "node:path";
+import { basename, dirname, parse, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
 import {
 	createStrictAjv,
@@ -12,25 +12,22 @@ import {
 	type RepositoryDiagram,
 	type RepositoryReview,
 	type RepositoryRevisionEvidence,
-	SUPPORTED_GRAPHREFLY_VERSION,
+	SUPPORTED_GRAPHREFLY_RANGE,
 } from "@graphrefly-stack/contracts";
+import { satisfies, valid } from "semver";
 
+import { runtimeAssetPath } from "./runtime-paths.js";
 import { parseStructuredDiff } from "./structured-diff.js";
 import { gitText, SystemGitAdapter } from "./system-git.js";
 
-const moduleRequire = createRequire(import.meta.url);
-const contractsDist = dirname(moduleRequire.resolve("@graphrefly-stack/contracts"));
-const configSchemaPath = resolve(
-	contractsDist,
-	"schemas/repository/v1/repository-config.schema.json",
-);
-const reviewSchemaPath = resolve(contractsDist, "schemas/repository/v1/review.schema.json");
+const configSchemaPath = runtimeAssetPath("contracts/repository/v1/repository-config.schema.json");
+const reviewSchemaPath = runtimeAssetPath("contracts/repository/v1/review.schema.json");
 const configName = ".graphrefly-stack.json";
 const lockCandidates = ["pnpm-lock.yaml", "package-lock.json", "yarn.lock"] as const;
 const maxReviewCommits = 64;
 
 interface TargetGraphReFlyRuntime {
-	version: typeof SUPPORTED_GRAPHREFLY_VERSION;
+	version: string;
 	nodeModulesRoot: string;
 	parseGraphBlueprint(value: unknown): Record<string, unknown>;
 	verifyBlueprintHash(
@@ -73,6 +70,33 @@ async function readSchemas() {
 	);
 }
 
+async function findPackageRoot(entrypoint: string): Promise<string> {
+	let candidate = dirname(entrypoint);
+	const filesystemRoot = parse(candidate).root;
+	while (candidate !== filesystemRoot) {
+		try {
+			const manifest = JSON.parse(await readFile(resolve(candidate, "package.json"), "utf8")) as {
+				name?: string;
+			};
+			if (manifest.name === "@graphrefly/ts") return candidate;
+		} catch {
+			// Continue upward until the package that owns the resolved public entrypoint is found.
+		}
+		candidate = dirname(candidate);
+	}
+	throw new RepositoryReviewError(
+		"DEPENDENCY_UNSUPPORTED",
+		"Installed @graphrefly/ts package root could not be identified",
+	);
+}
+
+function importExportPath(value: unknown): string | undefined {
+	if (typeof value === "string") return value;
+	if (typeof value !== "object" || value === null) return undefined;
+	const record = value as Record<string, unknown>;
+	return importExportPath(record.import) ?? importExportPath(record.default);
+}
+
 async function readRepositoryConfig(repository: string): Promise<RepositoryConfig> {
 	const path = resolve(repository, configName);
 	try {
@@ -98,10 +122,6 @@ async function readRepositoryConfig(repository: string): Promise<RepositoryConfi
 
 function gitObject(repository: string, revision: string, path: string): string {
 	return gitText(repository, ["show", `${revision}:${path}`]);
-}
-
-function gitBlob(repository: string, revision: string, path: string): string {
-	return gitText(repository, ["rev-parse", `${revision}:${path}`]);
 }
 
 function graphReFlyPins(packageJson: Record<string, unknown>): string[] {
@@ -148,19 +168,23 @@ async function resolveTargetRuntime(repository: string): Promise<TargetGraphReFl
 			"Run the target repository package-manager install before review",
 		);
 	}
-	const packageRoot = resolve(dirname(graphCjs), "../..");
+	const packageRoot = await findPackageRoot(graphCjs);
 	const packageJson = JSON.parse(await readFile(resolve(packageRoot, "package.json"), "utf8")) as {
 		version?: string;
-		exports?: Record<string, { import?: { default?: string } }>;
+		exports?: Record<string, unknown>;
 	};
-	if (packageJson.version !== SUPPORTED_GRAPHREFLY_VERSION) {
+	if (
+		typeof packageJson.version !== "string" ||
+		valid(packageJson.version) === null ||
+		!satisfies(packageJson.version, SUPPORTED_GRAPHREFLY_RANGE)
+	) {
 		throw new RepositoryReviewError(
 			"DEPENDENCY_UNSUPPORTED",
-			`Installed @graphrefly/ts must be ${SUPPORTED_GRAPHREFLY_VERSION}`,
+			`Installed @graphrefly/ts must satisfy ${SUPPORTED_GRAPHREFLY_RANGE}`,
 		);
 	}
-	const graphEntry = packageJson.exports?.["./graph"]?.import?.default;
-	const renderEntry = packageJson.exports?.["./render"]?.import?.default;
+	const graphEntry = importExportPath(packageJson.exports?.["./graph"]);
+	const renderEntry = importExportPath(packageJson.exports?.["./render"]);
 	if (graphEntry === undefined || renderEntry === undefined) {
 		throw new RepositoryReviewError(
 			"DEPENDENCY_UNSUPPORTED",
@@ -185,7 +209,7 @@ async function resolveTargetRuntime(repository: string): Promise<TargetGraphReFl
 		}
 	}
 	return {
-		version: SUPPORTED_GRAPHREFLY_VERSION,
+		version: packageJson.version,
 		nodeModulesRoot: await realpath(resolve(repository, "node_modules")),
 		parseGraphBlueprint: graphModule.parseGraphBlueprint,
 		verifyBlueprintHash: graphModule.verifyBlueprintHash,
@@ -220,7 +244,9 @@ async function executeBlueprint(
 				`Blueprint entrypoint is missing at ${revision.slice(0, 12)}`,
 			);
 		}
-		await symlink(runtime.nodeModulesRoot, resolve(canonicalWorktree, "node_modules"), "dir");
+		const worktreeNodeModules = resolve(canonicalWorktree, "node_modules");
+		await rm(worktreeNodeModules, { recursive: true, force: true });
+		await symlink(runtime.nodeModulesRoot, worktreeNodeModules, "dir");
 		const result = spawnSync(
 			process.execPath,
 			[
@@ -341,10 +367,8 @@ function diagramFor(
 async function validateDependencyContinuity(
 	repository: string,
 	revisions: readonly string[],
+	installedVersion: string,
 ): Promise<void> {
-	let lockFile: string | undefined;
-	let manifestBlob: string | undefined;
-	let lockBlob: string | undefined;
 	for (const revision of revisions) {
 		let packageJson: Record<string, unknown>;
 		try {
@@ -356,10 +380,10 @@ async function validateDependencyContinuity(
 			);
 		}
 		const pins = graphReFlyPins(packageJson);
-		if (pins.length === 0 || pins.some((pin) => pin !== SUPPORTED_GRAPHREFLY_VERSION)) {
+		if (pins.length === 0 || pins.some((pin) => !satisfies(installedVersion, pin))) {
 			throw new RepositoryReviewError(
 				"DEPENDENCY_UNSUPPORTED",
-				`@graphrefly/ts must be exactly ${SUPPORTED_GRAPHREFLY_VERSION} at ${revision.slice(0, 12)}`,
+				`@graphrefly/ts must accept installed ${installedVersion} at ${revision.slice(0, 12)}`,
 			);
 		}
 		const lockFiles = gitText(repository, [
@@ -375,23 +399,6 @@ async function validateDependencyContinuity(
 			throw new RepositoryReviewError(
 				"DEPENDENCY_LOCK_UNSUPPORTED",
 				`Exactly one root pnpm, npm, or Yarn lockfile is required at ${revision.slice(0, 12)}`,
-			);
-		}
-		lockFile ??= lockFiles[0];
-		if (lockFile !== lockFiles[0]) {
-			throw new RepositoryReviewError(
-				"DEPENDENCY_TRANSITION_UNSUPPORTED",
-				"The dependency lockfile type must remain unchanged across the reviewed range",
-			);
-		}
-		const currentManifestBlob = gitBlob(repository, revision, "package.json");
-		const currentLockBlob = gitBlob(repository, revision, lockFile as string);
-		manifestBlob ??= currentManifestBlob;
-		lockBlob ??= currentLockBlob;
-		if (manifestBlob !== currentManifestBlob || lockBlob !== currentLockBlob) {
-			throw new RepositoryReviewError(
-				"DEPENDENCY_TRANSITION_UNSUPPORTED",
-				"package.json and the dependency lock must remain unchanged across the reviewed range",
 			);
 		}
 	}
@@ -478,8 +485,8 @@ export async function createRepositoryReview(options: {
 		expectedParent = revision;
 	}
 	const allRevisions = [baseOid, ...revisions];
-	await validateDependencyContinuity(repository, allRevisions);
 	const runtime = await resolveTargetRuntime(repository);
+	await validateDependencyContinuity(repository, allRevisions, runtime.version);
 	const evidence: RepositoryRevisionEvidence[] = [];
 	for (const revision of allRevisions) {
 		const blueprint = await executeBlueprint(
