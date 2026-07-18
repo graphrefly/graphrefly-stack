@@ -4,10 +4,11 @@ import {
 	canonicalize,
 	createStrictAjv,
 	INTEGRATION_ARTIFACTS_SCHEMA,
+	INTEGRATION_CONFLICT_REASONS,
 	INTEGRATION_REASON_ORDER,
 	INTEGRATION_RESULT_SCHEMA,
-	sha256Jcs,
 	type IntegrationReasonCode,
+	sha256Jcs,
 } from "@graphrefly-stack/contracts";
 import type {
 	IntegrationEffectConflict,
@@ -23,6 +24,7 @@ type JsonObject = Record<string, unknown>;
 type Hash = { algorithm: "sha256"; value: string };
 
 export type IntegrationSemanticWitness =
+	| { kind: "path"; path: string }
 	| { kind: "claim"; workUnitId: string; claimId: string }
 	| { kind: "dependency"; workUnitId: string; dependencyId: string }
 	| { kind: "policy"; policyDigest: Hash }
@@ -32,6 +34,23 @@ export interface IntegrationSemanticEvaluation {
 	reasonCodes: IntegrationReasonCode[];
 	conflicts: { reasonCode: IntegrationReasonCode; witness: IntegrationSemanticWitness }[];
 	headGate: { inputDigest: Hash; resultDigest: Hash; verdict: unknown };
+}
+
+type IntegrationConflictRecord =
+	| IntegrationEffectConflict
+	| { reasonCode: IntegrationReasonCode; witness: IntegrationSemanticWitness };
+
+export interface IntegrationResultArtifact {
+	schema: typeof INTEGRATION_RESULT_SCHEMA;
+	candidateDigest: Hash;
+	observedRevisions: {
+		target: IntegrationCandidateArtifact["revisions"]["target"];
+		head: IntegrationCandidateArtifact["revisions"]["head"];
+	};
+	outcome: "compatible" | "conflict" | "error";
+	reasonCodes: IntegrationReasonCode[];
+	overlaps: IntegrationEffectWitness[];
+	conflicts: IntegrationConflictRecord[];
 }
 
 const integrationSchemaPath = runtimeAssetPath("contracts/integration/v1/artifacts.schema.json");
@@ -127,21 +146,7 @@ export async function assembleIntegrationResult(options: {
 	candidate: IntegrationCandidateArtifact;
 	graph: IntegrationEffectEvaluation;
 	semantic: IntegrationSemanticEvaluation;
-}): Promise<{
-	schema: typeof INTEGRATION_RESULT_SCHEMA;
-	candidateDigest: Hash;
-	observedRevisions: {
-		target: IntegrationCandidateArtifact["revisions"]["target"];
-		head: IntegrationCandidateArtifact["revisions"]["head"];
-	};
-	outcome: "compatible" | "conflict";
-	reasonCodes: IntegrationReasonCode[];
-	overlaps: IntegrationEffectWitness[];
-	conflicts: (
-		| IntegrationEffectConflict
-		| { reasonCode: IntegrationReasonCode; witness: IntegrationSemanticWitness }
-	)[];
-}> {
+}): Promise<IntegrationResultArtifact> {
 	if (canonicalize(options.candidate.headGate) !== canonicalize(options.semantic.headGate)) {
 		throw new Error(
 			"IntegrationResult head GateInput or GateResult identity does not match candidate",
@@ -160,6 +165,45 @@ export async function assembleIntegrationResult(options: {
 		outcome: conflicts.length === 0 ? ("compatible" as const) : ("conflict" as const),
 		reasonCodes: INTEGRATION_REASON_ORDER.filter((reason) => present.has(reason)),
 		overlaps: [...options.graph.overlaps].sort(compareCanonical),
+		conflicts,
+	};
+	const schema = JSON.parse(await readFile(integrationSchemaPath, "utf8"));
+	const ajv = createStrictAjv();
+	ajv.addSchema(schema);
+	const validate = ajv.getSchema(`${INTEGRATION_ARTIFACTS_SCHEMA}#/definitions/IntegrationResult`);
+	if (validate === undefined || !validate(result)) {
+		throw new Error(`IntegrationResult failed validation: ${JSON.stringify(validate?.errors)}`);
+	}
+	assertIntegrationIntegrity(options.candidate, result);
+	return result;
+}
+
+export async function assembleIntegrationFailureResult(options: {
+	candidate: IntegrationCandidateArtifact;
+	reasonCode: IntegrationReasonCode;
+	observedRevisions?: IntegrationResultArtifact["observedRevisions"];
+	witnesses?: IntegrationSemanticWitness[];
+}): Promise<IntegrationResultArtifact> {
+	const conflictReasons = new Set<IntegrationReasonCode>(INTEGRATION_CONFLICT_REASONS);
+	const outcome = conflictReasons.has(options.reasonCode) ? "conflict" : "error";
+	if (options.candidate.status !== outcome) {
+		throw new Error("Integration failure candidate status does not match its result outcome");
+	}
+	const witnesses = options.witnesses ?? [
+		{ kind: "diagnostics", code: options.reasonCode, path: null } as const,
+	];
+	const conflicts = witnesses.map((witness) => ({ reasonCode: options.reasonCode, witness }));
+	conflicts.sort(compareCanonical);
+	const result: IntegrationResultArtifact = {
+		schema: INTEGRATION_RESULT_SCHEMA,
+		candidateDigest: { algorithm: "sha256", value: sha256Jcs(options.candidate) },
+		observedRevisions: options.observedRevisions ?? {
+			target: options.candidate.revisions.target,
+			head: options.candidate.revisions.head,
+		},
+		outcome,
+		reasonCodes: INTEGRATION_REASON_ORDER.filter((reason) => reason === options.reasonCode),
+		overlaps: [],
 		conflicts,
 	};
 	const schema = JSON.parse(await readFile(integrationSchemaPath, "utf8"));

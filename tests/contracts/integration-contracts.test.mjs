@@ -9,9 +9,9 @@ import {
 	INTEGRATION_CANDIDATE_SCHEMA,
 	INTEGRATION_CONFLICT_REASONS,
 	INTEGRATION_GOLDEN_SUITE_SCHEMA,
-	IntegrationIntegrityError,
 	INTEGRATION_REASON_ORDER,
 	INTEGRATION_RESULT_SCHEMA,
+	IntegrationIntegrityError,
 	sha256Jcs,
 } from "../../packages/contracts/dist/index.js";
 

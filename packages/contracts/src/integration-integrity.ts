@@ -1,9 +1,9 @@
-import { canonicalize, sha256Jcs } from "./jcs.js";
 import {
 	INTEGRATION_CONFLICT_REASONS,
 	INTEGRATION_REASON_ORDER,
 	type IntegrationReasonCode,
 } from "./integration.js";
+import { canonicalize, sha256Jcs } from "./jcs.js";
 
 type JsonObject = Record<string, unknown>;
 
@@ -93,11 +93,17 @@ export function assertIntegrationIntegrity(candidateValue: unknown, resultValue:
 			(equal(targetDelta.from, revisions.mergeBase) && equal(targetDelta.to, revisions.target))) &&
 		(headDelta === null ||
 			(equal(headDelta.from, revisions.mergeBase) && equal(headDelta.to, revisions.head)));
+	const targetRevisionBindingValid = presentReasons.has("TARGET_MOVED")
+		? !equal(observed.target, revisions.target)
+		: equal(observed.target, revisions.target);
+	const headRevisionBindingValid = presentReasons.has("HEAD_MOVED")
+		? !equal(observed.head, revisions.head)
+		: equal(observed.head, revisions.head);
 
 	if (
 		candidateDigest.value !== sha256Jcs(candidate) ||
-		!equal(observed.target, revisions.target) ||
-		!equal(observed.head, revisions.head) ||
+		!targetRevisionBindingValid ||
+		!headRevisionBindingValid ||
 		!equal(reasons, orderedReasons) ||
 		new Set(reasons).size !== reasons.length ||
 		!isSorted(overlaps) ||

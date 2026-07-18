@@ -6,6 +6,8 @@ import {
 	createStrictAjv,
 	INTEGRATION_ARTIFACTS_SCHEMA,
 	INTEGRATION_CANDIDATE_SCHEMA,
+	INTEGRATION_CONFLICT_REASONS,
+	type IntegrationReasonCode,
 } from "@graphrefly-stack/contracts";
 
 import {
@@ -33,10 +35,35 @@ export class IntegrationCandidateError extends Error {
 			| "CONTRACT_INVALID"
 			| "GIT_FAILED",
 		message: string,
+		readonly context?: IntegrationFailureContext,
 	) {
 		super(message);
 		this.name = "IntegrationCandidateError";
 	}
+}
+
+export interface IntegrationFailureContext {
+	sourceRepository: string;
+	revisions: {
+		mergeBase: { algorithm: "sha1" | "sha256"; value: string } | null;
+		target: { algorithm: "sha1" | "sha256"; value: string };
+		head: { algorithm: "sha1" | "sha256"; value: string };
+	};
+	topology: {
+		mergeBase: "unique" | "ambiguous" | "missing";
+		headRange: "linear" | "non-linear" | "unavailable";
+	};
+	merge: {
+		algorithm: "git-ort-three-way";
+		revision: "v1";
+		status: "merged" | "conflict" | "unavailable";
+		tree: { algorithm: "sha1" | "sha256"; value: string } | null;
+	};
+	conflictPaths: string[];
+	observedRevisions?: {
+		target: { algorithm: "sha1" | "sha256"; value: string };
+		head: { algorithm: "sha1" | "sha256"; value: string };
+	};
 }
 
 interface GitResult {
@@ -79,6 +106,45 @@ function gitText(repository: string, args: readonly string[]): string {
 
 function oid(value: string): { algorithm: "sha1" | "sha256"; value: string } {
 	return { algorithm: value.length === 40 ? "sha1" : "sha256", value };
+}
+
+function failureContext(options: {
+	repository: string;
+	target: string;
+	head: string;
+	mergeBase?: string;
+	mergeBaseStatus: "unique" | "ambiguous" | "missing";
+	headRange: "linear" | "non-linear" | "unavailable";
+	mergeStatus?: "merged" | "conflict" | "unavailable";
+	tree?: string;
+	conflictPaths?: string[];
+	observedTarget?: string;
+	observedHead?: string;
+}): IntegrationFailureContext {
+	return {
+		sourceRepository: options.repository,
+		revisions: {
+			mergeBase: options.mergeBase === undefined ? null : oid(options.mergeBase),
+			target: oid(options.target),
+			head: oid(options.head),
+		},
+		topology: { mergeBase: options.mergeBaseStatus, headRange: options.headRange },
+		merge: {
+			algorithm: "git-ort-three-way",
+			revision: "v1",
+			status: options.mergeStatus ?? "unavailable",
+			tree: options.tree === undefined ? null : oid(options.tree),
+		},
+		conflictPaths: [...(options.conflictPaths ?? [])].sort(),
+		...(options.observedTarget !== undefined && options.observedHead !== undefined
+			? {
+					observedRevisions: {
+						target: oid(options.observedTarget),
+						head: oid(options.observedHead),
+					},
+				}
+			: {}),
+	};
 }
 
 function resolveCommit(repository: string, revision: string): string {
@@ -182,36 +248,57 @@ export interface IntegrationCandidateArtifact {
 	repository: { provider: string; owner: string; name: string };
 	provider: { kind: "graphrefly"; runtimeVersion: string };
 	revisions: {
-		mergeBase: IsolatedGitCandidate["mergeBase"];
+		mergeBase: IsolatedGitCandidate["mergeBase"] | null;
 		target: IsolatedGitCandidate["target"];
 		head: IsolatedGitCandidate["head"];
 	};
-	topology: { mergeBase: "unique"; headRange: "linear" };
+	topology: {
+		mergeBase: "unique" | "ambiguous" | "missing";
+		headRange: "linear" | "non-linear" | "unavailable";
+	};
 	merge: {
 		algorithm: IsolatedGitCandidate["mergeAlgorithm"];
 		revision: IsolatedGitCandidate["mergeRevision"];
-		status: "merged";
-		tree: IsolatedGitCandidate["tree"];
+		status: "merged" | "conflict" | "unavailable";
+		tree: IsolatedGitCandidate["tree"] | null;
 	};
 	accepted: { planDigest: Hash; policyDigest: Hash };
 	evidence: {
-		baseBlueprint: { revision: IsolatedGitCandidate["mergeBase"]; blueprintHash: Hash };
-		targetBlueprint: { revision: IsolatedGitCandidate["target"]; blueprintHash: Hash };
-		headBlueprint: { revision: IsolatedGitCandidate["head"]; blueprintHash: Hash };
-		candidateBlueprint: { revision: IsolatedGitCandidate["tree"]; blueprintHash: Hash };
+		baseBlueprint: { revision: IsolatedGitCandidate["mergeBase"]; blueprintHash: Hash } | null;
+		targetBlueprint: { revision: IsolatedGitCandidate["target"]; blueprintHash: Hash } | null;
+		headBlueprint: { revision: IsolatedGitCandidate["head"]; blueprintHash: Hash } | null;
+		candidateBlueprint: { revision: IsolatedGitCandidate["tree"]; blueprintHash: Hash } | null;
 		targetDelta: {
 			from: IsolatedGitCandidate["mergeBase"];
 			to: IsolatedGitCandidate["target"];
 			deltaDigest: Hash;
-		};
+		} | null;
 		headDelta: {
 			from: IsolatedGitCandidate["mergeBase"];
 			to: IsolatedGitCandidate["head"];
 			deltaDigest: Hash;
-		};
+		} | null;
 	};
 	headGate: { inputDigest: Hash; resultDigest: Hash; verdict: "pass" | "blocked" | "error" };
-	status: "ready";
+	status: "ready" | "conflict" | "error";
+}
+
+async function validateIntegrationCandidate(
+	candidate: IntegrationCandidateArtifact,
+): Promise<IntegrationCandidateArtifact> {
+	const schema = JSON.parse(await readFile(integrationSchemaPath, "utf8"));
+	const ajv = createStrictAjv();
+	ajv.addSchema(schema);
+	const validate = ajv.getSchema(
+		`${INTEGRATION_ARTIFACTS_SCHEMA}#/definitions/IntegrationCandidate`,
+	);
+	if (validate === undefined || !validate(candidate)) {
+		throw new IntegrationCandidateError(
+			"CONTRACT_INVALID",
+			`IntegrationCandidate failed validation: ${JSON.stringify(validate?.errors)}`,
+		);
+	}
+	return candidate;
 }
 
 export async function assembleIntegrationCandidate(options: {
@@ -270,19 +357,38 @@ export async function assembleIntegrationCandidate(options: {
 		headGate: options.headGate,
 		status: "ready",
 	};
-	const schema = JSON.parse(await readFile(integrationSchemaPath, "utf8"));
-	const ajv = createStrictAjv();
-	ajv.addSchema(schema);
-	const validate = ajv.getSchema(
-		`${INTEGRATION_ARTIFACTS_SCHEMA}#/definitions/IntegrationCandidate`,
-	);
-	if (validate === undefined || !validate(candidate)) {
-		throw new IntegrationCandidateError(
-			"CONTRACT_INVALID",
-			`IntegrationCandidate failed validation: ${JSON.stringify(validate?.errors)}`,
-		);
-	}
-	return candidate;
+	return validateIntegrationCandidate(candidate);
+}
+
+export async function assembleIntegrationFailureCandidate(options: {
+	context: IntegrationFailureContext;
+	repository: IntegrationCandidateArtifact["repository"];
+	runtimeVersion: string;
+	planDigest: Hash;
+	policyDigest: Hash;
+	headGate: IntegrationCandidateArtifact["headGate"];
+	reasonCode: IntegrationReasonCode;
+}): Promise<IntegrationCandidateArtifact> {
+	const conflictReasons = new Set<IntegrationReasonCode>(INTEGRATION_CONFLICT_REASONS);
+	return validateIntegrationCandidate({
+		schema: INTEGRATION_CANDIDATE_SCHEMA,
+		repository: options.repository,
+		provider: { kind: "graphrefly", runtimeVersion: options.runtimeVersion },
+		revisions: options.context.revisions,
+		topology: options.context.topology,
+		merge: options.context.merge,
+		accepted: { planDigest: options.planDigest, policyDigest: options.policyDigest },
+		evidence: {
+			baseBlueprint: null,
+			targetBlueprint: null,
+			headBlueprint: null,
+			candidateBlueprint: null,
+			targetDelta: null,
+			headDelta: null,
+		},
+		headGate: options.headGate,
+		status: conflictReasons.has(options.reasonCode) ? "conflict" : "error",
+	});
 }
 
 export async function evaluateIsolatedGraphCandidate(
@@ -376,10 +482,35 @@ export async function withIsolatedGitCandidate<T>(
 		throw new IntegrationCandidateError(
 			"ANCESTRY_AMBIGUOUS",
 			"Integration requires exactly one merge base",
+			failureContext({
+				repository,
+				target,
+				head,
+				mergeBaseStatus: mergeBases.length === 0 ? "missing" : "ambiguous",
+				headRange: "unavailable",
+			}),
 		);
 	}
 	const mergeBase = mergeBases[0] as string;
-	assertLinearHeadRange(repository, mergeBase, head);
+	try {
+		assertLinearHeadRange(repository, mergeBase, head);
+	} catch (error) {
+		if (error instanceof IntegrationCandidateError && error.code === "HEAD_RANGE_NON_LINEAR") {
+			throw new IntegrationCandidateError(
+				error.code,
+				error.message,
+				failureContext({
+					repository,
+					target,
+					head,
+					mergeBase,
+					mergeBaseStatus: "unique",
+					headRange: "non-linear",
+				}),
+			);
+		}
+		throw error;
+	}
 
 	const temporaryRoot = await mkdtemp(join(tmpdir(), "graphrefly-stack-integration-"));
 	const isolatedRepository = join(temporaryRoot, "repository");
@@ -395,16 +526,35 @@ export async function withIsolatedGitCandidate<T>(
 		]);
 		const merge = runGit(
 			isolatedRepository,
-			["merge-tree", "--write-tree", `--merge-base=${mergeBase}`, target, head],
+			[
+				"merge-tree",
+				"--write-tree",
+				"--name-only",
+				"-z",
+				"--no-messages",
+				`--merge-base=${mergeBase}`,
+				target,
+				head,
+			],
 			[0, 1],
 		);
+		const [tree = "", ...mergePaths] = merge.stdout.split("\0").filter(Boolean);
 		if (merge.status === 1) {
 			throw new IntegrationCandidateError(
 				"TEXT_CONFLICT",
 				"The isolated Git three-way candidate has textual conflicts",
+				failureContext({
+					repository,
+					target,
+					head,
+					mergeBase,
+					mergeBaseStatus: "unique",
+					headRange: "linear",
+					mergeStatus: "conflict",
+					conflictPaths: mergePaths,
+				}),
 			);
 		}
-		const tree = merge.stdout.trim();
 		if (!/^(?:[0-9a-f]{40}|[0-9a-f]{64})$/u.test(tree)) {
 			throw new IntegrationCandidateError("GIT_FAILED", "Git did not produce one candidate tree");
 		}
@@ -418,11 +568,33 @@ export async function withIsolatedGitCandidate<T>(
 			mergeAlgorithm: "git-ort-three-way",
 			mergeRevision: "v1",
 		});
-		if (resolveCommit(repository, options.target) !== target) {
-			throw new IntegrationCandidateError("TARGET_MOVED", "Target moved during integration");
+		const observedTarget = resolveCommit(repository, options.target);
+		const observedHead = resolveCommit(repository, options.head);
+		const driftContext = failureContext({
+			repository,
+			target,
+			head,
+			mergeBase,
+			mergeBaseStatus: "unique",
+			headRange: "linear",
+			mergeStatus: "merged",
+			tree,
+			observedTarget,
+			observedHead,
+		});
+		if (observedTarget !== target) {
+			throw new IntegrationCandidateError(
+				"TARGET_MOVED",
+				"Target moved during integration",
+				driftContext,
+			);
 		}
-		if (resolveCommit(repository, options.head) !== head) {
-			throw new IntegrationCandidateError("HEAD_MOVED", "Head moved during integration");
+		if (observedHead !== head) {
+			throw new IntegrationCandidateError(
+				"HEAD_MOVED",
+				"Head moved during integration",
+				driftContext,
+			);
 		}
 		return result;
 	} finally {

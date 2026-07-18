@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
-
+import { assembleIntegrationFailureCandidate } from "../../packages/cli/dist/integration-candidate.js";
 import {
+	assembleIntegrationFailureResult,
 	assembleIntegrationResult,
 	evaluateIntegrationSemantics,
 } from "../../packages/cli/dist/integration-semantics.js";
@@ -122,5 +123,76 @@ test("strict IntegrationResult combines graph and semantic evidence without edit
 			semantic,
 		}),
 		/head GateInput or GateResult identity/u,
+	);
+});
+
+test("typed failure results bind text paths, ancestry diagnostics, and changed observed revisions", async () => {
+	const makeCandidate = async (context, reasonCode) =>
+		assembleIntegrationFailureCandidate({
+			context,
+			repository: candidate.repository,
+			runtimeVersion: candidate.provider.runtimeVersion,
+			planDigest: candidate.accepted.planDigest,
+			policyDigest: candidate.accepted.policyDigest,
+			headGate: candidate.headGate,
+			reasonCode,
+		});
+	const baseContext = {
+		sourceRepository: "/tmp/repository",
+		revisions: candidate.revisions,
+		topology: { mergeBase: "unique", headRange: "linear" },
+		merge: { ...candidate.merge, tree: null },
+		conflictPaths: [],
+	};
+	const textCandidate = await makeCandidate(
+		{
+			...baseContext,
+			merge: { ...baseContext.merge, status: "conflict" },
+			conflictPaths: ["graph.mjs"],
+		},
+		"TEXT_CONFLICT",
+	);
+	const textResult = await assembleIntegrationFailureResult({
+		candidate: textCandidate,
+		reasonCode: "TEXT_CONFLICT",
+		witnesses: [{ kind: "path", path: "graph.mjs" }],
+	});
+	assert.equal(textResult.outcome, "conflict");
+	assert.equal(textResult.conflicts[0].witness.path, "graph.mjs");
+
+	const ancestryCandidate = await makeCandidate(
+		{
+			...baseContext,
+			revisions: { ...candidate.revisions, mergeBase: null },
+			topology: { mergeBase: "ambiguous", headRange: "unavailable" },
+			merge: { ...baseContext.merge, status: "unavailable" },
+		},
+		"ANCESTRY_AMBIGUOUS",
+	);
+	const ancestryResult = await assembleIntegrationFailureResult({
+		candidate: ancestryCandidate,
+		reasonCode: "ANCESTRY_AMBIGUOUS",
+	});
+	assert.equal(ancestryResult.outcome, "error");
+	assert.equal(ancestryResult.conflicts[0].witness.code, "ANCESTRY_AMBIGUOUS");
+
+	const movedTarget = {
+		...candidate.revisions.target,
+		value: candidate.revisions.target.value.replace(/^./u, "f"),
+	};
+	const driftCandidate = await makeCandidate(baseContext, "TARGET_MOVED");
+	const driftResult = await assembleIntegrationFailureResult({
+		candidate: driftCandidate,
+		reasonCode: "TARGET_MOVED",
+		observedRevisions: { target: movedTarget, head: candidate.revisions.head },
+	});
+	assert.equal(driftResult.outcome, "error");
+	assert.notDeepEqual(driftResult.observedRevisions.target, driftCandidate.revisions.target);
+	await assert.rejects(
+		assembleIntegrationFailureResult({
+			candidate: driftCandidate,
+			reasonCode: "TARGET_MOVED",
+		}),
+		/cross-binding or ordering/u,
 	);
 });

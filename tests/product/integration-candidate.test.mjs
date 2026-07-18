@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 
 import {
 	assembleIntegrationCandidate,
+	assembleIntegrationFailureCandidate,
 	evaluateIsolatedGraphCandidate,
 	IntegrationCandidateError,
 	withIsolatedGitCandidate,
@@ -184,13 +185,36 @@ test("isolated candidate reports text conflict and rejects merge-containing head
 	);
 	git(fixture.repository, ["switch", "head"]);
 	const headConflict = await commitFile(fixture.repository, "base.txt", "head\n", "head conflict");
+	let textConflict;
 	await assert.rejects(
 		withIsolatedGitCandidate(
 			{ repository: fixture.repository, target: targetConflict, head: headConflict },
 			async () => undefined,
 		),
-		(error) => error instanceof IntegrationCandidateError && error.code === "TEXT_CONFLICT",
+		(error) => {
+			textConflict = error;
+			return error instanceof IntegrationCandidateError && error.code === "TEXT_CONFLICT";
+		},
 	);
+	assert.deepEqual(textConflict.context.conflictPaths, ["base.txt"]);
+	assert.deepEqual(textConflict.context.topology, {
+		mergeBase: "unique",
+		headRange: "linear",
+	});
+	assert.equal(textConflict.context.merge.status, "conflict");
+	const hash = (value) => ({ algorithm: "sha256", value: value.repeat(64) });
+	const failureCandidate = await assembleIntegrationFailureCandidate({
+		context: textConflict.context,
+		repository: { provider: "github", owner: "graphrefly", name: "integration" },
+		runtimeVersion: "0.3.0",
+		planDigest: hash("a"),
+		policyDigest: hash("b"),
+		headGate: { inputDigest: hash("c"), resultDigest: hash("d"), verdict: "pass" },
+		reasonCode: "TEXT_CONFLICT",
+	});
+	assert.equal(failureCandidate.status, "conflict");
+	assert.equal(failureCandidate.merge.tree, null);
+	assert.equal(failureCandidate.evidence.candidateBlueprint, null);
 
 	git(fixture.repository, ["switch", "-c", "side", fixture.head]);
 	await commitFile(fixture.repository, "side.txt", "side\n", "side");
@@ -202,7 +226,10 @@ test("isolated candidate reports text conflict and rejects merge-containing head
 			{ repository: fixture.repository, target: fixture.target, head: mergeHead },
 			async () => undefined,
 		),
-		(error) => error instanceof IntegrationCandidateError && error.code === "HEAD_RANGE_NON_LINEAR",
+		(error) =>
+			error instanceof IntegrationCandidateError &&
+			error.code === "HEAD_RANGE_NON_LINEAR" &&
+			error.context.topology.headRange === "non-linear",
 	);
 });
 
@@ -217,7 +244,11 @@ test("symbolic target movement invalidates candidate before return", async (cont
 				git(fixture.repository, ["branch", "-f", "target", fixture.base]);
 			},
 		),
-		(error) => error instanceof IntegrationCandidateError && error.code === "TARGET_MOVED",
+		(error) =>
+			error instanceof IntegrationCandidateError &&
+			error.code === "TARGET_MOVED" &&
+			error.context.observedRevisions.target.value === fixture.base &&
+			error.context.revisions.target.value === fixture.target,
 	);
 });
 
