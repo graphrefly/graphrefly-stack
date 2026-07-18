@@ -18,6 +18,7 @@ export type CliCommand =
 	| "ci-run"
 	| "hosted-init"
 	| "hosted-sync"
+	| "integration"
 	| "fixture-create"
 	| "plan"
 	| "gate"

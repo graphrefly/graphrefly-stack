@@ -10,6 +10,7 @@ import { runIntegration } from "../../packages/cli/dist/integration-runner.js";
 import { createSemanticPlan } from "../../packages/cli/dist/semantic-repository.js";
 
 const workspaceNodeModules = fileURLToPath(new URL("../../node_modules", import.meta.url));
+const cli = fileURLToPath(new URL("../../packages/cli/dist/cli.js", import.meta.url));
 
 function git(repository, args) {
 	const result = spawnSync("git", args, {
@@ -196,6 +197,31 @@ test("repository-owned integration runner emits compatible bytes and policy inva
 	assert.deepEqual(compatible.result.reasonCodes, []);
 	assert.equal(compatible.candidate.headGate.verdict, "pass");
 	assert.deepEqual(sourceFingerprint(fixture.repository), before);
+	const local = spawnSync(
+		process.execPath,
+		[
+			cli,
+			"integration",
+			"--repo",
+			fixture.repository,
+			"--target",
+			fixture.target,
+			"--head",
+			fixture.head,
+			"--plan-id",
+			"integration-plan",
+			"--provider",
+			identity.provider,
+			"--owner",
+			identity.owner,
+			"--name",
+			identity.name,
+			"--json",
+		],
+		{ encoding: "utf8" },
+	);
+	assert.equal(local.status, 0, local.stderr || local.stdout);
+	assert.deepEqual(JSON.parse(local.stdout).data, compatible);
 
 	git(fixture.repository, ["switch", "target"]);
 	const stalePolicy = { ...fixture.policy, revision: "rev-2" };

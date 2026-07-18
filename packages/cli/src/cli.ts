@@ -24,6 +24,7 @@ import {
 	initializeHostedWorkflow,
 	syncHostedEvidence,
 } from "./hosted-runner.js";
+import { IntegrationRunnerError, runIntegration } from "./integration-runner.js";
 import { readPortableEvidenceBundle } from "./portable-bundle.js";
 import { initializeRepository, RepositoryInitError } from "./repository-init.js";
 import { createRepositoryReview, RepositoryReviewError } from "./repository-review.js";
@@ -48,6 +49,7 @@ Usage:
   grfs ci run [--repo <path>] --event <github-event.json> [--plan-id <id>] --output <artifact.json> [--json]
   grfs hosted init [--repo <path>] --endpoint <https-url> [--profile gate-summary-v1|semantic-review-v1] [--force] [--json]
   grfs hosted sync --artifact <ci-artifact.json> --endpoint <https-url> [--profile gate-summary-v1|semantic-review-v1] --json
+  grfs integration --repo <path> --target <revision> --head <revision> --plan-id <id> --provider <provider> --owner <owner> --name <name> [--json]
   grfs review --repo <path> --base <revision> --head <revision> [--host 127.0.0.1] [--port 4173] [--json]
   grfs fixture create [--output <path>] [--force] [--json]
   grfs plan --repo <path> --task <summary> --policy <policy.json> [--proposal <proposal.json>] [--context <manifest.json> --authorize-context] [--mode replay|live] [--accept --accept-by <label>] --json
@@ -80,6 +82,7 @@ function commandFrom(argv: readonly string[]): CliCommand | null {
 	if (argv[0] === "ci" && argv[1] === "run") return "ci-run";
 	if (argv[0] === "hosted" && argv[1] === "init") return "hosted-init";
 	if (argv[0] === "hosted" && argv[1] === "sync") return "hosted-sync";
+	if (argv[0] === "integration") return "integration";
 	if (argv[0] === "fixture" && argv[1] === "create") return "fixture-create";
 	if (["plan", "gate", "replan", "review", "export"].includes(argv[0] ?? "")) {
 		return argv[0] as CliCommand;
@@ -354,6 +357,55 @@ export async function runCli(argv = process.argv.slice(2)): Promise<number> {
 		} catch (error) {
 			if (error instanceof HostedRunnerError) {
 				return failure(command, true, error.code, error.message);
+			}
+			throw error;
+		}
+	}
+	if (command === "integration") {
+		const repository = readOption(argv, "--repo");
+		const target = readOption(argv, "--target");
+		const head = readOption(argv, "--head");
+		const planId = readOption(argv, "--plan-id");
+		const provider = readOption(argv, "--provider");
+		const owner = readOption(argv, "--owner");
+		const name = readOption(argv, "--name");
+		if (
+			repository === undefined ||
+			target === undefined ||
+			head === undefined ||
+			planId === undefined ||
+			provider === undefined ||
+			owner === undefined ||
+			name === undefined
+		) {
+			return failure(
+				command,
+				json,
+				"INTEGRATION_INPUT_REQUIRED",
+				"--repo, --target, --head, --plan-id, --provider, --owner and --name are required",
+			);
+		}
+		try {
+			const output = await runIntegration({
+				repository,
+				target,
+				head,
+				planId,
+				repositoryIdentity: { provider, owner, name },
+			});
+			success(command, "deterministic", output, json);
+			return output.result.outcome === "compatible"
+				? 0
+				: output.result.outcome === "conflict"
+					? 2
+					: 1;
+		} catch (error) {
+			if (
+				error instanceof IntegrationRunnerError ||
+				error instanceof SemanticRepositoryError ||
+				error instanceof RepositoryReviewError
+			) {
+				return failure(command, json, error.code, error.message);
 			}
 			throw error;
 		}
