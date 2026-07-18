@@ -652,6 +652,12 @@ test("the npm tarball installs and reviews an independent GraphReFly 0.3.x repos
 	assert.deepEqual(tarballFiles, [`graphrefly-stack-${packageVersion}.tgz`]);
 	const tarball = resolve(tarballs, tarballFiles[0]);
 	const packedPaths = run(workspace, "tar", ["-tf", tarball]).split("\n");
+	const packedManifest = JSON.parse(
+		run(workspace, "tar", ["-xOf", tarball, "package/package.json"]),
+	);
+	assert.equal(packedManifest.name, "@graphrefly/stack");
+	assert.equal(packedManifest.version, packageVersion);
+	assert.deepEqual(packedManifest.bin, { grfs: "dist/grfs.js" });
 	assert.equal(packedPaths.includes("package/dist/grfs.js"), true);
 	assert.equal(packedPaths.includes("package/dist/review/index.html"), true);
 	assert.equal(
