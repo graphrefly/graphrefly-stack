@@ -786,7 +786,7 @@ export async function bindSemanticPlan(options: {
 	return { repository, ...bundle, artifact };
 }
 
-type PredicateEvaluation = {
+export type PredicateEvaluation = {
 	ok: boolean;
 	reason?:
 		| "PREDICATE_SELECTOR_AMBIGUOUS"
@@ -928,6 +928,13 @@ function evaluatePredicate(blueprint: JsonObject, predicate: JsonObject): Predic
 		};
 	}
 	return { ok: false, reason: "PREDICATE_UNSUPPORTED" };
+}
+
+export function evaluateSemanticPredicate(
+	blueprint: Record<string, unknown>,
+	predicate: Record<string, unknown>,
+): PredicateEvaluation {
+	return evaluatePredicate(blueprint, predicate);
 }
 
 async function runPolicyChecks(
