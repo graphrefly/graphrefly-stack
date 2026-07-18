@@ -561,6 +561,16 @@ async function proveInstalledCiPass(repository, inputRoot, lifecycle, repository
 		"utf8",
 	);
 	const prefix = `${lifecycle.planId}-ci`;
+	const workflowRepository = resolve(inputRoot, `${prefix}-workflow-repository`);
+	await mkdir(workflowRepository);
+	run(workflowRepository, "git", ["init", "-q"]);
+	const initialized = JSON.parse(
+		run(repository, "pnpm", ["exec", "grfs", "ci", "init", "--repo", workflowRepository, "--json"]),
+	);
+	assert.equal(initialized.data.workflow, ".github/workflows/graphrefly-stack.yml");
+	const workflow = await readFile(resolve(workflowRepository, initialized.data.workflow), "utf8");
+	assert.match(workflow, /^ {4}runs-on: ubuntu-22\.04$/mu);
+	assert.doesNotMatch(workflow, /runs-on: ubuntu-24\.04/u);
 	const eventPath = resolve(inputRoot, `${prefix}-event.json`);
 	await writeFile(
 		eventPath,

@@ -53,6 +53,8 @@ test("ci init writes one deterministic least-privilege pull-request workflow", a
 	assert.match(workflow, /^ {2}pull_request:$/mu);
 	assert.doesNotMatch(workflow, /pull_request_target|merge_group|push:/u);
 	assert.match(workflow, /^permissions:\n {2}contents: read$/mu);
+	assert.match(workflow, /^ {4}runs-on: ubuntu-22\.04$/mu);
+	assert.doesNotMatch(workflow, /runs-on: ubuntu-24\.04/u);
 	assert.match(workflow, /persist-credentials: false/u);
 	assert.match(workflow, /ref: \$\{\{ github\.event\.pull_request\.head\.sha \}\}/u);
 	assert.match(workflow, /node-version: 24\.18\.0/u);

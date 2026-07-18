@@ -168,7 +168,7 @@ concurrency:
 jobs:
   semantic-gate:
     name: ${CI_JOB_NAME}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     permissions:
       contents: read
     steps:
