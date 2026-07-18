@@ -7,10 +7,12 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 
 import {
+	assembleIntegrationCandidate,
 	evaluateIsolatedGraphCandidate,
 	IntegrationCandidateError,
 	withIsolatedGitCandidate,
 } from "../../packages/cli/dist/integration-candidate.js";
+import { assertIntegrationIntegrity, sha256Jcs } from "../../packages/contracts/dist/index.js";
 
 const workspaceNodeModules = fileURLToPath(new URL("../../node_modules", import.meta.url));
 
@@ -223,9 +225,27 @@ test("isolated candidate derives verified four-revision Blueprints and both upst
 	context.after(() => rm(root, { recursive: true, force: true }));
 	const fixture = await createGraphRepository(root);
 	const before = sourceFingerprint(fixture.repository);
-	const evidence = await withIsolatedGitCandidate(
+	const { evidence, artifact } = await withIsolatedGitCandidate(
 		{ repository: fixture.repository, target: fixture.target, head: fixture.head },
-		evaluateIsolatedGraphCandidate,
+		async (gitCandidate) => {
+			const evidence = await evaluateIsolatedGraphCandidate(gitCandidate);
+			const hash = (value) => ({ algorithm: "sha256", value: value.repeat(64) });
+			return {
+				evidence,
+				artifact: await assembleIntegrationCandidate({
+					git: gitCandidate,
+					graph: evidence,
+					repository: { provider: "github", owner: "graphrefly", name: "integration" },
+					planDigest: hash("a"),
+					policyDigest: hash("b"),
+					headGate: {
+						inputDigest: hash("c"),
+						resultDigest: hash("d"),
+						verdict: "pass",
+					},
+				}),
+			};
+		},
 	);
 	assert.equal(evidence.graphreflyVersion, "0.3.0");
 	assert.notEqual(evidence.base.blueprintHash.value, evidence.target.blueprintHash.value);
@@ -236,5 +256,17 @@ test("isolated candidate derives verified four-revision Blueprints and both upst
 	assert.match(JSON.stringify(evidence.headDelta.delta), /head/u);
 	assert.match(evidence.targetDelta.digest.value, /^[0-9a-f]{64}$/u);
 	assert.match(evidence.headDelta.digest.value, /^[0-9a-f]{64}$/u);
+	assert.equal(artifact.evidence.candidateBlueprint.revision.value, artifact.merge.tree.value);
+	assert.equal(artifact.evidence.targetDelta.deltaDigest.value, evidence.targetDelta.digest.value);
+	const result = {
+		schema: "graphrefly.stack.integration-result.v1",
+		candidateDigest: { algorithm: "sha256", value: sha256Jcs(artifact) },
+		observedRevisions: { target: artifact.revisions.target, head: artifact.revisions.head },
+		outcome: "compatible",
+		reasonCodes: [],
+		overlaps: [],
+		conflicts: [],
+	};
+	assertIntegrationIntegrity(artifact, result);
 	assert.deepEqual(sourceFingerprint(fixture.repository), before);
 });

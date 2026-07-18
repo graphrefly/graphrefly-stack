@@ -1,15 +1,24 @@
 import { spawnSync } from "node:child_process";
-import { mkdtemp, realpath, rm, symlink } from "node:fs/promises";
+import { mkdtemp, readFile, realpath, rm, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import {
+	createStrictAjv,
+	INTEGRATION_ARTIFACTS_SCHEMA,
+	INTEGRATION_CANDIDATE_SCHEMA,
+} from "@graphrefly-stack/contracts";
 
 import {
 	createRepositoryBlueprintSnapshot,
 	diffRepositoryBlueprintSnapshots,
 } from "./repository-review.js";
+import { runtimeAssetPath } from "./runtime-paths.js";
 
 const maxHeadCommits = 64;
 const maxGitOutput = 16 * 1024 * 1024;
+const integrationSchemaPath = runtimeAssetPath("contracts/integration/v1/artifacts.schema.json");
+
+type Hash = { algorithm: "sha256"; value: string };
 
 export class IntegrationCandidateError extends Error {
 	constructor(
@@ -21,6 +30,7 @@ export class IntegrationCandidateError extends Error {
 			| "TEXT_CONFLICT"
 			| "TARGET_MOVED"
 			| "HEAD_MOVED"
+			| "CONTRACT_INVALID"
 			| "GIT_FAILED",
 		message: string,
 	) {
@@ -161,6 +171,114 @@ export interface IsolatedGraphEvidence {
 		delta: Record<string, unknown>;
 		digest: { algorithm: "sha256"; value: string };
 	};
+}
+
+export interface IntegrationCandidateArtifact {
+	schema: typeof INTEGRATION_CANDIDATE_SCHEMA;
+	repository: { provider: string; owner: string; name: string };
+	provider: { kind: "graphrefly"; runtimeVersion: string };
+	revisions: {
+		mergeBase: IsolatedGitCandidate["mergeBase"];
+		target: IsolatedGitCandidate["target"];
+		head: IsolatedGitCandidate["head"];
+	};
+	topology: { mergeBase: "unique"; headRange: "linear" };
+	merge: {
+		algorithm: IsolatedGitCandidate["mergeAlgorithm"];
+		revision: IsolatedGitCandidate["mergeRevision"];
+		status: "merged";
+		tree: IsolatedGitCandidate["tree"];
+	};
+	accepted: { planDigest: Hash; policyDigest: Hash };
+	evidence: {
+		baseBlueprint: { revision: IsolatedGitCandidate["mergeBase"]; blueprintHash: Hash };
+		targetBlueprint: { revision: IsolatedGitCandidate["target"]; blueprintHash: Hash };
+		headBlueprint: { revision: IsolatedGitCandidate["head"]; blueprintHash: Hash };
+		candidateBlueprint: { revision: IsolatedGitCandidate["tree"]; blueprintHash: Hash };
+		targetDelta: {
+			from: IsolatedGitCandidate["mergeBase"];
+			to: IsolatedGitCandidate["target"];
+			deltaDigest: Hash;
+		};
+		headDelta: {
+			from: IsolatedGitCandidate["mergeBase"];
+			to: IsolatedGitCandidate["head"];
+			deltaDigest: Hash;
+		};
+	};
+	headGate: { inputDigest: Hash; resultDigest: Hash; verdict: "pass" | "blocked" | "error" };
+	status: "ready";
+}
+
+export async function assembleIntegrationCandidate(options: {
+	git: IsolatedGitCandidate;
+	graph: IsolatedGraphEvidence;
+	repository: IntegrationCandidateArtifact["repository"];
+	planDigest: Hash;
+	policyDigest: Hash;
+	headGate: IntegrationCandidateArtifact["headGate"];
+}): Promise<IntegrationCandidateArtifact> {
+	const candidate: IntegrationCandidateArtifact = {
+		schema: INTEGRATION_CANDIDATE_SCHEMA,
+		repository: options.repository,
+		provider: { kind: "graphrefly", runtimeVersion: options.graph.graphreflyVersion },
+		revisions: {
+			mergeBase: options.git.mergeBase,
+			target: options.git.target,
+			head: options.git.head,
+		},
+		topology: { mergeBase: "unique", headRange: "linear" },
+		merge: {
+			algorithm: options.git.mergeAlgorithm,
+			revision: options.git.mergeRevision,
+			status: "merged",
+			tree: options.git.tree,
+		},
+		accepted: { planDigest: options.planDigest, policyDigest: options.policyDigest },
+		evidence: {
+			baseBlueprint: {
+				revision: options.git.mergeBase,
+				blueprintHash: options.graph.base.blueprintHash,
+			},
+			targetBlueprint: {
+				revision: options.git.target,
+				blueprintHash: options.graph.target.blueprintHash,
+			},
+			headBlueprint: {
+				revision: options.git.head,
+				blueprintHash: options.graph.head.blueprintHash,
+			},
+			candidateBlueprint: {
+				revision: options.git.tree,
+				blueprintHash: options.graph.candidate.blueprintHash,
+			},
+			targetDelta: {
+				from: options.git.mergeBase,
+				to: options.git.target,
+				deltaDigest: options.graph.targetDelta.digest,
+			},
+			headDelta: {
+				from: options.git.mergeBase,
+				to: options.git.head,
+				deltaDigest: options.graph.headDelta.digest,
+			},
+		},
+		headGate: options.headGate,
+		status: "ready",
+	};
+	const schema = JSON.parse(await readFile(integrationSchemaPath, "utf8"));
+	const ajv = createStrictAjv();
+	ajv.addSchema(schema);
+	const validate = ajv.getSchema(
+		`${INTEGRATION_ARTIFACTS_SCHEMA}#/definitions/IntegrationCandidate`,
+	);
+	if (validate === undefined || !validate(candidate)) {
+		throw new IntegrationCandidateError(
+			"CONTRACT_INVALID",
+			`IntegrationCandidate failed validation: ${JSON.stringify(validate?.errors)}`,
+		);
+	}
+	return candidate;
 }
 
 export async function evaluateIsolatedGraphCandidate(
