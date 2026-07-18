@@ -1,0 +1,104 @@
+{
+	"schema": "graphrefly.stack.ci-golden-suite.v1",
+	"invocation": {
+		"schema": "graphrefly.stack.ci-invocation.v1",
+		"adapter": { "provider": "github-actions", "version": "v1" },
+		"repository": { "id": "123456", "ownerId": "654321", "headRepositoryId": "123456" },
+		"event": {
+			"name": "pull_request",
+			"pullRequestNumber": 42,
+			"base": { "algorithm": "sha1", "value": "1111111111111111111111111111111111111111" },
+			"head": { "algorithm": "sha1", "value": "2222222222222222222222222222222222222222" }
+		},
+		"workflow": {
+			"ref": "graphrefly/example/.github/workflows/graphrefly-stack.yml@refs/pull/42/merge",
+			"sha": { "algorithm": "sha1", "value": "3333333333333333333333333333333333333333" }
+		},
+		"run": {
+			"id": "987654321",
+			"attempt": 2,
+			"actorId": "24680",
+			"jobName": "GraphReFly Stack / Semantic Gate"
+		},
+		"plan": {
+			"id": "refresh-token-plan",
+			"policyDigest": {
+				"algorithm": "sha256",
+				"value": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+			}
+		},
+		"cacheInputs": {
+			"operatingSystem": "linux",
+			"architecture": "x64",
+			"nodeVersion": "24.4.1",
+			"pnpmVersion": "11.7.0",
+			"lockfilePath": "pnpm-lock.yaml",
+			"lockfileDigest": {
+				"algorithm": "sha256",
+				"value": "4444444444444444444444444444444444444444444444444444444444444444"
+			},
+			"packageManifestDigest": {
+				"algorithm": "sha256",
+				"value": "5555555555555555555555555555555555555555555555555555555555555555"
+			},
+			"stackVersion": "0.1.2",
+			"graphreflyVersion": "0.3.0",
+			"cacheKey": "graphrefly-stack-linux-x64-node-24.4.1-pnpm-11.7.0-lock-444444444444-stack-0.1.2-graphrefly-0.3.0"
+		},
+		"identity": { "assurance": "platform-asserted" }
+	},
+	"result": {
+		"schema": "graphrefly.stack.ci-result.v1",
+		"invocationDigest": {
+			"algorithm": "sha256",
+			"value": "317a4dccc0ce763be4c2f8f1be57d4c65a61126fd3f89cfb1b49aa9f53fbbb92"
+		},
+		"outcome": "pass",
+		"gateInputDigest": {
+			"algorithm": "sha256",
+			"value": "3030303030303030303030303030303030303030303030303030303030303030"
+		},
+		"gateResult": {
+			"schema": "graphrefly.stack.semantic-gate-result.v1",
+			"gateVersion": "v1",
+			"inputDigest": {
+				"algorithm": "sha256",
+				"value": "3030303030303030303030303030303030303030303030303030303030303030"
+			},
+			"verdict": "pass",
+			"units": [
+				{
+					"workUnitId": "CONTRACTS",
+					"verdict": "valid",
+					"reasonCodes": [],
+					"invalidDependencies": [],
+					"recordId": "record-contracts-v1"
+				}
+			],
+			"checkIds": ["typecheck"]
+		},
+		"portableBundleDigest": {
+			"algorithm": "sha256",
+			"value": "6666666666666666666666666666666666666666666666666666666666666666"
+		},
+		"provenance": {
+			"provider": "github-actions",
+			"repositoryId": "123456",
+			"workflowSha": { "algorithm": "sha1", "value": "3333333333333333333333333333333333333333" },
+			"runId": "987654321",
+			"attempt": 2
+		},
+		"redaction": {
+			"excludes": [
+				"source-content",
+				"raw-blueprint",
+				"check-output",
+				"credentials",
+				"environment",
+				"model-response"
+			]
+		},
+		"summary": { "verdict": "pass", "affectedWorkUnitIds": [], "reasonCodes": [] },
+		"artifactName": "graphrefly-stack-ci-6666666666666666666666666666666666666666666666666666666666666666"
+	}
+}

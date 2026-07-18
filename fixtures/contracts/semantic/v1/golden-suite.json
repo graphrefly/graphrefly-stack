@@ -1,0 +1,715 @@
+{
+	"schema": "graphrefly.stack.semantic-golden-suite.v1",
+	"policy": {
+		"schema": "graphrefly.stack.semantic-policy.v1",
+		"policyId": "default-policy",
+		"revision": "rev-2",
+		"allowedSourceRoots": ["src", "tests"],
+		"allowedCapabilities": ["session-read", "session-write", "http-adapter"],
+		"checks": [
+			{
+				"id": "typecheck",
+				"argv": ["pnpm", "exec", "tsc", "--noEmit"],
+				"timeoutMs": 120000,
+				"network": false,
+				"shell": false
+			},
+			{
+				"id": "test",
+				"argv": ["pnpm", "test"],
+				"timeoutMs": 300000,
+				"network": false,
+				"shell": false
+			}
+		]
+	},
+	"plan": {
+		"schema": "graphrefly.stack.semantic-plan.v1",
+		"planId": "refresh-token-plan",
+		"taskDigest": {
+			"algorithm": "sha256",
+			"value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+		},
+		"taskSummary": "Rotate refresh tokens through the repository session architecture.",
+		"baseCommit": {
+			"algorithm": "sha1",
+			"value": "1111111111111111111111111111111111111111"
+		},
+		"baseBlueprintHash": {
+			"algorithm": "sha256",
+			"value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+		},
+		"policy": {
+			"policyId": "default-policy",
+			"revision": "rev-2",
+			"digest": {
+				"algorithm": "sha256",
+				"value": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+			}
+		},
+		"proposalSource": "codex",
+		"acceptedBy": {
+			"label": "local-reviewer",
+			"identityVerified": false
+		},
+		"workUnits": [
+			{
+				"id": "CONTRACTS",
+				"title": "Define token contracts",
+				"intent": "Add stable refresh-token contracts without changing session mutation.",
+				"dependencies": [],
+				"allowedSourceScopes": ["src/contracts", "tests/contracts"],
+				"capabilities": ["session-read"],
+				"claims": [
+					{
+						"id": "session-present",
+						"predicate": {
+							"operator": "present",
+							"selector": { "kind": "node", "nodeId": "session" }
+						},
+						"rationale": "The contract attaches to the stable session capability."
+					}
+				],
+				"requiredChecks": ["typecheck"]
+			},
+			{
+				"id": "RUNTIME",
+				"title": "Implement rotation",
+				"intent": "Route refresh-token mutation through the current session broker.",
+				"dependencies": ["CONTRACTS"],
+				"allowedSourceScopes": ["src/runtime", "tests/runtime"],
+				"capabilities": ["session-write"],
+				"claims": [
+					{
+						"id": "runtime-uses-broker",
+						"predicate": {
+							"operator": "depends-on",
+							"fromNodeId": "rotation",
+							"toNodeId": "broker"
+						},
+						"rationale": "All session mutation must flow through the broker."
+					}
+				],
+				"requiredChecks": ["typecheck", "test"]
+			},
+			{
+				"id": "HTTP",
+				"title": "Expose the adapter",
+				"intent": "Expose the verified runtime through the HTTP adapter.",
+				"dependencies": ["RUNTIME"],
+				"allowedSourceScopes": ["src/http", "tests/http"],
+				"capabilities": ["http-adapter"],
+				"claims": [
+					{
+						"id": "adapter-edge",
+						"predicate": {
+							"operator": "present",
+							"selector": {
+								"kind": "edge",
+								"fromNodeId": "http",
+								"toNodeId": "rotation"
+							}
+						},
+						"rationale": "The adapter must resolve through the rotation runtime."
+					}
+				],
+				"requiredChecks": ["typecheck", "test"]
+			}
+		]
+	},
+	"bindings": [
+		{
+			"schema": "graphrefly.stack.semantic-binding.v1",
+			"planId": "refresh-token-plan",
+			"workUnitId": "CONTRACTS",
+			"commit": { "algorithm": "sha1", "value": "2222222222222222222222222222222222222222" },
+			"parentCommit": { "algorithm": "sha1", "value": "1111111111111111111111111111111111111111" },
+			"trailer": { "name": "GraphReFly-Work-Unit", "value": "CONTRACTS", "occurrences": 1 },
+			"stablePatchId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+			"diffDigest": {
+				"algorithm": "sha256",
+				"value": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+			},
+			"changedPaths": ["src/contracts/token.ts", "tests/contracts/token.test.ts"]
+		},
+		{
+			"schema": "graphrefly.stack.semantic-binding.v1",
+			"planId": "refresh-token-plan",
+			"workUnitId": "RUNTIME",
+			"commit": { "algorithm": "sha1", "value": "3333333333333333333333333333333333333333" },
+			"parentCommit": { "algorithm": "sha1", "value": "2222222222222222222222222222222222222222" },
+			"trailer": { "name": "GraphReFly-Work-Unit", "value": "RUNTIME", "occurrences": 1 },
+			"stablePatchId": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+			"diffDigest": {
+				"algorithm": "sha256",
+				"value": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+			},
+			"changedPaths": ["src/runtime/rotation.ts", "tests/runtime/rotation.test.ts"]
+		},
+		{
+			"schema": "graphrefly.stack.semantic-binding.v1",
+			"planId": "refresh-token-plan",
+			"workUnitId": "HTTP",
+			"commit": { "algorithm": "sha1", "value": "4444444444444444444444444444444444444444" },
+			"parentCommit": { "algorithm": "sha1", "value": "3333333333333333333333333333333333333333" },
+			"trailer": { "name": "GraphReFly-Work-Unit", "value": "HTTP", "occurrences": 1 },
+			"stablePatchId": "cccccccccccccccccccccccccccccccccccccccc",
+			"diffDigest": {
+				"algorithm": "sha256",
+				"value": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+			},
+			"changedPaths": ["src/http/token.ts", "tests/http/token.test.ts"]
+		}
+	],
+	"records": [
+		{
+			"schema": "graphrefly.stack.semantic-record.v1",
+			"recordId": "record-contracts-v1",
+			"planId": "refresh-token-plan",
+			"workUnitId": "CONTRACTS",
+			"bindingDigest": {
+				"algorithm": "sha256",
+				"value": "1111111111111111111111111111111111111111111111111111111111111111"
+			},
+			"semanticParentRecordId": null,
+			"policyDigest": {
+				"algorithm": "sha256",
+				"value": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+			},
+			"blueprintHash": {
+				"algorithm": "sha256",
+				"value": "1212121212121212121212121212121212121212121212121212121212121212"
+			},
+			"sourceScopeDigest": {
+				"algorithm": "sha256",
+				"value": "1313131313131313131313131313131313131313131313131313131313131313"
+			},
+			"claimWitnesses": [
+				{
+					"claimId": "session-present",
+					"predicateDigest": {
+						"algorithm": "sha256",
+						"value": "1414141414141414141414141414141414141414141414141414141414141414"
+					},
+					"status": "satisfied"
+				}
+			],
+			"requiredChecks": ["typecheck"],
+			"rebindFrom": null
+		},
+		{
+			"schema": "graphrefly.stack.semantic-record.v1",
+			"recordId": "record-runtime-v1",
+			"planId": "refresh-token-plan",
+			"workUnitId": "RUNTIME",
+			"bindingDigest": {
+				"algorithm": "sha256",
+				"value": "1515151515151515151515151515151515151515151515151515151515151515"
+			},
+			"semanticParentRecordId": "record-contracts-v1",
+			"policyDigest": {
+				"algorithm": "sha256",
+				"value": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+			},
+			"blueprintHash": {
+				"algorithm": "sha256",
+				"value": "1616161616161616161616161616161616161616161616161616161616161616"
+			},
+			"sourceScopeDigest": {
+				"algorithm": "sha256",
+				"value": "1717171717171717171717171717171717171717171717171717171717171717"
+			},
+			"claimWitnesses": [
+				{
+					"claimId": "runtime-uses-broker",
+					"predicateDigest": {
+						"algorithm": "sha256",
+						"value": "1818181818181818181818181818181818181818181818181818181818181818"
+					},
+					"status": "satisfied"
+				}
+			],
+			"requiredChecks": ["typecheck", "test"],
+			"rebindFrom": null
+		},
+		{
+			"schema": "graphrefly.stack.semantic-record.v1",
+			"recordId": "record-http-v1",
+			"planId": "refresh-token-plan",
+			"workUnitId": "HTTP",
+			"bindingDigest": {
+				"algorithm": "sha256",
+				"value": "1919191919191919191919191919191919191919191919191919191919191919"
+			},
+			"semanticParentRecordId": "record-runtime-v1",
+			"policyDigest": {
+				"algorithm": "sha256",
+				"value": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+			},
+			"blueprintHash": {
+				"algorithm": "sha256",
+				"value": "2020202020202020202020202020202020202020202020202020202020202020"
+			},
+			"sourceScopeDigest": {
+				"algorithm": "sha256",
+				"value": "2121212121212121212121212121212121212121212121212121212121212121"
+			},
+			"claimWitnesses": [
+				{
+					"claimId": "adapter-edge",
+					"predicateDigest": {
+						"algorithm": "sha256",
+						"value": "2222222222222222222222222222222222222222222222222222222222222222"
+					},
+					"status": "satisfied"
+				}
+			],
+			"requiredChecks": ["typecheck", "test"],
+			"rebindFrom": null
+		}
+	],
+	"checks": [
+		{
+			"schema": "graphrefly.stack.semantic-check-result.v1",
+			"checkId": "typecheck",
+			"commandDigest": {
+				"algorithm": "sha256",
+				"value": "2323232323232323232323232323232323232323232323232323232323232323"
+			},
+			"exitCode": 0,
+			"stdoutDigest": {
+				"algorithm": "sha256",
+				"value": "2424242424242424242424242424242424242424242424242424242424242424"
+			},
+			"stderrDigest": {
+				"algorithm": "sha256",
+				"value": "2525252525252525252525252525252525252525252525252525252525252525"
+			}
+		},
+		{
+			"schema": "graphrefly.stack.semantic-check-result.v1",
+			"checkId": "test",
+			"commandDigest": {
+				"algorithm": "sha256",
+				"value": "2626262626262626262626262626262626262626262626262626262626262626"
+			},
+			"exitCode": 0,
+			"stdoutDigest": {
+				"algorithm": "sha256",
+				"value": "2727272727272727272727272727272727272727272727272727272727272727"
+			},
+			"stderrDigest": {
+				"algorithm": "sha256",
+				"value": "2828282828282828282828282828282828282828282828282828282828282828"
+			}
+		}
+	],
+	"modelContext": {
+		"schema": "graphrefly.stack.semantic-model-context.v1",
+		"purpose": "plan",
+		"taskDigest": {
+			"algorithm": "sha256",
+			"value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+		},
+		"policyDigest": {
+			"algorithm": "sha256",
+			"value": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+		},
+		"policyFields": [
+			"policyId",
+			"revision",
+			"allowedSourceRoots",
+			"allowedCapabilities",
+			"checkIds"
+		],
+		"blueprintFields": ["version", "topology.nodes", "topology.edges", "hash"],
+		"sourcePaths": ["src/contracts/token.ts"],
+		"omittedClasses": [
+			"credentials",
+			"environment",
+			"unlisted-source",
+			"execution-details",
+			"raw-provider-output"
+		],
+		"authorization": { "mode": "explicit-cli", "identityVerified": false }
+	},
+	"cases": [
+		{
+			"caseId": "normal-valid",
+			"category": "valid",
+			"states": {
+				"binding": "valid",
+				"predicate": "satisfied",
+				"scope": "valid",
+				"check": "passed",
+				"policy": "fresh",
+				"artifact": "valid",
+				"context": "not-used"
+			},
+			"expectedGate": {
+				"schema": "graphrefly.stack.semantic-gate-result.v1",
+				"gateVersion": "v1",
+				"inputDigest": {
+					"algorithm": "sha256",
+					"value": "3030303030303030303030303030303030303030303030303030303030303030"
+				},
+				"verdict": "pass",
+				"units": [
+					{
+						"workUnitId": "CONTRACTS",
+						"verdict": "valid",
+						"reasonCodes": [],
+						"invalidDependencies": [],
+						"recordId": "record-contracts-v1"
+					},
+					{
+						"workUnitId": "RUNTIME",
+						"verdict": "valid",
+						"reasonCodes": [],
+						"invalidDependencies": [],
+						"recordId": "record-runtime-v1"
+					},
+					{
+						"workUnitId": "HTTP",
+						"verdict": "valid",
+						"reasonCodes": [],
+						"invalidDependencies": [],
+						"recordId": "record-http-v1"
+					}
+				],
+				"checkIds": ["typecheck", "test"]
+			},
+			"expectedError": null,
+			"selectiveReplan": null,
+			"rebindRecord": null
+		},
+		{
+			"caseId": "architecture-stale-selective",
+			"category": "blocked",
+			"states": {
+				"binding": "valid",
+				"predicate": "architecture-stale",
+				"scope": "valid",
+				"check": "passed",
+				"policy": "fresh",
+				"artifact": "valid",
+				"context": "not-used"
+			},
+			"expectedGate": {
+				"schema": "graphrefly.stack.semantic-gate-result.v1",
+				"gateVersion": "v1",
+				"inputDigest": {
+					"algorithm": "sha256",
+					"value": "3131313131313131313131313131313131313131313131313131313131313131"
+				},
+				"verdict": "blocked",
+				"units": [
+					{
+						"workUnitId": "CONTRACTS",
+						"verdict": "valid",
+						"reasonCodes": [],
+						"invalidDependencies": [],
+						"recordId": "record-contracts-v1"
+					},
+					{
+						"workUnitId": "RUNTIME",
+						"verdict": "invalid",
+						"reasonCodes": ["BLUEPRINT_PREDICATE_UNSATISFIED", "BLUEPRINT_WITNESS_STALE"],
+						"invalidDependencies": [],
+						"recordId": null
+					},
+					{
+						"workUnitId": "HTTP",
+						"verdict": "invalid",
+						"reasonCodes": ["DEPENDENCY_INVALID"],
+						"invalidDependencies": ["RUNTIME"],
+						"recordId": null
+					}
+				],
+				"checkIds": ["typecheck", "test"]
+			},
+			"expectedError": null,
+			"selectiveReplan": {
+				"schema": "graphrefly.stack.semantic-selective-replan.v1",
+				"sourcePlanId": "refresh-token-plan",
+				"replacementPlanId": "refresh-token-plan-rev-2",
+				"preservedUnits": ["CONTRACTS"],
+				"invalidUnits": ["RUNTIME", "HTTP"],
+				"contextManifestDigest": {
+					"algorithm": "sha256",
+					"value": "3232323232323232323232323232323232323232323232323232323232323232"
+				},
+				"proposalSource": "codex"
+			},
+			"rebindRecord": null
+		},
+		{
+			"caseId": "unrelated-immutable-rebind",
+			"category": "valid",
+			"states": {
+				"binding": "valid",
+				"predicate": "satisfied",
+				"scope": "valid",
+				"check": "passed",
+				"policy": "fresh",
+				"artifact": "valid",
+				"context": "not-used"
+			},
+			"expectedGate": {
+				"schema": "graphrefly.stack.semantic-gate-result.v1",
+				"gateVersion": "v1",
+				"inputDigest": {
+					"algorithm": "sha256",
+					"value": "3333333333333333333333333333333333333333333333333333333333333333"
+				},
+				"verdict": "pass",
+				"units": [
+					{
+						"workUnitId": "CONTRACTS",
+						"verdict": "valid",
+						"reasonCodes": [],
+						"invalidDependencies": [],
+						"recordId": "record-contracts-v2"
+					},
+					{
+						"workUnitId": "RUNTIME",
+						"verdict": "valid",
+						"reasonCodes": [],
+						"invalidDependencies": [],
+						"recordId": "record-runtime-v1"
+					},
+					{
+						"workUnitId": "HTTP",
+						"verdict": "valid",
+						"reasonCodes": [],
+						"invalidDependencies": [],
+						"recordId": "record-http-v1"
+					}
+				],
+				"checkIds": ["typecheck", "test"]
+			},
+			"expectedError": null,
+			"selectiveReplan": null,
+			"rebindRecord": {
+				"schema": "graphrefly.stack.semantic-record.v1",
+				"recordId": "record-contracts-v2",
+				"planId": "refresh-token-plan",
+				"workUnitId": "CONTRACTS",
+				"bindingDigest": {
+					"algorithm": "sha256",
+					"value": "3434343434343434343434343434343434343434343434343434343434343434"
+				},
+				"semanticParentRecordId": null,
+				"policyDigest": {
+					"algorithm": "sha256",
+					"value": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+				},
+				"blueprintHash": {
+					"algorithm": "sha256",
+					"value": "1212121212121212121212121212121212121212121212121212121212121212"
+				},
+				"sourceScopeDigest": {
+					"algorithm": "sha256",
+					"value": "1313131313131313131313131313131313131313131313131313131313131313"
+				},
+				"claimWitnesses": [
+					{
+						"claimId": "session-present",
+						"predicateDigest": {
+							"algorithm": "sha256",
+							"value": "1414141414141414141414141414141414141414141414141414141414141414"
+						},
+						"status": "satisfied"
+					}
+				],
+				"requiredChecks": ["typecheck"],
+				"rebindFrom": "record-contracts-v1"
+			}
+		},
+		{
+			"caseId": "missing-trailer",
+			"category": "error",
+			"states": {
+				"binding": "missing-trailer",
+				"predicate": "satisfied",
+				"scope": "valid",
+				"check": "passed",
+				"policy": "fresh",
+				"artifact": "valid",
+				"context": "not-used"
+			},
+			"expectedGate": null,
+			"expectedError": "WORK_UNIT_TRAILER_MISSING",
+			"selectiveReplan": null,
+			"rebindRecord": null
+		},
+		{
+			"caseId": "duplicate-trailer",
+			"category": "error",
+			"states": {
+				"binding": "duplicate-trailer",
+				"predicate": "satisfied",
+				"scope": "valid",
+				"check": "passed",
+				"policy": "fresh",
+				"artifact": "valid",
+				"context": "not-used"
+			},
+			"expectedGate": null,
+			"expectedError": "WORK_UNIT_TRAILER_DUPLICATE",
+			"selectiveReplan": null,
+			"rebindRecord": null
+		},
+		{
+			"caseId": "ambiguous-predicate",
+			"category": "error",
+			"states": {
+				"binding": "valid",
+				"predicate": "ambiguous",
+				"scope": "valid",
+				"check": "passed",
+				"policy": "fresh",
+				"artifact": "valid",
+				"context": "authorized"
+			},
+			"expectedGate": null,
+			"expectedError": "PREDICATE_SELECTOR_AMBIGUOUS",
+			"selectiveReplan": null,
+			"rebindRecord": null
+		},
+		{
+			"caseId": "unsupported-predicate",
+			"category": "error",
+			"states": {
+				"binding": "valid",
+				"predicate": "unsupported",
+				"scope": "valid",
+				"check": "passed",
+				"policy": "fresh",
+				"artifact": "valid",
+				"context": "authorized"
+			},
+			"expectedGate": null,
+			"expectedError": "PREDICATE_UNSUPPORTED",
+			"selectiveReplan": null,
+			"rebindRecord": null
+		},
+		{
+			"caseId": "widened-scope",
+			"category": "error",
+			"states": {
+				"binding": "valid",
+				"predicate": "satisfied",
+				"scope": "widened",
+				"check": "passed",
+				"policy": "fresh",
+				"artifact": "valid",
+				"context": "authorized"
+			},
+			"expectedGate": null,
+			"expectedError": "SOURCE_SCOPE_VIOLATION",
+			"selectiveReplan": null,
+			"rebindRecord": null
+		},
+		{
+			"caseId": "undeclared-check",
+			"category": "error",
+			"states": {
+				"binding": "valid",
+				"predicate": "satisfied",
+				"scope": "valid",
+				"check": "undeclared",
+				"policy": "fresh",
+				"artifact": "valid",
+				"context": "authorized"
+			},
+			"expectedGate": null,
+			"expectedError": "REQUIRED_CHECK_UNDECLARED",
+			"selectiveReplan": null,
+			"rebindRecord": null
+		},
+		{
+			"caseId": "policy-freshness",
+			"category": "blocked",
+			"states": {
+				"binding": "valid",
+				"predicate": "satisfied",
+				"scope": "valid",
+				"check": "passed",
+				"policy": "stale",
+				"artifact": "valid",
+				"context": "not-used"
+			},
+			"expectedGate": {
+				"schema": "graphrefly.stack.semantic-gate-result.v1",
+				"gateVersion": "v1",
+				"inputDigest": {
+					"algorithm": "sha256",
+					"value": "3535353535353535353535353535353535353535353535353535353535353535"
+				},
+				"verdict": "blocked",
+				"units": [
+					{
+						"workUnitId": "CONTRACTS",
+						"verdict": "valid",
+						"reasonCodes": [],
+						"invalidDependencies": [],
+						"recordId": "record-contracts-v1"
+					},
+					{
+						"workUnitId": "RUNTIME",
+						"verdict": "invalid",
+						"reasonCodes": ["POLICY_REVISION_STALE"],
+						"invalidDependencies": [],
+						"recordId": null
+					},
+					{
+						"workUnitId": "HTTP",
+						"verdict": "invalid",
+						"reasonCodes": ["DEPENDENCY_INVALID"],
+						"invalidDependencies": ["RUNTIME"],
+						"recordId": null
+					}
+				],
+				"checkIds": ["typecheck", "test"]
+			},
+			"expectedError": null,
+			"selectiveReplan": null,
+			"rebindRecord": null
+		},
+		{
+			"caseId": "artifact-tamper",
+			"category": "error",
+			"states": {
+				"binding": "valid",
+				"predicate": "satisfied",
+				"scope": "valid",
+				"check": "passed",
+				"policy": "fresh",
+				"artifact": "tampered",
+				"context": "not-used"
+			},
+			"expectedGate": null,
+			"expectedError": "ARTIFACT_HASH_MISMATCH",
+			"selectiveReplan": null,
+			"rebindRecord": null
+		},
+		{
+			"caseId": "unauthorized-live-context",
+			"category": "error",
+			"states": {
+				"binding": "valid",
+				"predicate": "satisfied",
+				"scope": "valid",
+				"check": "passed",
+				"policy": "fresh",
+				"artifact": "valid",
+				"context": "unauthorized"
+			},
+			"expectedGate": null,
+			"expectedError": "MODEL_CONTEXT_UNAUTHORIZED",
+			"selectiveReplan": null,
+			"rebindRecord": null
+		}
+	]
+}

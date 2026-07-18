@@ -28,15 +28,19 @@ const gitEnvironment = {
 };
 
 function run(cwd, command, args, options = {}) {
-	const result = spawnSync(command, args, {
+	const result = invoke(cwd, command, args, options);
+	assert.equal(result.status, 0, `${command} ${args.join(" ")}\n${result.stderr || result.stdout}`);
+	return result.stdout.trim();
+}
+
+function invoke(cwd, command, args, options = {}) {
+	return spawnSync(command, args, {
 		cwd,
 		encoding: "utf8",
 		env: gitEnvironment,
 		maxBuffer: 32 * 1024 * 1024,
 		...options,
 	});
-	assert.equal(result.status, 0, `${command} ${args.join(" ")}\n${result.stderr || result.stdout}`);
-	return result.stdout.trim();
 }
 
 async function put(root, path, value) {
@@ -49,6 +53,568 @@ function commit(repository, subject) {
 	run(repository, "git", ["add", "-A"]);
 	run(repository, "git", ["commit", "-m", subject]);
 	return run(repository, "git", ["rev-parse", "HEAD"]);
+}
+
+function commitWorkUnit(repository, subject, workUnitId) {
+	run(repository, "git", ["add", "-A"]);
+	run(repository, "git", ["commit", "-m", subject, "-m", `GraphReFly-Work-Unit: ${workUnitId}`]);
+	return run(repository, "git", ["rev-parse", "HEAD"]);
+}
+
+async function runInstalledSemanticLifecycle(
+	repository,
+	inputRoot,
+	planId,
+	nodeId,
+	checkArgv = ["node", "--test"],
+) {
+	let unrelatedHead;
+	let architectureHead;
+	const policyPath = resolve(inputRoot, `${planId}-policy.json`);
+	const proposalPath = resolve(inputRoot, `${planId}-proposal.json`);
+	await Promise.all([
+		put(
+			inputRoot,
+			`${planId}-policy.json`,
+			`${JSON.stringify(
+				{
+					schema: "graphrefly.stack.semantic-policy.v1",
+					policyId: `${planId}-policy`,
+					revision: "rev-1",
+					allowedSourceRoots: ["src"],
+					allowedCapabilities: ["graph-change"],
+					checks: [
+						{
+							id: "test",
+							argv: checkArgv,
+							timeoutMs: 120000,
+							network: false,
+							shell: false,
+						},
+					],
+				},
+				null,
+				2,
+			)}\n`,
+		),
+		put(
+			inputRoot,
+			`${planId}-proposal.json`,
+			`${JSON.stringify(
+				{
+					schema: "graphrefly.stack.semantic-plan-proposal.v1",
+					planId,
+					proposalSource: "human",
+					workUnits: [
+						{
+							id: "CONTRACTS",
+							title: "Implement semantic contract",
+							intent: "Add the installed-package semantic contract.",
+							dependencies: [],
+							allowedSourceScopes: ["src"],
+							capabilities: ["graph-change"],
+							claims: [
+								{
+									id: "stable-node",
+									predicate: {
+										operator: "present",
+										selector: { kind: "node", nodeId },
+									},
+									rationale: "The implementation retains the stable graph anchor.",
+								},
+							],
+							requiredChecks: ["test"],
+						},
+						{
+							id: "VERIFY",
+							title: "Verify semantic behavior",
+							intent: "Verify the installed-package semantic contract.",
+							dependencies: ["CONTRACTS"],
+							allowedSourceScopes: ["src"],
+							capabilities: [],
+							claims: [
+								{
+									id: "ghost-absent",
+									predicate: {
+										operator: "absent",
+										selector: { kind: "node", nodeId: "ghost" },
+									},
+									rationale: "The initial architecture has no ghost node.",
+								},
+							],
+							requiredChecks: ["test"],
+						},
+					],
+				},
+				null,
+				2,
+			)}\n`,
+		),
+	]);
+	const accepted = JSON.parse(
+		run(repository, "pnpm", [
+			"exec",
+			"grfs",
+			"plan",
+			"--repo",
+			".",
+			"--task",
+			"Exercise the installed semantic lifecycle",
+			"--policy",
+			policyPath,
+			"--proposal",
+			proposalPath,
+			"--accept",
+			"--accept-by",
+			"package-test",
+			"--json",
+		]),
+	);
+	assert.equal(accepted.ok, true);
+	const acceptanceCommit = commit(repository, "accept installed semantic plan");
+	await put(
+		repository,
+		`src/${planId}-contract.ts`,
+		`export const ${planId.replaceAll("-", "_")}_contract = true;\n`,
+	);
+	const contractsCommit = commitWorkUnit(
+		repository,
+		"implement installed semantic contract",
+		"CONTRACTS",
+	);
+	await put(
+		repository,
+		`src/${planId}-verify.ts`,
+		`export const ${planId.replaceAll("-", "_")}_verified = true;\n`,
+	);
+	const head = commitWorkUnit(repository, "verify installed semantic plan", "VERIFY");
+	const bound = JSON.parse(
+		run(repository, "pnpm", [
+			"exec",
+			"grfs",
+			"plan",
+			"--repo",
+			".",
+			"--bind",
+			"--plan-id",
+			planId,
+			"--head",
+			head,
+			"--json",
+		]),
+	);
+	assert.equal(bound.ok, true);
+	assert.deepEqual(
+		bound.data.bindings.map((binding) => binding.workUnitId),
+		["CONTRACTS", "VERIFY"],
+	);
+	const gated = JSON.parse(
+		run(repository, "pnpm", [
+			"exec",
+			"grfs",
+			"gate",
+			"--repo",
+			".",
+			"--plan-id",
+			planId,
+			"--head",
+			head,
+			"--json",
+		]),
+	);
+	assert.equal(gated.data.gateResult.verdict, "pass");
+	const semanticReview = JSON.parse(
+		run(repository, "pnpm", [
+			"exec",
+			"grfs",
+			"review",
+			"--repo",
+			".",
+			"--base",
+			accepted.data.plan.baseCommit.value,
+			"--head",
+			head,
+			"--plan-id",
+			planId,
+			"--json",
+		]),
+	);
+	assert.equal(semanticReview.data.semanticStatus, "evaluated");
+	assert.equal(semanticReview.data.semantic.gateResult.verdict, "pass");
+	const semanticServer = spawn(
+		"pnpm",
+		[
+			"exec",
+			"grfs",
+			"review",
+			"--repo",
+			".",
+			"--base",
+			accepted.data.plan.baseCommit.value,
+			"--head",
+			head,
+			"--plan-id",
+			planId,
+			"--port",
+			"0",
+		],
+		{ cwd: repository, env: gitEnvironment, stdio: ["ignore", "pipe", "pipe"] },
+	);
+	try {
+		const semanticUrl = await waitForServer(semanticServer);
+		const [shell, semanticData] = await Promise.all([
+			fetch(semanticUrl),
+			fetch(`${semanticUrl}/api/review-data`),
+		]);
+		assert.equal(shell.status, 200);
+		const shellHtml = await shell.text();
+		assert.match(shellHtml, /<div id="root"><\/div>/u);
+		const stylesheet = shellHtml.match(/href="([^"]+\.css)"/u)?.[1];
+		assert.notEqual(stylesheet, undefined);
+		const responsiveCss = await fetch(new URL(stylesheet, semanticUrl)).then((response) =>
+			response.text(),
+		);
+		assert.match(responsiveCss, /semantic-grid/u);
+		assert.match(responsiveCss, /@media/u);
+		assert.equal((await semanticData.json()).semantic.gateResult.verdict, "pass");
+	} finally {
+		semanticServer.kill("SIGTERM");
+	}
+	const exportPath = resolve(inputRoot, `${planId}-evidence.json`);
+	const exported = JSON.parse(
+		run(repository, "pnpm", [
+			"exec",
+			"grfs",
+			"export",
+			"--repo",
+			".",
+			"--plan-id",
+			planId,
+			"--head",
+			head,
+			"--output",
+			exportPath,
+			"--json",
+		]),
+	);
+	assert.equal(exported.ok, true);
+	assert.equal(
+		JSON.parse(await readFile(exportPath, "utf8")).schema,
+		"graphrefly.stack.semantic-portable-bundle.v1",
+	);
+	const verifiedExport = JSON.parse(
+		run(repository, "pnpm", ["exec", "grfs", "export", "--verify", exportPath, "--json"]),
+	);
+	assert.equal(verifiedExport.data.artifactCount, 7);
+	assert.equal(verifiedExport.data.planId, planId);
+	const portableValue = JSON.parse(await readFile(exportPath, "utf8"));
+	portableValue.artifacts["gate-result.json"].verdict = "error";
+	const tamperedExportPath = resolve(inputRoot, `${planId}-evidence-tampered.json`);
+	await writeFile(tamperedExportPath, `${JSON.stringify(portableValue, null, 2)}\n`, "utf8");
+	const rejectedExport = invoke(repository, "pnpm", [
+		"exec",
+		"grfs",
+		"export",
+		"--verify",
+		tamperedExportPath,
+		"--json",
+	]);
+	assert.equal(rejectedExport.status, 1);
+	assert.equal(JSON.parse(rejectedExport.stdout).error.code, "ARTIFACT_HASH_MISMATCH");
+	if (planId === "flat-installed") {
+		const originalBranch = run(repository, "git", ["branch", "--show-current"]);
+		const semanticBase = accepted.data.plan.baseCommit.value;
+		run(repository, "git", ["switch", "-c", "packed-policy-tamper", head]);
+		const policyFile = resolve(repository, ".graphrefly-stack/policy.json");
+		const tamperedPolicy = JSON.parse(await readFile(policyFile, "utf8"));
+		const executionMarker = resolve(inputRoot, "tampered-policy-executed");
+		tamperedPolicy.revision = "rev-tampered";
+		tamperedPolicy.checks[0].argv = [
+			"node",
+			"-e",
+			`require("node:fs").writeFileSync(${JSON.stringify(executionMarker)}, "unsafe")`,
+		];
+		await writeFile(policyFile, `${JSON.stringify(tamperedPolicy, null, 2)}\n`, "utf8");
+		const policyTamperHead = commit(repository, "tamper accepted policy");
+		const rejectedPolicy = invoke(repository, "pnpm", [
+			"exec",
+			"grfs",
+			"gate",
+			"--repo",
+			".",
+			"--plan-id",
+			planId,
+			"--head",
+			policyTamperHead,
+			"--json",
+		]);
+		assert.equal(rejectedPolicy.status, 1);
+		assert.equal(JSON.parse(rejectedPolicy.stdout).error.code, "POLICY_MISMATCH");
+		await assert.rejects(readFile(executionMarker, "utf8"));
+		run(repository, "git", ["switch", originalBranch]);
+
+		run(repository, "git", ["switch", "-c", "packed-unrelated-rebase", semanticBase]);
+		await put(repository, "src/upstream-note.ts", "export const upstreamNote = true;\n");
+		commit(repository, "add unrelated upstream source");
+		run(repository, "git", ["cherry-pick", acceptanceCommit, contractsCommit, head]);
+		unrelatedHead = run(repository, "git", ["rev-parse", "HEAD"]);
+		const rebound = JSON.parse(
+			run(repository, "pnpm", [
+				"exec",
+				"grfs",
+				"gate",
+				"--repo",
+				".",
+				"--plan-id",
+				planId,
+				"--head",
+				unrelatedHead,
+				"--json",
+			]),
+		);
+		assert.equal(rebound.data.gateResult.verdict, "pass");
+		assert.equal(
+			rebound.data.input.records.every((record) => record.rebindFrom !== null),
+			true,
+		);
+
+		run(repository, "git", ["switch", "-c", "packed-architecture-rebase", semanticBase]);
+		const graphPath = "src/application-graph.mjs";
+		const architectureSource = await readFile(resolve(repository, graphPath), "utf8");
+		await put(
+			repository,
+			graphPath,
+			architectureSource.replace(
+				"  return application;",
+				'  application.state(0, { name: "ghost" });\n  return application;',
+			),
+		);
+		commit(repository, "add upstream architecture node");
+		run(repository, "git", ["cherry-pick", acceptanceCommit, contractsCommit, head]);
+		architectureHead = run(repository, "git", ["rev-parse", "HEAD"]);
+		const staleRun = invoke(repository, "pnpm", [
+			"exec",
+			"grfs",
+			"gate",
+			"--repo",
+			".",
+			"--plan-id",
+			planId,
+			"--head",
+			architectureHead,
+			"--json",
+		]);
+		assert.equal(staleRun.status, 2, staleRun.stderr || staleRun.stdout);
+		const stale = JSON.parse(staleRun.stdout);
+		assert.deepEqual(
+			stale.data.gateResult.units.map((unit) => unit.verdict),
+			["valid", "invalid"],
+		);
+		assert.deepEqual(stale.data.gateResult.units[1].reasonCodes, [
+			"BLUEPRINT_PREDICATE_UNSATISFIED",
+		]);
+
+		const unauthorized = invoke(repository, "pnpm", [
+			"exec",
+			"grfs",
+			"replan",
+			"--repo",
+			".",
+			"--plan-id",
+			planId,
+			"--head",
+			architectureHead,
+			"--mode",
+			"live",
+			"--json",
+		]);
+		assert.equal(unauthorized.status, 1);
+		assert.equal(JSON.parse(unauthorized.stdout).error.code, "MODEL_CONTEXT_UNAUTHORIZED");
+
+		const recoveryId = "flat-installed-recovery";
+		const recoveryProposalPath = resolve(inputRoot, `${recoveryId}.json`);
+		await put(
+			inputRoot,
+			`${recoveryId}.json`,
+			`${JSON.stringify(
+				{
+					schema: "graphrefly.stack.semantic-plan-proposal.v1",
+					planId: recoveryId,
+					proposalSource: "human",
+					workUnits: [
+						{
+							id: "VERIFY",
+							title: "Verify recovered architecture",
+							intent: "Verify the accepted upstream architecture.",
+							dependencies: ["CONTRACTS"],
+							allowedSourceScopes: ["src"],
+							capabilities: [],
+							claims: [
+								{
+									id: "ghost-present",
+									predicate: {
+										operator: "present",
+										selector: { kind: "node", nodeId: "ghost" },
+									},
+									rationale: "Recovery accepts the upstream node.",
+								},
+							],
+							requiredChecks: ["test"],
+						},
+					],
+				},
+				null,
+				2,
+			)}\n`,
+		);
+		const recovery = JSON.parse(
+			run(repository, "pnpm", [
+				"exec",
+				"grfs",
+				"replan",
+				"--repo",
+				".",
+				"--plan-id",
+				planId,
+				"--head",
+				architectureHead,
+				"--proposal",
+				recoveryProposalPath,
+				"--accept",
+				"--accept-by",
+				"package-test",
+				"--json",
+			]),
+		);
+		assert.deepEqual(recovery.data.selectiveReplan.preservedUnits, ["CONTRACTS"]);
+		commit(repository, "accept packed selective recovery");
+		await put(repository, "src/flat-installed-recovered.ts", "export const recovered = true;\n");
+		const recoveredHead = commitWorkUnit(repository, "verify packed recovery", "VERIFY");
+		const recovered = JSON.parse(
+			run(repository, "pnpm", [
+				"exec",
+				"grfs",
+				"gate",
+				"--repo",
+				".",
+				"--plan-id",
+				recoveryId,
+				"--head",
+				recoveredHead,
+				"--json",
+			]),
+		);
+		assert.equal(recovered.data.gateResult.verdict, "pass");
+		assert.equal(
+			recovered.data.input.bindings.find((binding) => binding.workUnitId === "CONTRACTS").commit
+				.value,
+			run(repository, "git", ["rev-parse", `${architectureHead}~1`]),
+		);
+
+		const gateDirectory = resolve(repository, ".git/grfs/gates", recoveryId);
+		const gateFile = (await readdir(gateDirectory)).find((entry) => entry.endsWith(".json"));
+		assert.notEqual(gateFile, undefined);
+		const gatePath = resolve(gateDirectory, gateFile);
+		const originalGate = await readFile(gatePath, "utf8");
+		const tamperedGate = JSON.parse(originalGate);
+		tamperedGate.schema = "graphrefly.stack.semantic-gate-bundle.tampered";
+		await writeFile(gatePath, `${JSON.stringify(tamperedGate)}\n`, "utf8");
+		const tampered = invoke(repository, "pnpm", [
+			"exec",
+			"grfs",
+			"gate",
+			"--repo",
+			".",
+			"--plan-id",
+			recoveryId,
+			"--head",
+			recoveredHead,
+			"--json",
+		]);
+		assert.equal(tampered.status, 1);
+		assert.equal(JSON.parse(tampered.stdout).error.code, "ARTIFACT_HASH_MISMATCH");
+		await writeFile(gatePath, originalGate, "utf8");
+		run(repository, "git", ["switch", originalBranch]);
+	}
+	assert.equal(run(repository, "git", ["status", "--short"]), "");
+	return {
+		base: accepted.data.plan.baseCommit.value,
+		head,
+		planId,
+		gateInputDigest: gated.data.gateResult.inputDigest,
+		gateResult: gated.data.gateResult,
+		unrelatedHead,
+		architectureHead,
+	};
+}
+
+async function proveInstalledCiPass(repository, inputRoot, lifecycle, repositoryId, pullRequest) {
+	const originalPackageJson = await readFile(resolve(repository, "package.json"), "utf8");
+	const ciPackageJson = JSON.parse(originalPackageJson);
+	ciPackageJson.packageManager = JSON.parse(
+		await readFile(resolve(workspace, "package.json"), "utf8"),
+	).packageManager;
+	ciPackageJson.devDependencies["@graphrefly/stack"] = packageVersion;
+	await writeFile(
+		resolve(repository, "package.json"),
+		`${JSON.stringify(ciPackageJson, null, 2)}\n`,
+		"utf8",
+	);
+	const prefix = `${lifecycle.planId}-ci`;
+	const eventPath = resolve(inputRoot, `${prefix}-event.json`);
+	await writeFile(
+		eventPath,
+		`${JSON.stringify({
+			number: pullRequest,
+			repository: { id: repositoryId, owner: { id: repositoryId + 1 } },
+			pull_request: {
+				number: pullRequest,
+				base: { sha: lifecycle.base },
+				head: { sha: lifecycle.head, repo: { id: repositoryId } },
+			},
+		})}\n`,
+		"utf8",
+	);
+	const local = JSON.parse(
+		run(repository, "pnpm", [
+			"exec",
+			"grfs",
+			"gate",
+			"--repo",
+			".",
+			"--plan-id",
+			lifecycle.planId,
+			"--head",
+			lifecycle.head,
+			"--json",
+		]),
+	).data;
+	const outputPath = resolve(inputRoot, `${prefix}-artifact.json`);
+	const ci = invoke(
+		repository,
+		"pnpm",
+		["exec", "grfs", "ci", "run", "--event", eventPath, "--output", outputPath, "--json"],
+		{
+			env: {
+				...gitEnvironment,
+				GITHUB_EVENT_NAME: "pull_request",
+				GITHUB_WORKFLOW_REF: `graphrefly/independent/.github/workflows/graphrefly-stack.yml@refs/pull/${pullRequest}/merge`,
+				GITHUB_WORKFLOW_SHA: lifecycle.head,
+				GITHUB_RUN_ID: String(repositoryId * 1000),
+				GITHUB_RUN_ATTEMPT: "1",
+				GITHUB_ACTOR_ID: String(repositoryId + 2),
+			},
+		},
+	);
+	assert.equal(ci.status, 0, ci.stderr || ci.stdout);
+	const artifact = JSON.parse(await readFile(outputPath, "utf8"));
+	assert.equal(artifact.invocation.repository.id, String(repositoryId));
+	assert.equal(artifact.invocation.plan.id, lifecycle.planId);
+	assert.equal(artifact.invocation.cacheInputs.stackVersion, packageVersion);
+	assert.deepEqual(artifact.result.gateInputDigest, local.gateResult.inputDigest);
+	assert.deepEqual(artifact.result.gateResult, local.gateResult);
+	await writeFile(resolve(repository, "package.json"), originalPackageJson, "utf8");
+	assert.equal(run(repository, "git", ["status", "--short"]), "");
 }
 
 async function waitForServer(child) {
@@ -102,6 +668,22 @@ test("the npm tarball installs and reviews an independent GraphReFly 0.3.x repos
 		assert.equal(
 			packedPaths.includes(`package/dist/assets/contracts/repository/v1/${schema}`),
 			true,
+		);
+	}
+	for (const packedPath of [
+		"package/dist/assets/contracts/ci/v1/artifacts.schema.json",
+		"package/dist/assets/contracts/ci/v1/golden-suite.schema.json",
+		"package/dist/assets/fixtures/contracts/ci/v1/golden-suite.json",
+		"package/dist/assets/fixtures/contracts/ci/v1/golden-digests.json",
+		"package/dist/assets/contracts/semantic/v1/artifacts.schema.json",
+		"package/dist/assets/contracts/semantic/v1/golden-suite.schema.json",
+		"package/dist/assets/fixtures/contracts/semantic/v1/golden-suite.json",
+		"package/dist/assets/fixtures/contracts/semantic/v1/golden-digests.json",
+	]) {
+		assert.equal(
+			packedPaths.includes(packedPath),
+			true,
+			`${packedPath} is missing from the tarball`,
 		);
 	}
 	assert.equal(
@@ -265,4 +847,352 @@ export function createApplicationGraph() {
 	);
 	assert.equal(run(repository, "git", ["status", "--short"]), statusBeforeDecision);
 	server.kill("SIGTERM");
+
+	commit(repository, "onboard installed GraphReFly Stack package");
+	const semanticInputs = resolve(temporary, "semantic-inputs");
+	await mkdir(semanticInputs);
+	const flatLifecycle = await runInstalledSemanticLifecycle(
+		repository,
+		semanticInputs,
+		"flat-installed",
+		"source",
+	);
+	const originalPackageJson = await readFile(resolve(repository, "package.json"), "utf8");
+	const ciPackageJson = JSON.parse(originalPackageJson);
+	ciPackageJson.packageManager = JSON.parse(
+		await readFile(resolve(workspace, "package.json"), "utf8"),
+	).packageManager;
+	ciPackageJson.devDependencies["@graphrefly/stack"] = packageVersion;
+	await writeFile(
+		resolve(repository, "package.json"),
+		`${JSON.stringify(ciPackageJson, null, 2)}\n`,
+		"utf8",
+	);
+	const eventPath = resolve(semanticInputs, "github-pull-request.json");
+	await writeFile(
+		eventPath,
+		`${JSON.stringify(
+			{
+				number: 42,
+				repository: { id: 123456, owner: { id: 654321 } },
+				pull_request: {
+					number: 42,
+					base: { sha: flatLifecycle.base },
+					head: { sha: flatLifecycle.head, repo: { id: 123456 } },
+				},
+			},
+			null,
+			2,
+		)}\n`,
+		"utf8",
+	);
+	const githubOutput = resolve(semanticInputs, "github-output.txt");
+	const githubSummary = resolve(semanticInputs, "github-summary.md");
+	await Promise.all([writeFile(githubOutput, "", "utf8"), writeFile(githubSummary, "", "utf8")]);
+	const ciEnvironment = {
+		...gitEnvironment,
+		GITHUB_EVENT_NAME: "pull_request",
+		GITHUB_WORKFLOW_REF:
+			"graphrefly/independent/.github/workflows/graphrefly-stack.yml@refs/pull/42/merge",
+		GITHUB_WORKFLOW_SHA: flatLifecycle.head,
+		GITHUB_RUN_ID: "987654321",
+		GITHUB_RUN_ATTEMPT: "1",
+		GITHUB_ACTOR_ID: "24680",
+		GITHUB_OUTPUT: githubOutput,
+		GITHUB_STEP_SUMMARY: githubSummary,
+	};
+	const localParity = JSON.parse(
+		run(repository, "pnpm", [
+			"exec",
+			"grfs",
+			"gate",
+			"--repo",
+			".",
+			"--plan-id",
+			flatLifecycle.planId,
+			"--head",
+			flatLifecycle.head,
+			"--json",
+		]),
+	).data;
+	const ciArtifactPath = resolve(semanticInputs, "ci-artifact.json");
+	const ciRun = invoke(
+		repository,
+		"pnpm",
+		[
+			"exec",
+			"grfs",
+			"ci",
+			"run",
+			"--event",
+			eventPath,
+			"--plan-id",
+			flatLifecycle.planId,
+			"--output",
+			ciArtifactPath,
+			"--json",
+		],
+		{ env: ciEnvironment },
+	);
+	assert.equal(ciRun.status, 0, ciRun.stderr || ciRun.stdout);
+	const ciResult = JSON.parse(ciRun.stdout);
+	const ciArtifact = JSON.parse(await readFile(ciArtifactPath, "utf8"));
+	assert.equal(ciResult.command, "ci-run");
+	assert.equal(ciResult.data.outcome, "pass");
+	assert.deepEqual(ciResult.data.gateInputDigest, localParity.gateResult.inputDigest);
+	assert.deepEqual(ciResult.data.gateResult, localParity.gateResult);
+	assert.equal(ciArtifact.schema, "graphrefly.stack.ci-bundle.v1");
+	assert.equal(ciArtifact.invocation.event.head.value, flatLifecycle.head);
+	assert.equal(ciArtifact.invocation.plan.id, flatLifecycle.planId);
+	assert.equal(ciArtifact.invocation.identity.assurance, "platform-asserted");
+	assert.equal(ciArtifact.invocation.cacheInputs.stackVersion, packageVersion);
+	assert.match(ciArtifact.invocation.cacheInputs.graphreflyVersion, /^0\.3\.\d+$/u);
+	assert.equal(ciArtifact.result.outcome, ciArtifact.result.gateResult.verdict);
+	assert.equal(
+		ciArtifact.result.gateInputDigest.value,
+		ciArtifact.result.gateResult.inputDigest.value,
+	);
+	assert.equal(
+		ciArtifact.result.artifactName,
+		`graphrefly-stack-ci-${ciArtifact.result.portableBundleDigest.value}`,
+	);
+	assert.deepEqual(ciArtifact.result.redaction.excludes, [
+		"source-content",
+		"raw-blueprint",
+		"check-output",
+		"credentials",
+		"environment",
+		"model-response",
+	]);
+	assert.equal(Object.hasOwn(ciArtifact, "source"), false);
+	assert.match(
+		await readFile(githubOutput, "utf8"),
+		/artifact-name=graphrefly-stack-ci-[0-9a-f]{64}/u,
+	);
+	assert.match(await readFile(githubSummary, "utf8"), /Verdict: pass/u);
+
+	const discoveredArtifactPath = resolve(semanticInputs, "ci-artifact-discovered.json");
+	const discoveredRun = invoke(
+		repository,
+		"pnpm",
+		[
+			"exec",
+			"grfs",
+			"ci",
+			"run",
+			"--event",
+			eventPath,
+			"--output",
+			discoveredArtifactPath,
+			"--json",
+		],
+		{ env: { ...ciEnvironment, GITHUB_RUN_ATTEMPT: "2" } },
+	);
+	assert.equal(discoveredRun.status, 0, discoveredRun.stderr || discoveredRun.stdout);
+	const discovered = JSON.parse(await readFile(discoveredArtifactPath, "utf8"));
+	assert.equal(discovered.invocation.plan.id, flatLifecycle.planId);
+	assert.equal(discovered.invocation.run.attempt, 2);
+	assert.deepEqual(discovered.result.gateInputDigest, ciArtifact.result.gateInputDigest);
+	assert.deepEqual(discovered.result.gateResult, ciArtifact.result.gateResult);
+	assert.notDeepEqual(discovered.result.invocationDigest, ciArtifact.result.invocationDigest);
+	const forkEvent = JSON.parse(await readFile(eventPath, "utf8"));
+	forkEvent.pull_request.head.repo.id = 777777;
+	await writeFile(eventPath, `${JSON.stringify(forkEvent, null, 2)}\n`, "utf8");
+	const forkArtifactPath = resolve(semanticInputs, "ci-artifact-fork.json");
+	const forkRun = invoke(
+		repository,
+		"pnpm",
+		[
+			"exec",
+			"grfs",
+			"ci",
+			"run",
+			"--event",
+			eventPath,
+			"--plan-id",
+			flatLifecycle.planId,
+			"--output",
+			forkArtifactPath,
+			"--json",
+		],
+		{ env: { ...ciEnvironment, GITHUB_RUN_ATTEMPT: "5" } },
+	);
+	assert.equal(forkRun.status, 0, forkRun.stderr || forkRun.stdout);
+	const forkArtifact = JSON.parse(await readFile(forkArtifactPath, "utf8"));
+	assert.equal(forkArtifact.invocation.repository.id, "123456");
+	assert.equal(forkArtifact.invocation.repository.headRepositoryId, "777777");
+	assert.equal(forkArtifact.result.outcome, "pass");
+	forkEvent.pull_request.head.repo.id = 123456;
+	await writeFile(eventPath, `${JSON.stringify(forkEvent, null, 2)}\n`, "utf8");
+
+	run(repository, "git", ["switch", "packed-unrelated-rebase"]);
+	const unrelatedLocal = JSON.parse(
+		run(repository, "pnpm", [
+			"exec",
+			"grfs",
+			"gate",
+			"--repo",
+			".",
+			"--plan-id",
+			flatLifecycle.planId,
+			"--head",
+			flatLifecycle.unrelatedHead,
+			"--json",
+		]),
+	).data;
+	const unrelatedEvent = JSON.parse(await readFile(eventPath, "utf8"));
+	unrelatedEvent.pull_request.head.sha = flatLifecycle.unrelatedHead;
+	await writeFile(eventPath, `${JSON.stringify(unrelatedEvent, null, 2)}\n`, "utf8");
+	const unrelatedArtifactPath = resolve(semanticInputs, "ci-artifact-unrelated.json");
+	const unrelatedCi = invoke(
+		repository,
+		"pnpm",
+		[
+			"exec",
+			"grfs",
+			"ci",
+			"run",
+			"--event",
+			eventPath,
+			"--plan-id",
+			flatLifecycle.planId,
+			"--output",
+			unrelatedArtifactPath,
+			"--json",
+		],
+		{
+			env: {
+				...ciEnvironment,
+				GITHUB_WORKFLOW_SHA: flatLifecycle.unrelatedHead,
+				GITHUB_RUN_ATTEMPT: "3",
+			},
+		},
+	);
+	assert.equal(unrelatedCi.status, 0, unrelatedCi.stderr || unrelatedCi.stdout);
+	const unrelatedArtifact = JSON.parse(await readFile(unrelatedArtifactPath, "utf8"));
+	assert.deepEqual(unrelatedArtifact.result.gateResult, unrelatedLocal.gateResult);
+	assert.equal(
+		unrelatedArtifact.portableBundle.artifacts["records.json"].every(
+			(record) => record.rebindFrom !== null,
+		),
+		true,
+	);
+
+	run(repository, "git", ["switch", "--detach", flatLifecycle.architectureHead]);
+	const architectureLocalRun = invoke(repository, "pnpm", [
+		"exec",
+		"grfs",
+		"gate",
+		"--repo",
+		".",
+		"--plan-id",
+		flatLifecycle.planId,
+		"--head",
+		flatLifecycle.architectureHead,
+		"--json",
+	]);
+	assert.equal(architectureLocalRun.status, 2, architectureLocalRun.stderr);
+	const architectureLocal = JSON.parse(architectureLocalRun.stdout).data;
+	const architectureEvent = JSON.parse(await readFile(eventPath, "utf8"));
+	architectureEvent.pull_request.head.sha = flatLifecycle.architectureHead;
+	await writeFile(eventPath, `${JSON.stringify(architectureEvent, null, 2)}\n`, "utf8");
+	const architectureArtifactPath = resolve(semanticInputs, "ci-artifact-architecture.json");
+	const architectureCi = invoke(
+		repository,
+		"pnpm",
+		[
+			"exec",
+			"grfs",
+			"ci",
+			"run",
+			"--event",
+			eventPath,
+			"--plan-id",
+			flatLifecycle.planId,
+			"--output",
+			architectureArtifactPath,
+			"--json",
+		],
+		{
+			env: {
+				...ciEnvironment,
+				GITHUB_WORKFLOW_SHA: flatLifecycle.architectureHead,
+				GITHUB_RUN_ATTEMPT: "4",
+			},
+		},
+	);
+	assert.equal(architectureCi.status, 2, architectureCi.stderr || architectureCi.stdout);
+	const architectureArtifact = JSON.parse(await readFile(architectureArtifactPath, "utf8"));
+	assert.equal(architectureArtifact.result.outcome, "blocked");
+	assert.deepEqual(architectureArtifact.result.gateResult, architectureLocal.gateResult);
+	assert.deepEqual(architectureArtifact.result.summary.affectedWorkUnitIds, ["VERIFY"]);
+	assert.deepEqual(architectureArtifact.result.summary.reasonCodes, [
+		"BLUEPRINT_PREDICATE_UNSATISFIED",
+	]);
+	run(repository, "git", ["switch", "main"]);
+	await writeFile(resolve(repository, "package.json"), originalPackageJson, "utf8");
+	assert.equal(run(repository, "git", ["status", "--short"]), "");
+
+	const mountedRepository = resolve(temporary, "mounted-consumer-repository");
+	await mkdir(mountedRepository);
+	await Promise.all([
+		put(mountedRepository, ".gitignore", "node_modules\n"),
+		put(
+			mountedRepository,
+			"package.json",
+			`${JSON.stringify(
+				{
+					name: "mounted-graphrefly-consumer",
+					private: true,
+					type: "module",
+					dependencies: { "@graphrefly/ts": "0.3.x" },
+					devDependencies: { "@graphrefly/stack": `file:${tarball}` },
+				},
+				null,
+				2,
+			)}\n`,
+		),
+		put(
+			mountedRepository,
+			"src/application-graph.mjs",
+			`import { graph } from "@graphrefly/ts/graph";
+export function createApplicationGraph() {
+  const application = graph({ name: "mounted-installed-proof" });
+  application.state(1, { name: "source" });
+  const audit = graph({ name: "audit" });
+  audit.state("idle", { name: "sink" });
+  application.mount(audit, { at: "audit" });
+  return application;
+}
+`,
+		),
+	]);
+	run(mountedRepository, "pnpm", ["install", "--ignore-scripts"]);
+	run(mountedRepository, "git", ["init", "-b", "main"]);
+	const mountedInit = JSON.parse(
+		run(mountedRepository, "pnpm", [
+			"exec",
+			"grfs",
+			"init",
+			"--graph-module",
+			"src/application-graph.mjs",
+			"--json",
+		]),
+	);
+	assert.equal(mountedInit.ok, true);
+	commit(mountedRepository, "onboard mounted installed package");
+	const mutationTarget = resolve(mountedRepository, "sandbox-escape.txt");
+	const mountedLifecycle = await runInstalledSemanticLifecycle(
+		mountedRepository,
+		semanticInputs,
+		"mounted-installed",
+		"audit::sink",
+		[
+			"node",
+			"-e",
+			`const fs=require("node:fs");try{fs.writeFileSync(${JSON.stringify(mutationTarget)},"unsafe");process.exitCode=91}catch(error){if(!["EACCES","EPERM","EROFS"].includes(error.code))throw error}`,
+		],
+	);
+	await assert.rejects(readFile(mutationTarget, "utf8"));
+	await proveInstalledCiPass(mountedRepository, semanticInputs, mountedLifecycle, 234567, 84);
 });

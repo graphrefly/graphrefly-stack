@@ -1,0 +1,697 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "urn:graphrefly-stack:schema:semantic-artifacts:v1",
+	"title": "GraphReFly Stack repository semantic lifecycle artifacts v1",
+	"definitions": {
+		"Hash": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["algorithm", "value"],
+			"properties": {
+				"algorithm": { "const": "sha256" },
+				"value": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+			}
+		},
+		"GitOid": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["algorithm", "value"],
+			"properties": {
+				"algorithm": { "enum": ["sha1", "sha256"] },
+				"value": { "type": "string", "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$" }
+			}
+		},
+		"RepoPath": {
+			"type": "string",
+			"minLength": 1,
+			"maxLength": 512,
+			"pattern": "^(?!/)(?!\\.?\\.?$)(?!\\./)(?!.*//)(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*\\\\)(?!.*\\/$).+$"
+		},
+		"Identifier": {
+			"type": "string",
+			"minLength": 1,
+			"maxLength": 64,
+			"pattern": "^[A-Za-z][A-Za-z0-9._-]*$"
+		},
+		"WorkUnitId": {
+			"type": "string",
+			"minLength": 1,
+			"maxLength": 64,
+			"pattern": "^[A-Z][A-Z0-9_-]*$"
+		},
+		"BlueprintNodeId": {
+			"type": "string",
+			"minLength": 1,
+			"maxLength": 256,
+			"pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]*$"
+		},
+		"BlueprintSelector": {
+			"oneOf": [
+				{
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["kind", "nodeId"],
+					"properties": {
+						"kind": { "const": "node" },
+						"nodeId": { "$ref": "#/definitions/BlueprintNodeId" }
+					}
+				},
+				{
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["kind", "fromNodeId", "toNodeId"],
+					"properties": {
+						"kind": { "const": "edge" },
+						"fromNodeId": { "$ref": "#/definitions/BlueprintNodeId" },
+						"toNodeId": { "$ref": "#/definitions/BlueprintNodeId" }
+					}
+				},
+				{
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["kind", "mountPath"],
+					"properties": {
+						"kind": { "const": "subgraph" },
+						"mountPath": {
+							"type": "array",
+							"items": { "$ref": "#/definitions/Identifier" },
+							"minItems": 1
+						}
+					}
+				}
+			]
+		},
+		"BlueprintPredicate": {
+			"oneOf": [
+				{
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["operator", "selector"],
+					"properties": {
+						"operator": { "enum": ["present", "absent"] },
+						"selector": { "$ref": "#/definitions/BlueprintSelector" }
+					}
+				},
+				{
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["operator", "selector", "key", "value"],
+					"properties": {
+						"operator": { "const": "metadata-equals" },
+						"selector": { "$ref": "#/definitions/BlueprintSelector" },
+						"key": { "$ref": "#/definitions/Identifier" },
+						"value": { "type": ["string", "number", "boolean", "null"] }
+					}
+				},
+				{
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["operator", "fromNodeId", "toNodeId"],
+					"properties": {
+						"operator": { "const": "depends-on" },
+						"fromNodeId": { "$ref": "#/definitions/BlueprintNodeId" },
+						"toNodeId": { "$ref": "#/definitions/BlueprintNodeId" }
+					}
+				}
+			]
+		},
+		"ClaimDraft": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["id", "predicate", "rationale"],
+			"properties": {
+				"id": { "$ref": "#/definitions/Identifier" },
+				"predicate": { "$ref": "#/definitions/BlueprintPredicate" },
+				"rationale": { "type": "string", "minLength": 1, "maxLength": 1024 }
+			}
+		},
+		"PolicyCheck": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["id", "argv", "timeoutMs", "network", "shell"],
+			"properties": {
+				"id": { "$ref": "#/definitions/Identifier" },
+				"argv": {
+					"type": "array",
+					"items": { "type": "string", "minLength": 1, "maxLength": 512 },
+					"minItems": 1,
+					"maxItems": 32
+				},
+				"timeoutMs": { "type": "integer", "minimum": 100, "maximum": 900000 },
+				"network": { "const": false },
+				"shell": { "const": false }
+			}
+		},
+		"RepositoryPolicy": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"schema",
+				"policyId",
+				"revision",
+				"allowedSourceRoots",
+				"allowedCapabilities",
+				"checks"
+			],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.semantic-policy.v1" },
+				"policyId": { "$ref": "#/definitions/Identifier" },
+				"revision": { "$ref": "#/definitions/Identifier" },
+				"allowedSourceRoots": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/RepoPath" },
+					"minItems": 1,
+					"uniqueItems": true
+				},
+				"allowedCapabilities": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/Identifier" },
+					"uniqueItems": true
+				},
+				"checks": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/PolicyCheck" },
+					"minItems": 1
+				}
+			}
+		},
+		"SemanticWorkUnit": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"id",
+				"title",
+				"intent",
+				"dependencies",
+				"allowedSourceScopes",
+				"capabilities",
+				"claims",
+				"requiredChecks"
+			],
+			"properties": {
+				"id": { "$ref": "#/definitions/WorkUnitId" },
+				"title": { "type": "string", "minLength": 1, "maxLength": 256 },
+				"intent": { "type": "string", "minLength": 1, "maxLength": 2048 },
+				"dependencies": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/WorkUnitId" },
+					"uniqueItems": true
+				},
+				"allowedSourceScopes": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/RepoPath" },
+					"minItems": 1,
+					"uniqueItems": true
+				},
+				"capabilities": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/Identifier" },
+					"uniqueItems": true
+				},
+				"claims": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/ClaimDraft" },
+					"minItems": 1
+				},
+				"requiredChecks": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/Identifier" },
+					"minItems": 1,
+					"uniqueItems": true
+				}
+			}
+		},
+		"SemanticPlanProposal": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["schema", "planId", "proposalSource", "workUnits"],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.semantic-plan-proposal.v1" },
+				"planId": { "$ref": "#/definitions/Identifier" },
+				"proposalSource": { "enum": ["codex", "human"] },
+				"workUnits": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/SemanticWorkUnit" },
+					"minItems": 1
+				}
+			}
+		},
+		"AcceptedChangePlan": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"schema",
+				"planId",
+				"taskDigest",
+				"taskSummary",
+				"baseCommit",
+				"baseBlueprintHash",
+				"policy",
+				"proposalSource",
+				"acceptedBy",
+				"workUnits"
+			],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.semantic-plan.v1" },
+				"planId": { "$ref": "#/definitions/Identifier" },
+				"taskDigest": { "$ref": "#/definitions/Hash" },
+				"taskSummary": { "type": "string", "minLength": 1, "maxLength": 2048 },
+				"baseCommit": { "$ref": "#/definitions/GitOid" },
+				"baseBlueprintHash": { "$ref": "#/definitions/Hash" },
+				"policy": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["policyId", "revision", "digest"],
+					"properties": {
+						"policyId": { "$ref": "#/definitions/Identifier" },
+						"revision": { "$ref": "#/definitions/Identifier" },
+						"digest": { "$ref": "#/definitions/Hash" }
+					}
+				},
+				"proposalSource": { "enum": ["fixture", "codex", "human"] },
+				"acceptedBy": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["label", "identityVerified"],
+					"properties": {
+						"label": { "type": "string", "minLength": 1, "maxLength": 128 },
+						"identityVerified": { "const": false }
+					}
+				},
+				"workUnits": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/SemanticWorkUnit" },
+					"minItems": 1
+				}
+			}
+		},
+		"CommitWorkUnitBinding": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"schema",
+				"planId",
+				"workUnitId",
+				"commit",
+				"parentCommit",
+				"trailer",
+				"stablePatchId",
+				"diffDigest",
+				"changedPaths"
+			],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.semantic-binding.v1" },
+				"planId": { "$ref": "#/definitions/Identifier" },
+				"workUnitId": { "$ref": "#/definitions/WorkUnitId" },
+				"commit": { "$ref": "#/definitions/GitOid" },
+				"parentCommit": { "$ref": "#/definitions/GitOid" },
+				"trailer": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["name", "value", "occurrences"],
+					"properties": {
+						"name": { "const": "GraphReFly-Work-Unit" },
+						"value": { "$ref": "#/definitions/WorkUnitId" },
+						"occurrences": { "const": 1 }
+					}
+				},
+				"stablePatchId": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+				"diffDigest": { "$ref": "#/definitions/Hash" },
+				"changedPaths": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/RepoPath" },
+					"minItems": 1,
+					"uniqueItems": true
+				}
+			}
+		},
+		"ModelContextManifest": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"schema",
+				"purpose",
+				"taskDigest",
+				"policyDigest",
+				"policyFields",
+				"blueprintFields",
+				"sourcePaths",
+				"omittedClasses",
+				"authorization"
+			],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.semantic-model-context.v1" },
+				"purpose": { "enum": ["plan", "selective-replan"] },
+				"taskDigest": { "$ref": "#/definitions/Hash" },
+				"policyDigest": { "$ref": "#/definitions/Hash" },
+				"policyFields": {
+					"type": "array",
+					"items": {
+						"enum": [
+							"policyId",
+							"revision",
+							"allowedSourceRoots",
+							"allowedCapabilities",
+							"checkIds"
+						]
+					},
+					"uniqueItems": true
+				},
+				"blueprintFields": {
+					"type": "array",
+					"items": {
+						"enum": [
+							"version",
+							"topology.nodes",
+							"topology.edges",
+							"topology.subgraphs",
+							"topology.metadata",
+							"hash"
+						]
+					},
+					"uniqueItems": true
+				},
+				"sourcePaths": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/RepoPath" },
+					"uniqueItems": true
+				},
+				"omittedClasses": {
+					"type": "array",
+					"items": {
+						"enum": [
+							"credentials",
+							"environment",
+							"unlisted-source",
+							"execution-details",
+							"raw-provider-output"
+						]
+					},
+					"minItems": 5,
+					"maxItems": 5,
+					"uniqueItems": true
+				},
+				"authorization": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["mode", "identityVerified"],
+					"properties": {
+						"mode": { "const": "explicit-cli" },
+						"identityVerified": { "const": false }
+					}
+				}
+			}
+		},
+		"CheckResult": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"schema",
+				"checkId",
+				"commandDigest",
+				"exitCode",
+				"stdoutDigest",
+				"stderrDigest"
+			],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.semantic-check-result.v1" },
+				"checkId": { "$ref": "#/definitions/Identifier" },
+				"commandDigest": { "$ref": "#/definitions/Hash" },
+				"exitCode": { "type": "integer", "minimum": 0, "maximum": 255 },
+				"stdoutDigest": { "$ref": "#/definitions/Hash" },
+				"stderrDigest": { "$ref": "#/definitions/Hash" }
+			}
+		},
+		"SemanticChangeRecord": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"schema",
+				"recordId",
+				"planId",
+				"workUnitId",
+				"bindingDigest",
+				"semanticParentRecordId",
+				"policyDigest",
+				"blueprintHash",
+				"sourceScopeDigest",
+				"claimWitnesses",
+				"requiredChecks",
+				"rebindFrom"
+			],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.semantic-record.v1" },
+				"recordId": { "$ref": "#/definitions/Identifier" },
+				"planId": { "$ref": "#/definitions/Identifier" },
+				"workUnitId": { "$ref": "#/definitions/WorkUnitId" },
+				"bindingDigest": { "$ref": "#/definitions/Hash" },
+				"semanticParentRecordId": { "type": ["string", "null"], "maxLength": 64 },
+				"policyDigest": { "$ref": "#/definitions/Hash" },
+				"blueprintHash": { "$ref": "#/definitions/Hash" },
+				"sourceScopeDigest": { "$ref": "#/definitions/Hash" },
+				"claimWitnesses": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"additionalProperties": false,
+						"required": ["claimId", "predicateDigest", "status"],
+						"properties": {
+							"claimId": { "$ref": "#/definitions/Identifier" },
+							"predicateDigest": { "$ref": "#/definitions/Hash" },
+							"status": { "const": "satisfied" }
+						}
+					},
+					"minItems": 1
+				},
+				"requiredChecks": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/Identifier" },
+					"minItems": 1,
+					"uniqueItems": true
+				},
+				"rebindFrom": { "type": ["string", "null"], "maxLength": 64 }
+			}
+		},
+		"ReasonCode": {
+			"enum": [
+				"SCHEMA_INVALID",
+				"PLAN_NOT_ACCEPTED",
+				"POLICY_MISMATCH",
+				"WORK_UNIT_TRAILER_MISSING",
+				"WORK_UNIT_TRAILER_DUPLICATE",
+				"WORK_UNIT_UNKNOWN",
+				"COMMIT_BINDING_MISMATCH",
+				"PATCH_ID_AMBIGUOUS",
+				"SOURCE_SCOPE_VIOLATION",
+				"SEMANTIC_PARENT_STALE",
+				"DEPENDENCY_INVALID",
+				"PREDICATE_SELECTOR_AMBIGUOUS",
+				"PREDICATE_UNSUPPORTED",
+				"BLUEPRINT_PREDICATE_UNSATISFIED",
+				"BLUEPRINT_WITNESS_STALE",
+				"POLICY_REVISION_STALE",
+				"REQUIRED_CHECK_UNDECLARED",
+				"REQUIRED_CHECK_MISSING",
+				"REQUIRED_CHECK_FAILED",
+				"MODEL_CONTEXT_UNAUTHORIZED",
+				"ARTIFACT_HASH_MISMATCH"
+			]
+		},
+		"GateUnitResult": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["workUnitId", "verdict", "reasonCodes", "invalidDependencies", "recordId"],
+			"properties": {
+				"workUnitId": { "$ref": "#/definitions/WorkUnitId" },
+				"verdict": { "enum": ["valid", "invalid"] },
+				"reasonCodes": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/ReasonCode" },
+					"uniqueItems": true
+				},
+				"invalidDependencies": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/WorkUnitId" },
+					"uniqueItems": true
+				},
+				"recordId": { "type": ["string", "null"], "maxLength": 64 }
+			}
+		},
+		"GateInput": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"schema",
+				"policy",
+				"plan",
+				"bindings",
+				"records",
+				"currentBlueprintHash",
+				"checks"
+			],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.semantic-gate-input.v1" },
+				"policy": { "$ref": "#/definitions/RepositoryPolicy" },
+				"plan": { "$ref": "#/definitions/AcceptedChangePlan" },
+				"bindings": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/CommitWorkUnitBinding" },
+					"minItems": 1
+				},
+				"records": { "type": "array", "items": { "$ref": "#/definitions/SemanticChangeRecord" } },
+				"currentBlueprintHash": { "$ref": "#/definitions/Hash" },
+				"checks": { "type": "array", "items": { "$ref": "#/definitions/CheckResult" } }
+			}
+		},
+		"GateResult": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["schema", "gateVersion", "inputDigest", "verdict", "units", "checkIds"],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.semantic-gate-result.v1" },
+				"gateVersion": { "const": "v1" },
+				"inputDigest": { "$ref": "#/definitions/Hash" },
+				"verdict": { "enum": ["pass", "blocked", "error"] },
+				"units": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/GateUnitResult" },
+					"minItems": 1
+				},
+				"checkIds": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/Identifier" },
+					"uniqueItems": true
+				}
+			}
+		},
+		"SemanticExportManifest": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["schema", "planId", "head", "inputDigest", "redaction", "artifacts"],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.semantic-export-manifest.v1" },
+				"planId": { "$ref": "#/definitions/Identifier" },
+				"head": { "$ref": "#/definitions/GitOid" },
+				"inputDigest": { "$ref": "#/definitions/Hash" },
+				"redaction": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["excludes"],
+					"properties": {
+						"excludes": {
+							"type": "array",
+							"items": {
+								"enum": [
+									"source-content",
+									"raw-blueprint",
+									"check-output",
+									"credentials",
+									"environment",
+									"model-response"
+								]
+							},
+							"minItems": 6,
+							"maxItems": 6,
+							"uniqueItems": true
+						}
+					}
+				},
+				"artifacts": {
+					"type": "array",
+					"minItems": 7,
+					"maxItems": 7,
+					"items": {
+						"type": "object",
+						"additionalProperties": false,
+						"required": ["path", "hash"],
+						"properties": {
+							"path": {
+								"enum": [
+									"policy.json",
+									"plan.json",
+									"bindings.json",
+									"records.json",
+									"checks.json",
+									"gate-input.json",
+									"gate-result.json"
+								]
+							},
+							"hash": { "$ref": "#/definitions/Hash" }
+						}
+					}
+				}
+			}
+		},
+		"SemanticPortableBundle": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["schema", "manifest", "artifacts"],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.semantic-portable-bundle.v1" },
+				"manifest": { "$ref": "#/definitions/SemanticExportManifest" },
+				"artifacts": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": [
+						"policy.json",
+						"plan.json",
+						"bindings.json",
+						"records.json",
+						"checks.json",
+						"gate-input.json",
+						"gate-result.json"
+					],
+					"properties": {
+						"policy.json": { "$ref": "#/definitions/RepositoryPolicy" },
+						"plan.json": { "$ref": "#/definitions/AcceptedChangePlan" },
+						"bindings.json": {
+							"type": "array",
+							"items": { "$ref": "#/definitions/CommitWorkUnitBinding" }
+						},
+						"records.json": {
+							"type": "array",
+							"items": { "$ref": "#/definitions/SemanticChangeRecord" }
+						},
+						"checks.json": {
+							"type": "array",
+							"items": { "$ref": "#/definitions/CheckResult" }
+						},
+						"gate-input.json": { "$ref": "#/definitions/GateInput" },
+						"gate-result.json": { "$ref": "#/definitions/GateResult" }
+					}
+				}
+			}
+		},
+		"SelectiveReplan": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"schema",
+				"sourcePlanId",
+				"replacementPlanId",
+				"preservedUnits",
+				"invalidUnits",
+				"contextManifestDigest",
+				"proposalSource"
+			],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.semantic-selective-replan.v1" },
+				"sourcePlanId": { "$ref": "#/definitions/Identifier" },
+				"replacementPlanId": { "$ref": "#/definitions/Identifier" },
+				"preservedUnits": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/WorkUnitId" },
+					"uniqueItems": true
+				},
+				"invalidUnits": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/WorkUnitId" },
+					"minItems": 1,
+					"uniqueItems": true
+				},
+				"contextManifestDigest": { "$ref": "#/definitions/Hash" },
+				"proposalSource": { "enum": ["fixture", "codex", "human"] }
+			}
+		}
+	}
+}

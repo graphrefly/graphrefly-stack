@@ -10,7 +10,7 @@ import {
 	sha256Jcs,
 } from "@graphrefly-stack/contracts";
 import { CORE_ARCHITECTURE, computeGate } from "@graphrefly-stack/core";
-
+import { CiRunnerError, initializeCiWorkflow, runCi } from "./ci-runner.js";
 import {
 	redactProviderError,
 	replayFallback,
@@ -23,18 +23,36 @@ import { readPortableEvidenceBundle } from "./portable-bundle.js";
 import { initializeRepository, RepositoryInitError } from "./repository-init.js";
 import { createRepositoryReview, RepositoryReviewError } from "./repository-review.js";
 import { startReviewServer } from "./review-server.js";
+import {
+	bindSemanticPlan,
+	createSemanticGate,
+	createSemanticPlan,
+	createSemanticRepositoryReview,
+	exportSemanticBundle,
+	replanSemanticPlan,
+	SemanticRepositoryError,
+	verifySemanticBundle,
+} from "./semantic-repository.js";
 import { SystemGitAdapter } from "./system-git.js";
 
 const help = `GraphReFly Stack (grfs)
 
 Usage:
   grfs init [--repo <path>] --graph-module <path> [--graph-export <name>] [--force] [--json]
+  grfs ci init [--repo <path>] [--force] [--json]
+  grfs ci run [--repo <path>] --event <github-event.json> [--plan-id <id>] --output <artifact.json> [--json]
   grfs review --repo <path> --base <revision> --head <revision> [--host 127.0.0.1] [--port 4173] [--json]
   grfs fixture create [--output <path>] [--force] [--json]
+  grfs plan --repo <path> --task <summary> --policy <policy.json> [--proposal <proposal.json>] [--context <manifest.json> --authorize-context] [--mode replay|live] [--accept --accept-by <label>] --json
+  grfs plan --repo <path> --bind --plan-id <id> [--head <revision>] --json
   grfs plan [--fixture <runtime-suite.json>] [--mode replay|live] --json
+  grfs gate --repo <path> --plan-id <id> [--head <revision>] --json
   grfs gate [--fixture <runtime-suite.json>] [--case <case-id>] --json
+  grfs replan --repo <path> --plan-id <id> [--head <revision>] [--proposal <proposal.json>] [--context <manifest.json> --authorize-context] [--mode replay|live] [--accept --accept-by <label>] --json
   grfs replan [--mode replay|live] [--fallback none|replay] --json
   grfs review [--bundle <path>] [--fixture <runtime-suite.json>] [--host 127.0.0.1] [--port 4173]
+  grfs export --repo <path> --plan-id <id> [--head <revision>] --output <bundle.json> --json
+  grfs export --verify <bundle.json> --json
   grfs export [--fixture <runtime-suite.json>] [--plan-run <path>] [--replan-run <path>] [--output <path>] --json
 `;
 
@@ -51,6 +69,8 @@ function isWithin(root: string, candidate: string): boolean {
 
 function commandFrom(argv: readonly string[]): CliCommand | null {
 	if (argv[0] === "init") return "init";
+	if (argv[0] === "ci" && argv[1] === "init") return "ci-init";
+	if (argv[0] === "ci" && argv[1] === "run") return "ci-run";
 	if (argv[0] === "fixture" && argv[1] === "create") return "fixture-create";
 	if (["plan", "gate", "replan", "review", "export"].includes(argv[0] ?? "")) {
 		return argv[0] as CliCommand;
@@ -219,6 +239,57 @@ export async function runCli(argv = process.argv.slice(2)): Promise<number> {
 	if (fallback !== "none" && fallback !== "replay") {
 		return failure(command, json, "INVALID_FALLBACK", fallback, requestedMode);
 	}
+	if (command === "ci-init") {
+		try {
+			success(
+				command,
+				"deterministic",
+				await initializeCiWorkflow({
+					repository: readOption(argv, "--repo") ?? ".",
+					force: argv.includes("--force"),
+				}),
+				json,
+			);
+			return 0;
+		} catch (error) {
+			if (error instanceof CiRunnerError) {
+				return failure(command, json, error.code, error.message);
+			}
+			throw error;
+		}
+	}
+
+	if (command === "ci-run") {
+		const eventPath = readOption(argv, "--event");
+		const output = readOption(argv, "--output");
+		if (eventPath === undefined || output === undefined) {
+			return failure(
+				command,
+				json,
+				"CI_RUN_INPUT_REQUIRED",
+				"--event and --output are required for CI execution",
+			);
+		}
+		try {
+			const result = await runCi({
+				repository: readOption(argv, "--repo") ?? ".",
+				eventPath,
+				planId: readOption(argv, "--plan-id"),
+				output,
+			});
+			success(command, "deterministic", result, json);
+			return result.outcome === "pass" ? 0 : result.outcome === "blocked" ? 2 : 1;
+		} catch (error) {
+			if (
+				error instanceof CiRunnerError ||
+				error instanceof SemanticRepositoryError ||
+				error instanceof RepositoryReviewError
+			) {
+				return failure(command, json, error.code, error.message);
+			}
+			throw error;
+		}
+	}
 	if (command === "init") {
 		const graphModule = readOption(argv, "--graph-module");
 		if (graphModule === undefined) {
@@ -261,6 +332,67 @@ export async function runCli(argv = process.argv.slice(2)): Promise<number> {
 	}
 
 	if (command === "plan") {
+		const repository = readOption(argv, "--repo");
+		if (repository !== undefined) {
+			try {
+				if (argv.includes("--bind")) {
+					const planId = readOption(argv, "--plan-id");
+					if (planId === undefined) {
+						return failure(command, json, "PLAN_ID_REQUIRED", "--plan-id is required with --bind");
+					}
+					success(
+						command,
+						"deterministic",
+						await bindSemanticPlan({
+							repository,
+							planId,
+							head: readOption(argv, "--head"),
+						}),
+						json,
+					);
+					return 0;
+				}
+				const taskSummary = readOption(argv, "--task");
+				const policyPath = readOption(argv, "--policy");
+				if (taskSummary === undefined || policyPath === undefined) {
+					return failure(
+						command,
+						json,
+						"SEMANTIC_PLAN_INPUT_REQUIRED",
+						"--task and --policy are required for generic semantic planning",
+						requestedMode,
+					);
+				}
+				if (fallback !== "none") {
+					return failure(
+						command,
+						json,
+						"GENERIC_PLAN_FALLBACK_UNSUPPORTED",
+						"Generic live planning fails closed instead of impersonating replay",
+						requestedMode,
+					);
+				}
+				const result = await createSemanticPlan({
+					repository,
+					taskSummary,
+					policyPath,
+					proposalPath: readOption(argv, "--proposal"),
+					contextPath: readOption(argv, "--context"),
+					base: readOption(argv, "--base"),
+					mode: requestedMode,
+					authorizeContext: argv.includes("--authorize-context"),
+					accept: argv.includes("--accept"),
+					acceptedBy: readOption(argv, "--accept-by"),
+				});
+				success(command, requestedMode, result, json);
+				return 0;
+			} catch (error) {
+				if (error instanceof SemanticRepositoryError || error instanceof RepositoryReviewError) {
+					return failure(command, json, error.code, error.message, requestedMode);
+				}
+				throw error;
+			}
+		}
 		const runtime = await readRuntimeSuite(readOption(argv, "--fixture") ?? defaultRuntimeSuite);
 		if (requestedMode === "live") {
 			try {
@@ -279,6 +411,31 @@ export async function runCli(argv = process.argv.slice(2)): Promise<number> {
 	}
 
 	if (command === "gate") {
+		const repository = readOption(argv, "--repo");
+		if (repository !== undefined) {
+			const planId = readOption(argv, "--plan-id");
+			if (planId === undefined) {
+				return failure(command, json, "PLAN_ID_REQUIRED", "--plan-id is required with --repo");
+			}
+			try {
+				const output = await createSemanticGate({
+					repository,
+					planId,
+					head: readOption(argv, "--head"),
+				});
+				success(command, "deterministic", output, json);
+				return output.gateResult.verdict === "pass"
+					? 0
+					: output.gateResult.verdict === "blocked"
+						? 2
+						: 1;
+			} catch (error) {
+				if (error instanceof SemanticRepositoryError || error instanceof RepositoryReviewError) {
+					return failure(command, json, error.code, error.message);
+				}
+				throw error;
+			}
+		}
 		const runtime = await readRuntimeSuite(readOption(argv, "--fixture") ?? defaultRuntimeSuite);
 		const caseId = readOption(argv, "--case") ?? "clean-rebase-semantic-stale";
 		const fixtureCase = caseFrom(runtime, caseId);
@@ -289,6 +446,42 @@ export async function runCli(argv = process.argv.slice(2)): Promise<number> {
 	}
 
 	if (command === "replan") {
+		const repository = readOption(argv, "--repo");
+		if (repository !== undefined) {
+			const planId = readOption(argv, "--plan-id");
+			if (planId === undefined) {
+				return failure(command, json, "PLAN_ID_REQUIRED", "--plan-id is required with --repo");
+			}
+			if (requestedMode === "live" && fallback !== "none") {
+				return failure(
+					command,
+					json,
+					"GENERIC_REPLAN_FALLBACK_UNSUPPORTED",
+					"Generic live replan fails closed instead of impersonating replay",
+					requestedMode,
+				);
+			}
+			try {
+				const output = await replanSemanticPlan({
+					repository,
+					planId,
+					head: readOption(argv, "--head"),
+					proposalPath: readOption(argv, "--proposal"),
+					contextPath: readOption(argv, "--context"),
+					mode: requestedMode,
+					authorizeContext: argv.includes("--authorize-context"),
+					accept: argv.includes("--accept"),
+					acceptedBy: readOption(argv, "--accept-by"),
+				});
+				success(command, requestedMode, output, json);
+				return 0;
+			} catch (error) {
+				if (error instanceof SemanticRepositoryError || error instanceof RepositoryReviewError) {
+					return failure(command, json, error.code, error.message, requestedMode);
+				}
+				throw error;
+			}
+		}
 		const runtime = await readRuntimeSuite(readOption(argv, "--fixture") ?? defaultRuntimeSuite);
 		if (requestedMode === "live") {
 			try {
@@ -307,6 +500,58 @@ export async function runCli(argv = process.argv.slice(2)): Promise<number> {
 	}
 
 	if (command === "export") {
+		const repository = readOption(argv, "--repo");
+		const verify = readOption(argv, "--verify");
+		if (verify !== undefined) {
+			if (repository !== undefined || readOption(argv, "--output") !== undefined) {
+				return failure(
+					command,
+					json,
+					"SEMANTIC_EXPORT_CONFLICT",
+					"--verify cannot be combined with --repo or --output",
+				);
+			}
+			try {
+				success(command, "deterministic", await verifySemanticBundle(verify), json);
+				return 0;
+			} catch (error) {
+				if (error instanceof SemanticRepositoryError) {
+					return failure(command, json, error.code, error.message);
+				}
+				throw error;
+			}
+		}
+		if (repository !== undefined) {
+			const planId = readOption(argv, "--plan-id");
+			const output = readOption(argv, "--output");
+			if (planId === undefined || output === undefined) {
+				return failure(
+					command,
+					json,
+					"SEMANTIC_EXPORT_INCOMPLETE",
+					"--plan-id and --output are required with --repo",
+				);
+			}
+			try {
+				success(
+					command,
+					"deterministic",
+					await exportSemanticBundle({
+						repository,
+						planId,
+						head: readOption(argv, "--head"),
+						output,
+					}),
+					json,
+				);
+				return 0;
+			} catch (error) {
+				if (error instanceof SemanticRepositoryError || error instanceof RepositoryReviewError) {
+					return failure(command, json, error.code, error.message);
+				}
+				throw error;
+			}
+		}
 		const runtime = await readRuntimeSuite(readOption(argv, "--fixture") ?? defaultRuntimeSuite);
 		const requestedOutput = resolve(
 			readOption(argv, "--output") ?? resolve(".private/exports/refresh-token-rotation-v1"),
@@ -371,7 +616,11 @@ export async function runCli(argv = process.argv.slice(2)): Promise<number> {
 			);
 		}
 		try {
-			const repositoryReview = await createRepositoryReview({ repository, base, head });
+			const planId = readOption(argv, "--plan-id");
+			const repositoryReview =
+				planId === undefined
+					? await createRepositoryReview({ repository, base, head })
+					: await createSemanticRepositoryReview({ repository, base, head, planId });
 			reviewData = repositoryReview;
 			repositoryReviewState = { repository: resolve(repository), review: repositoryReview };
 		} catch (error) {

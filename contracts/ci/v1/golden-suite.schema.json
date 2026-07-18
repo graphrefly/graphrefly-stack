@@ -1,0 +1,17 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "urn:graphrefly-stack:schema:ci-golden-suite:v1",
+	"title": "GraphReFly Stack CI golden suite v1",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["schema", "invocation", "result"],
+	"properties": {
+		"schema": { "const": "graphrefly.stack.ci-golden-suite.v1" },
+		"invocation": {
+			"$ref": "urn:graphrefly-stack:schema:ci-artifacts:v1#/definitions/CIInvocation"
+		},
+		"result": {
+			"$ref": "urn:graphrefly-stack:schema:ci-artifacts:v1#/definitions/CIResult"
+		}
+	}
+}

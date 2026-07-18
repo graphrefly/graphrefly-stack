@@ -22,6 +22,7 @@ import { gitText, SystemGitAdapter } from "./system-git.js";
 
 const configSchemaPath = runtimeAssetPath("contracts/repository/v1/repository-config.schema.json");
 const reviewSchemaPath = runtimeAssetPath("contracts/repository/v1/review.schema.json");
+const semanticSchemaPath = runtimeAssetPath("contracts/semantic/v1/artifacts.schema.json");
 const configName = ".graphrefly-stack.json";
 const lockCandidates = ["pnpm-lock.yaml", "package-lock.json", "yarn.lock"] as const;
 const maxReviewCommits = 64;
@@ -65,7 +66,7 @@ async function readJson(path: string): Promise<unknown> {
 
 async function readSchemas() {
 	return Promise.all(
-		[configSchemaPath, reviewSchemaPath].map(async (path) =>
+		[configSchemaPath, reviewSchemaPath, semanticSchemaPath].map(async (path) =>
 			JSON.parse(await readFile(path, "utf8")),
 		),
 	);
@@ -443,10 +444,11 @@ async function validateDependencyContinuity(
 	}
 }
 
-async function validateReview(review: RepositoryReview): Promise<void> {
-	const [configSchema, reviewSchema] = await readSchemas();
+export async function validateRepositoryReview(review: RepositoryReview): Promise<void> {
+	const [configSchema, reviewSchema, semanticSchema] = await readSchemas();
 	const ajv = createStrictAjv();
 	ajv.addSchema(configSchema);
+	ajv.addSchema(semanticSchema);
 	const validate = ajv.compile(reviewSchema);
 	if (!validate(review)) {
 		throw new RepositoryReviewError(
@@ -478,6 +480,58 @@ function reviewHeadLabel(repository: string, requested: string, headOid: string)
 		// Fall back to a stable short object identity.
 	}
 	return headOid.slice(0, 12);
+}
+
+export async function createRepositoryBlueprintSnapshot(options: {
+	repository: string;
+	revision: string;
+}): Promise<{
+	repository: string;
+	commit: { algorithm: "sha1" | "sha256"; value: string };
+	blueprint: Record<string, unknown>;
+	blueprintHash: { algorithm: "sha256"; value: string };
+}> {
+	let repository: string;
+	try {
+		const requested = await realpath(resolve(options.repository));
+		repository = await realpath(gitText(requested, ["rev-parse", "--show-toplevel"]));
+	} catch {
+		throw new RepositoryReviewError(
+			"REPOSITORY_INVALID",
+			"Repository must be a local Git worktree",
+		);
+	}
+	const config = await readRepositoryConfig(repository);
+	const entrypointSource = await readConfiguredEntrypoint(repository, config.blueprint.entrypoint);
+	const git = new SystemGitAdapter();
+	let commit: { algorithm: "sha1" | "sha256"; value: string };
+	try {
+		commit = await git.resolveCommit(repository, options.revision);
+	} catch {
+		throw new RepositoryReviewError("REVISION_INVALID", "Revision must resolve to a commit");
+	}
+	const runtime = await resolveTargetRuntime(repository);
+	await validateDependencyContinuity(repository, [commit.value], runtime.version);
+	const blueprint = await executeBlueprint(
+		repository,
+		commit.value,
+		config.blueprint.entrypoint,
+		entrypointSource,
+		runtime,
+	);
+	const hash = blueprint.hash as { algorithm?: unknown; value?: unknown } | undefined;
+	if (hash?.algorithm !== "sha256" || typeof hash.value !== "string") {
+		throw new RepositoryReviewError(
+			"BLUEPRINT_HASH_MISMATCH",
+			`GraphBlueprint hash is unavailable at ${commit.value.slice(0, 12)}`,
+		);
+	}
+	return {
+		repository,
+		commit,
+		blueprint,
+		blueprintHash: { algorithm: "sha256", value: hash.value },
+	};
 }
 
 export async function createRepositoryReview(options: {
@@ -605,6 +659,6 @@ export async function createRepositoryReview(options: {
 		commits,
 		semanticStatus: "not-configured",
 	};
-	await validateReview(review);
+	await validateRepositoryReview(review);
 	return review;
 }

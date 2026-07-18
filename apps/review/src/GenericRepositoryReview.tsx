@@ -62,7 +62,48 @@ export interface GenericReviewData {
 	};
 	base: Revision;
 	commits: ReviewCommit[];
-	semanticStatus: "not-configured";
+	semanticStatus: "not-configured" | "evaluated";
+	semantic?: {
+		plan: {
+			planId: string;
+			taskSummary: string;
+			workUnits: Array<{
+				id: string;
+				title: string;
+				intent: string;
+				claims: Array<{ id: string; rationale: string; predicate: Record<string, unknown> }>;
+				requiredChecks: string[];
+			}>;
+		};
+		bindings: Array<{
+			workUnitId: string;
+			commit: { value: string };
+			stablePatchId: string;
+			changedPaths: string[];
+		}>;
+		records: Array<{
+			workUnitId: string;
+			recordId: string;
+			rebindFrom: string | null;
+			claimWitnesses: Array<{
+				claimId: string;
+				predicateDigest: { value: string };
+			}>;
+		}>;
+		checks: Array<{ checkId: string; exitCode: number; commandDigest: { value: string } }>;
+		gateResult: {
+			verdict: "pass" | "blocked" | "error";
+			inputDigest: { value: string };
+			units: Array<{
+				workUnitId: string;
+				verdict: "valid" | "invalid";
+				reasonCodes: string[];
+				invalidDependencies: string[];
+				recordId: string | null;
+			}>;
+		};
+		invalidWorkUnitIds: string[];
+	};
 }
 
 type RepositoryReviewDecision = {
@@ -511,6 +552,18 @@ export function GenericRepositoryReview({ review }: { review: GenericReviewData 
 	const latestDecision = (commitOid: string) =>
 		[...decisions].reverse().find((decision) => decision.target.commitOid === commitOid);
 	const currentDecision = latestDecision(selected.oid);
+	const semanticBinding = review.semantic?.bindings.find(
+		(binding) => binding.commit.value === selected.oid,
+	);
+	const semanticUnit = review.semantic?.plan.workUnits.find(
+		(unit) => unit.id === semanticBinding?.workUnitId,
+	);
+	const semanticGate = review.semantic?.gateResult.units.find(
+		(unit) => unit.workUnitId === semanticBinding?.workUnitId,
+	);
+	const semanticRecord = review.semantic?.records.find(
+		(record) => record.workUnitId === semanticBinding?.workUnitId,
+	);
 
 	useEffect(() => {
 		const controller = new AbortController();
@@ -560,6 +613,19 @@ export function GenericRepositoryReview({ review }: { review: GenericReviewData 
 					</p>
 					<h1>{selected.subject}</h1>
 				</div>
+				{review.semantic === undefined ? (
+					<div className="gate-summary is-neutral">
+						<span>Structural only</span>
+						<code>semantic not configured</code>
+					</div>
+				) : (
+					<div
+						className={`gate-summary ${review.semantic.gateResult.verdict === "pass" ? "is-valid" : "is-invalid"}`}
+					>
+						<span>Gate {review.semantic.gateResult.verdict}</span>
+						<code>{review.semantic.invalidWorkUnitIds.length} units need action</code>
+					</div>
+				)}
 			</section>
 
 			<main className="review-workbench">
@@ -647,6 +713,63 @@ export function GenericRepositoryReview({ review }: { review: GenericReviewData 
 					) : null}
 				</section>
 			</main>
+
+			{review.semantic !== undefined &&
+			semanticBinding !== undefined &&
+			semanticUnit !== undefined ? (
+				<section className="semantic-review" aria-labelledby="semantic-title">
+					<div className="section-heading">
+						<div>
+							<p className="kicker">Accepted intent · {review.semantic.plan.planId}</p>
+							<h2 id="semantic-title">{semanticUnit.title}</h2>
+							<p>{semanticUnit.intent}</p>
+						</div>
+						<div
+							className={`gate-summary ${semanticGate?.verdict === "valid" ? "is-valid" : "is-invalid"}`}
+						>
+							<span>{semanticGate?.verdict ?? "unbound"}</span>
+							<code>{semanticGate?.reasonCodes.join(" · ") || "all predicates satisfied"}</code>
+						</div>
+					</div>
+					<div className="semantic-grid">
+						{semanticUnit.claims.map((claim) => {
+							const witness = semanticRecord?.claimWitnesses.find(
+								(candidate) => candidate.claimId === claim.id,
+							);
+							return (
+								<article key={claim.id}>
+									<span>Typed claim · {claim.id}</span>
+									<strong>{claim.rationale}</strong>
+									<code>{JSON.stringify(claim.predicate)}</code>
+									<small>
+										{witness === undefined
+											? "No current witness"
+											: `Witness ${short(witness.predicateDigest.value, 16)}`}
+									</small>
+								</article>
+							);
+						})}
+						<article>
+							<span>Policy checks</span>
+							<strong>{semanticUnit.requiredChecks.join(" · ")}</strong>
+							{review.semantic.checks
+								.filter((check) => semanticUnit.requiredChecks.includes(check.checkId))
+								.map((check) => (
+									<small key={check.checkId}>
+										{check.checkId}: exit {check.exitCode} · command{" "}
+										{short(check.commandDigest.value, 12)}
+									</small>
+								))}
+							<code>patch {semanticBinding.stablePatchId}</code>
+							<small>
+								{semanticRecord?.rebindFrom === null || semanticRecord === undefined
+									? "Original immutable binding"
+									: `Rebound from ${semanticRecord.rebindFrom}`}
+							</small>
+						</article>
+					</div>
+				</section>
+			) : null}
 
 			<section className="code-review" aria-labelledby="code-title">
 				<div className="section-heading">

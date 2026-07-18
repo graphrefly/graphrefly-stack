@@ -1,10 +1,15 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { access, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
+import {
+	createSemanticPlan,
+	replanSemanticPlan,
+} from "../../packages/cli/dist/semantic-repository.js";
+import { sha256Jcs } from "../../packages/contracts/dist/index.js";
 
 const workspace = fileURLToPath(new URL("../../", import.meta.url));
 const cli = resolve(workspace, "packages/cli/dist/cli.js");
@@ -142,6 +147,30 @@ function failedReview(repository, base, head) {
 	const envelope = JSON.parse(result.stdout);
 	assert.equal(envelope.ok, false);
 	return envelope.error.code;
+}
+
+function semanticPlan(repository, args) {
+	return semanticCommand(repository, "plan", args);
+}
+
+function semanticCommand(repository, command, args) {
+	const result = spawnSync(
+		process.execPath,
+		[cli, command, "--repo", repository, ...args, "--json"],
+		{
+			cwd: workspace,
+			encoding: "utf8",
+			maxBuffer: 16 * 1024 * 1024,
+		},
+	);
+	const envelope = JSON.parse(result.stdout);
+	return { status: result.status, envelope, stderr: result.stderr };
+}
+
+function workUnitCommit(repository, subject, workUnitId) {
+	run(repository, "git", ["add", "-A"]);
+	run(repository, "git", ["commit", "-m", subject, "-m", `GraphReFly-Work-Unit: ${workUnitId}`]);
+	return run(repository, "git", ["rev-parse", "HEAD"]);
 }
 
 const flatGraph = `import { graph } from "@graphrefly/ts/graph";
@@ -466,4 +495,564 @@ process.stdout.write(JSON.stringify(forged));
 	await write(timeoutRepo, "graphrefly-stack.blueprint.mjs", "for (;;) {}\n");
 	const timeoutHead = commit(timeoutRepo, "loop forever");
 	assert.equal(failedReview(timeoutRepo, timeoutBase, timeoutHead), "ENTRYPOINT_TIMEOUT");
+});
+
+test("generic semantic planning accepts before implementation and binds flat and mounted repositories", async (context) => {
+	const temporary = await mkdtemp(resolve(tmpdir(), "graphrefly-stack-semantic-plan-"));
+	context.after(() => rm(temporary, { recursive: true, force: true }));
+	const inputRoot = resolve(temporary, "inputs");
+	await mkdir(inputRoot);
+	const policyPath = resolve(inputRoot, "policy.json");
+	const policy = {
+		schema: "graphrefly.stack.semantic-policy.v1",
+		policyId: "repository-policy",
+		revision: "rev-1",
+		allowedSourceRoots: ["graph.mjs", "src", "tests"],
+		allowedCapabilities: ["graph-change"],
+		checks: [
+			{
+				id: "test",
+				argv: ["node", "--test"],
+				timeoutMs: 120000,
+				network: false,
+				shell: false,
+			},
+		],
+	};
+	await writeFile(policyPath, `${JSON.stringify(policy, null, 2)}\n`);
+	const variants = [
+		{
+			name: "semantic-flat",
+			graph: flatGraph,
+			nodeId: "source",
+		},
+		{
+			name: "semantic-mounted",
+			graph: `import { graph } from "@graphrefly/ts/graph";
+export function createApplicationGraph() {
+  const application = graph({ name: "mounted" });
+  application.state(1, { name: "source" });
+  const audit = graph({ name: "audit" });
+  audit.state("idle", { name: "sink" });
+  application.mount(audit, { at: "audit" });
+  return application;
+}
+`,
+			nodeId: "audit::sink",
+		},
+	];
+	for (const variant of variants) {
+		const repository = await createRepository(temporary, variant.name, variant.graph);
+		const base = commit(repository, "create semantic planning base");
+		const proposalPath = resolve(inputRoot, `${variant.name}.json`);
+		const proposal = {
+			schema: "graphrefly.stack.semantic-plan-proposal.v1",
+			planId: `${variant.name}-plan`,
+			proposalSource: "human",
+			workUnits: [
+				{
+					id: "CONTRACTS",
+					title: "Define the contract",
+					intent: "Add the repository contract before behavior.",
+					dependencies: [],
+					allowedSourceScopes: ["src"],
+					capabilities: ["graph-change"],
+					claims: [
+						{
+							id: "base-node-present",
+							predicate: {
+								operator: "present",
+								selector: { kind: "node", nodeId: variant.nodeId },
+							},
+							rationale: "The change is anchored to an existing stable node.",
+						},
+					],
+					requiredChecks: ["test"],
+				},
+				{
+					id: "TESTS",
+					title: "Verify the contract",
+					intent: "Add focused conformance evidence.",
+					dependencies: ["CONTRACTS"],
+					allowedSourceScopes: ["tests"],
+					capabilities: [],
+					claims: [
+						{
+							id: "base-node-still-present",
+							predicate: {
+								operator: "absent",
+								selector: { kind: "node", nodeId: "ghost" },
+							},
+							rationale: "Tests preserve the absence of an undeclared architecture node.",
+						},
+					],
+					requiredChecks: ["test"],
+				},
+			],
+		};
+		await writeFile(proposalPath, `${JSON.stringify(proposal, null, 2)}\n`);
+		if (variant.name === "semantic-flat") {
+			const taskSummary = "Add a verified semantic contract";
+			const contextPath = resolve(inputRoot, "model-context.json");
+			await writeFile(
+				contextPath,
+				`${JSON.stringify(
+					{
+						schema: "graphrefly.stack.semantic-model-context.v1",
+						purpose: "plan",
+						taskDigest: { algorithm: "sha256", value: sha256Jcs({ taskSummary }) },
+						policyDigest: { algorithm: "sha256", value: sha256Jcs(policy) },
+						policyFields: [
+							"policyId",
+							"revision",
+							"allowedSourceRoots",
+							"allowedCapabilities",
+							"checkIds",
+						],
+						blueprintFields: ["version", "topology.nodes", "topology.edges", "hash"],
+						sourcePaths: ["graph.mjs"],
+						omittedClasses: [
+							"credentials",
+							"environment",
+							"unlisted-source",
+							"execution-details",
+							"raw-provider-output",
+						],
+						authorization: { mode: "explicit-cli", identityVerified: false },
+					},
+					null,
+					2,
+				)}\n`,
+			);
+			const liveProposal = { ...proposal, proposalSource: "codex" };
+			let modelRequest;
+			const live = await createSemanticPlan(
+				{
+					repository,
+					taskSummary,
+					policyPath,
+					contextPath,
+					mode: "live",
+					authorizeContext: true,
+					accept: false,
+				},
+				{
+					async run(request) {
+						assert.equal(JSON.stringify(request.outputSchema).includes("oneOf"), false);
+						assert.equal(JSON.stringify(request.outputSchema).includes("anyOf"), true);
+						assert.equal(
+							Object.hasOwn(request.outputSchema.definitions, "RepositoryPolicy"),
+							false,
+						);
+						modelRequest = JSON.parse(
+							await readFile(resolve(request.workingDirectory, "request.json")),
+						);
+						return {
+							finalResponse: JSON.stringify(liveProposal),
+							threadId: "semantic-live-test",
+							usage: null,
+						};
+					},
+				},
+			);
+			assert.equal(live.draft.proposal.proposalSource, "codex");
+			assert.deepEqual(Object.keys(modelRequest.sources), ["graph.mjs"]);
+			assert.equal(Object.hasOwn(modelRequest.sources, "package.json"), false);
+			assert.deepEqual(modelRequest.policy.checkIds, ["test"]);
+			assert.equal(Object.hasOwn(modelRequest.policy, "checks"), false);
+			await assert.rejects(
+				createSemanticPlan(
+					{
+						repository,
+						taskSummary,
+						policyPath,
+						contextPath,
+						mode: "live",
+						authorizeContext: false,
+						accept: false,
+					},
+					{ run: async () => assert.fail("unauthorized context reached the provider") },
+				),
+				(error) => error.code === "MODEL_CONTEXT_UNAUTHORIZED",
+			);
+		}
+		const drafted = semanticPlan(repository, [
+			"--task",
+			"Add a verified semantic contract",
+			"--policy",
+			policyPath,
+			"--proposal",
+			proposalPath,
+		]);
+		assert.equal(drafted.status, 0, drafted.stderr || JSON.stringify(drafted.envelope));
+		assert.equal(drafted.envelope.data.draft.admission.baseCommit.value, base);
+		assert.equal(drafted.envelope.data.draft.proposal.planId, proposal.planId);
+		await assert.rejects(access(resolve(repository, ".graphrefly-stack/policy.json")));
+		if (variant.name === "semantic-flat") {
+			const widened = structuredClone(proposal);
+			widened.workUnits[0].allowedSourceScopes = ["docs"];
+			const widenedPath = resolve(inputRoot, "widened-proposal.json");
+			await writeFile(widenedPath, `${JSON.stringify(widened, null, 2)}\n`);
+			const rejected = semanticPlan(repository, [
+				"--task",
+				"Add a verified semantic contract",
+				"--policy",
+				policyPath,
+				"--proposal",
+				widenedPath,
+			]);
+			assert.equal(rejected.status, 1);
+			assert.equal(rejected.envelope.error.code, "PLAN_SOURCE_SCOPE_WIDENED");
+		}
+
+		const accepted = semanticPlan(repository, [
+			"--task",
+			"Add a verified semantic contract",
+			"--policy",
+			policyPath,
+			"--proposal",
+			proposalPath,
+			"--accept",
+			"--accept-by",
+			"local-reviewer",
+		]);
+		assert.equal(accepted.status, 0, accepted.stderr || JSON.stringify(accepted.envelope));
+		assert.equal(accepted.envelope.data.plan.acceptedBy.identityVerified, false);
+		const acceptedPlanPath = resolve(repository, `.graphrefly-stack/plans/${proposal.planId}.json`);
+		assert.equal(JSON.parse(await readFile(acceptedPlanPath, "utf8")).baseCommit.value, base);
+		const acceptanceCommit = commit(repository, "accept semantic plan and policy");
+
+		await write(repository, "src/contract.ts", "export const semanticContract = true;\n");
+		const contractsCommit = workUnitCommit(repository, "define semantic contract", "CONTRACTS");
+		await write(repository, "tests/contract.test.mjs", "export const contractEvidence = true;\n");
+		const head = workUnitCommit(repository, "verify semantic contract", "TESTS");
+		const bound = semanticPlan(repository, [
+			"--bind",
+			"--plan-id",
+			proposal.planId,
+			"--head",
+			head,
+		]);
+		assert.equal(bound.status, 0, bound.stderr || JSON.stringify(bound.envelope));
+		assert.deepEqual(
+			bound.envelope.data.bindings.map((binding) => binding.workUnitId),
+			["CONTRACTS", "TESTS"],
+		);
+		assert.equal(bound.envelope.data.acceptanceCommit.length, 40);
+		assert.equal(bound.envelope.data.bindings[0].changedPaths[0], "src/contract.ts");
+		assert.equal(bound.envelope.data.bindings[1].changedPaths[0], "tests/contract.test.mjs");
+		if (variant.name === "semantic-flat") {
+			const firstGate = semanticCommand(repository, "gate", [
+				"--plan-id",
+				proposal.planId,
+				"--head",
+				head,
+			]);
+			assert.equal(firstGate.status, 0, firstGate.stderr || JSON.stringify(firstGate.envelope));
+			assert.equal(firstGate.envelope.data.gateResult.verdict, "pass");
+			assert.deepEqual(
+				firstGate.envelope.data.gateResult.units.map((unit) => unit.verdict),
+				["valid", "valid"],
+			);
+			const repeatedGate = semanticCommand(repository, "gate", [
+				"--plan-id",
+				proposal.planId,
+				"--head",
+				head,
+			]);
+			assert.equal(repeatedGate.status, 0);
+			assert.deepEqual(
+				repeatedGate.envelope.data.input.records.map((record) => record.recordId),
+				firstGate.envelope.data.input.records.map((record) => record.recordId),
+			);
+
+			const exportPath = resolve(temporary, "semantic-portable.json");
+			const exported = semanticCommand(repository, "export", [
+				"--plan-id",
+				proposal.planId,
+				"--head",
+				head,
+				"--output",
+				exportPath,
+			]);
+			assert.equal(exported.status, 0, exported.stderr || JSON.stringify(exported.envelope));
+			const portable = JSON.parse(await readFile(exportPath, "utf8"));
+			assert.equal(portable.schema, "graphrefly.stack.semantic-portable-bundle.v1");
+			assert.equal(JSON.stringify(portable).includes("semanticContract = true"), false);
+			const semanticReview = semanticCommand(repository, "review", [
+				"--base",
+				base,
+				"--head",
+				head,
+				"--plan-id",
+				proposal.planId,
+			]);
+			assert.equal(
+				semanticReview.status,
+				0,
+				semanticReview.stderr || JSON.stringify(semanticReview.envelope),
+			);
+			assert.equal(semanticReview.envelope.data.semanticStatus, "evaluated");
+			assert.equal(semanticReview.envelope.data.semantic.gateResult.verdict, "pass");
+			assert.equal(Object.hasOwn(semanticReview.envelope.data, "reviewDecision"), false);
+
+			run(repository, "git", ["switch", "-c", "unrelated-rebase", base]);
+			await write(repository, "README.md", "# semantic-flat\n\nUpstream documentation.\n");
+			commit(repository, "upstream documentation");
+			run(repository, "git", ["cherry-pick", acceptanceCommit, contractsCommit, head]);
+			const unrelatedHead = run(repository, "git", ["rev-parse", "HEAD"]);
+			const rebound = semanticCommand(repository, "gate", [
+				"--plan-id",
+				proposal.planId,
+				"--head",
+				unrelatedHead,
+			]);
+			assert.equal(rebound.status, 0, rebound.stderr || JSON.stringify(rebound.envelope));
+			assert.equal(rebound.envelope.data.gateResult.verdict, "pass");
+			assert.equal(
+				rebound.envelope.data.input.records.every((record) => record.rebindFrom !== null),
+				true,
+			);
+
+			run(repository, "git", ["switch", "-c", "architecture-rebase", base]);
+			await write(
+				repository,
+				"graph.mjs",
+				`import { graph } from "@graphrefly/ts/graph";
+export function createApplicationGraph() {
+  const application = graph({ name: "failure-case" });
+  application.state(1, { name: "source" });
+  application.state(0, { name: "ghost" });
+  return application;
+}
+`,
+			);
+			commit(repository, "upstream adds architecture node");
+			run(repository, "git", ["cherry-pick", acceptanceCommit, contractsCommit, head]);
+			const architectureHead = run(repository, "git", ["rev-parse", "HEAD"]);
+			const stale = semanticCommand(repository, "gate", [
+				"--plan-id",
+				proposal.planId,
+				"--head",
+				architectureHead,
+			]);
+			assert.equal(stale.status, 2, stale.stderr || JSON.stringify(stale.envelope));
+			assert.equal(stale.envelope.data.gateResult.verdict, "blocked");
+			assert.deepEqual(stale.envelope.data.gateResult.units[0].reasonCodes, []);
+			assert.deepEqual(stale.envelope.data.gateResult.units[1].reasonCodes, [
+				"BLUEPRINT_PREDICATE_UNSATISFIED",
+			]);
+
+			const replacement = structuredClone(proposal);
+			replacement.planId = "semantic-flat-recovery";
+			replacement.workUnits = [
+				{
+					...proposal.workUnits[1],
+					claims: [
+						{
+							id: "ghost-now-present",
+							predicate: {
+								operator: "present",
+								selector: { kind: "node", nodeId: "ghost" },
+							},
+							rationale: "Recovery acknowledges the accepted upstream architecture.",
+						},
+					],
+				},
+			];
+			const replacementPath = resolve(inputRoot, "semantic-flat-recovery.json");
+			await writeFile(replacementPath, `${JSON.stringify(replacement, null, 2)}\n`);
+			const replanContextPath = resolve(inputRoot, "semantic-replan-context.json");
+			await writeFile(
+				replanContextPath,
+				`${JSON.stringify(
+					{
+						schema: "graphrefly.stack.semantic-model-context.v1",
+						purpose: "selective-replan",
+						taskDigest: {
+							algorithm: "sha256",
+							value: sha256Jcs({ taskSummary: "Add a verified semantic contract" }),
+						},
+						policyDigest: { algorithm: "sha256", value: sha256Jcs(policy) },
+						policyFields: ["policyId", "revision", "allowedSourceRoots", "checkIds"],
+						blueprintFields: ["version", "topology.nodes", "hash"],
+						sourcePaths: ["graph.mjs"],
+						omittedClasses: [
+							"credentials",
+							"environment",
+							"unlisted-source",
+							"execution-details",
+							"raw-provider-output",
+						],
+						authorization: { mode: "explicit-cli", identityVerified: false },
+					},
+					null,
+					2,
+				)}\n`,
+			);
+			const liveReplacement = { ...replacement, proposalSource: "codex" };
+			const liveRecovery = await replanSemanticPlan(
+				{
+					repository,
+					planId: proposal.planId,
+					head: architectureHead,
+					contextPath: replanContextPath,
+					mode: "live",
+					authorizeContext: true,
+					accept: false,
+				},
+				{
+					async run(request) {
+						const modelInput = JSON.parse(
+							await readFile(resolve(request.workingDirectory, "request.json"), "utf8"),
+						);
+						assert.deepEqual(modelInput.selectiveBoundary.invalidUnits, ["TESTS"]);
+						assert.deepEqual(modelInput.selectiveBoundary.preservedUnits, ["CONTRACTS"]);
+						return {
+							finalResponse: JSON.stringify(liveReplacement),
+							threadId: "semantic-live-replan-test",
+							usage: null,
+						};
+					},
+				},
+			);
+			assert.equal(liveRecovery.draft.proposal.proposalSource, "codex");
+			const replanned = semanticCommand(repository, "replan", [
+				"--plan-id",
+				proposal.planId,
+				"--head",
+				architectureHead,
+				"--proposal",
+				replacementPath,
+			]);
+			assert.equal(replanned.status, 0, replanned.stderr || JSON.stringify(replanned.envelope));
+			assert.deepEqual(replanned.envelope.data.draft.selectiveReplan.preservedUnits, ["CONTRACTS"]);
+			assert.deepEqual(replanned.envelope.data.draft.selectiveReplan.invalidUnits, ["TESTS"]);
+			const acceptedRecovery = semanticCommand(repository, "replan", [
+				"--plan-id",
+				proposal.planId,
+				"--head",
+				architectureHead,
+				"--proposal",
+				replacementPath,
+				"--accept",
+				"--accept-by",
+				"local-reviewer",
+			]);
+			assert.equal(
+				acceptedRecovery.status,
+				0,
+				acceptedRecovery.stderr || JSON.stringify(acceptedRecovery.envelope),
+			);
+			commit(repository, "accept selective recovery");
+			await write(repository, "tests/recovery.test.mjs", "export const recovered = true;\n");
+			const recoveryHead = workUnitCommit(repository, "verify selective recovery", "TESTS");
+			const recoveryBinding = semanticPlan(repository, [
+				"--bind",
+				"--plan-id",
+				replacement.planId,
+				"--head",
+				recoveryHead,
+			]);
+			assert.equal(
+				recoveryBinding.status,
+				0,
+				recoveryBinding.stderr || JSON.stringify(recoveryBinding.envelope),
+			);
+			assert.deepEqual(
+				recoveryBinding.envelope.data.bindings.map((binding) => binding.workUnitId),
+				["CONTRACTS", "TESTS"],
+			);
+			assert.equal(
+				recoveryBinding.envelope.data.bindings[0].commit.value,
+				run(repository, "git", ["rev-parse", `${architectureHead}~1`]),
+			);
+			const recovered = semanticCommand(repository, "gate", [
+				"--plan-id",
+				replacement.planId,
+				"--head",
+				recoveryHead,
+			]);
+			assert.equal(recovered.status, 0, recovered.stderr || JSON.stringify(recovered.envelope));
+			assert.equal(recovered.envelope.data.gateResult.verdict, "pass");
+			run(repository, "git", ["switch", "main"]);
+
+			run(repository, "git", ["switch", "-c", "missing-trailer", acceptanceCommit]);
+			await write(repository, "src/missing.ts", "export const missingTrailer = true;\n");
+			commit(repository, "implementation without binding trailer");
+			await write(repository, "tests/missing.test.mjs", "export const followup = true;\n");
+			const missingHead = workUnitCommit(repository, "add followup evidence", "TESTS");
+			const missing = semanticPlan(repository, [
+				"--bind",
+				"--plan-id",
+				proposal.planId,
+				"--head",
+				missingHead,
+			]);
+			assert.equal(missing.status, 1);
+			assert.equal(missing.envelope.error.code, "WORK_UNIT_TRAILER_MISSING");
+
+			run(repository, "git", ["switch", "-c", "duplicate-trailer", acceptanceCommit]);
+			await write(repository, "src/duplicate.ts", "export const duplicateTrailer = true;\n");
+			run(repository, "git", ["add", "-A"]);
+			run(repository, "git", [
+				"commit",
+				"-m",
+				"implementation with duplicate binding trailers",
+				"-m",
+				"GraphReFly-Work-Unit: CONTRACTS\nGraphReFly-Work-Unit: CONTRACTS",
+			]);
+			await write(repository, "tests/duplicate.test.mjs", "export const followup = true;\n");
+			const duplicateHead = workUnitCommit(repository, "add duplicate followup", "TESTS");
+			const duplicate = semanticPlan(repository, [
+				"--bind",
+				"--plan-id",
+				proposal.planId,
+				"--head",
+				duplicateHead,
+			]);
+			assert.equal(duplicate.status, 1);
+			assert.equal(duplicate.envelope.error.code, "WORK_UNIT_TRAILER_DUPLICATE");
+			run(repository, "git", ["switch", "main"]);
+
+			run(repository, "git", ["switch", "-c", "scope-violation", acceptanceCommit]);
+			await write(repository, "docs/outside.md", "outside the accepted unit scope\n");
+			workUnitCommit(repository, "write outside scope", "CONTRACTS");
+			await write(repository, "tests/scope.test.mjs", "export const scoped = true;\n");
+			const scopeHead = workUnitCommit(repository, "add scoped test", "TESTS");
+			const scoped = semanticCommand(repository, "gate", [
+				"--plan-id",
+				proposal.planId,
+				"--head",
+				scopeHead,
+			]);
+			assert.equal(scoped.status, 2, scoped.stderr || JSON.stringify(scoped.envelope));
+			assert.deepEqual(scoped.envelope.data.gateResult.units[0].reasonCodes, [
+				"SOURCE_SCOPE_VIOLATION",
+			]);
+
+			run(repository, "git", ["switch", "-c", "check-failure", acceptanceCommit]);
+			await write(repository, "src/failing-contract.ts", "export const contract = true;\n");
+			workUnitCommit(repository, "add contract for failed check", "CONTRACTS");
+			await write(repository, "tests/failing.test.mjs", 'throw new Error("expected failure");\n');
+			const failedCheckHead = workUnitCommit(repository, "add failing evidence", "TESTS");
+			const failedCheck = semanticCommand(repository, "gate", [
+				"--plan-id",
+				proposal.planId,
+				"--head",
+				failedCheckHead,
+			]);
+			assert.equal(
+				failedCheck.status,
+				2,
+				failedCheck.stderr || JSON.stringify(failedCheck.envelope),
+			);
+			assert.equal(
+				failedCheck.envelope.data.gateResult.units[0].reasonCodes.includes("REQUIRED_CHECK_FAILED"),
+				true,
+			);
+			run(repository, "git", ["switch", "main"]);
+		}
+		assert.equal(run(repository, "git", ["status", "--short"]), "");
+	}
 });

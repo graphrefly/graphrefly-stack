@@ -1,0 +1,253 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "urn:graphrefly-stack:schema:ci-artifacts:v1",
+	"title": "GraphReFly Stack CI artifacts v1",
+	"definitions": {
+		"Hash": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["algorithm", "value"],
+			"properties": {
+				"algorithm": { "const": "sha256" },
+				"value": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+			}
+		},
+		"GitOid": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["algorithm", "value"],
+			"properties": {
+				"algorithm": { "enum": ["sha1", "sha256"] },
+				"value": { "type": "string", "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$" }
+			}
+		},
+		"DecimalId": {
+			"type": "string",
+			"pattern": "^[1-9][0-9]*$",
+			"maxLength": 32
+		},
+		"Identifier": {
+			"type": "string",
+			"minLength": 1,
+			"maxLength": 64,
+			"pattern": "^[A-Za-z][A-Za-z0-9._-]*$"
+		},
+		"RuntimeVersion": {
+			"type": "string",
+			"minLength": 1,
+			"maxLength": 64,
+			"pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$"
+		},
+		"GitHubEvent": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["name", "pullRequestNumber", "base", "head"],
+			"properties": {
+				"name": { "const": "pull_request" },
+				"pullRequestNumber": { "type": "integer", "minimum": 1 },
+				"base": { "$ref": "#/definitions/GitOid" },
+				"head": { "$ref": "#/definitions/GitOid" }
+			}
+		},
+		"CacheInputs": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"operatingSystem",
+				"architecture",
+				"nodeVersion",
+				"pnpmVersion",
+				"lockfilePath",
+				"lockfileDigest",
+				"packageManifestDigest",
+				"stackVersion",
+				"graphreflyVersion",
+				"cacheKey"
+			],
+			"properties": {
+				"operatingSystem": { "type": "string", "minLength": 1, "maxLength": 64 },
+				"architecture": { "type": "string", "minLength": 1, "maxLength": 32 },
+				"nodeVersion": { "$ref": "#/definitions/RuntimeVersion" },
+				"pnpmVersion": { "$ref": "#/definitions/RuntimeVersion" },
+				"lockfilePath": { "const": "pnpm-lock.yaml" },
+				"lockfileDigest": { "$ref": "#/definitions/Hash" },
+				"packageManifestDigest": { "$ref": "#/definitions/Hash" },
+				"stackVersion": { "$ref": "#/definitions/RuntimeVersion" },
+				"graphreflyVersion": { "$ref": "#/definitions/RuntimeVersion" },
+				"cacheKey": { "type": "string", "minLength": 1, "maxLength": 512 }
+			}
+		},
+		"CIInvocation": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"schema",
+				"adapter",
+				"repository",
+				"event",
+				"workflow",
+				"run",
+				"plan",
+				"cacheInputs",
+				"identity"
+			],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.ci-invocation.v1" },
+				"adapter": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["provider", "version"],
+					"properties": {
+						"provider": { "const": "github-actions" },
+						"version": { "const": "v1" }
+					}
+				},
+				"repository": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["id", "ownerId", "headRepositoryId"],
+					"properties": {
+						"id": { "$ref": "#/definitions/DecimalId" },
+						"ownerId": { "$ref": "#/definitions/DecimalId" },
+						"headRepositoryId": { "$ref": "#/definitions/DecimalId" }
+					}
+				},
+				"event": { "$ref": "#/definitions/GitHubEvent" },
+				"workflow": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["ref", "sha"],
+					"properties": {
+						"ref": { "type": "string", "minLength": 1, "maxLength": 1024 },
+						"sha": { "$ref": "#/definitions/GitOid" }
+					}
+				},
+				"run": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["id", "attempt", "actorId", "jobName"],
+					"properties": {
+						"id": { "$ref": "#/definitions/DecimalId" },
+						"attempt": { "type": "integer", "minimum": 1 },
+						"actorId": { "$ref": "#/definitions/DecimalId" },
+						"jobName": { "const": "GraphReFly Stack / Semantic Gate" }
+					}
+				},
+				"plan": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["id", "policyDigest"],
+					"properties": {
+						"id": { "$ref": "#/definitions/Identifier" },
+						"policyDigest": { "$ref": "#/definitions/Hash" }
+					}
+				},
+				"cacheInputs": { "$ref": "#/definitions/CacheInputs" },
+				"identity": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["assurance"],
+					"properties": { "assurance": { "const": "platform-asserted" } }
+				}
+			}
+		},
+		"CIResult": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"schema",
+				"invocationDigest",
+				"outcome",
+				"gateInputDigest",
+				"gateResult",
+				"portableBundleDigest",
+				"provenance",
+				"redaction",
+				"summary",
+				"artifactName"
+			],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.ci-result.v1" },
+				"invocationDigest": { "$ref": "#/definitions/Hash" },
+				"outcome": { "enum": ["pass", "blocked", "error"] },
+				"gateInputDigest": { "$ref": "#/definitions/Hash" },
+				"gateResult": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/GateResult"
+				},
+				"portableBundleDigest": { "$ref": "#/definitions/Hash" },
+				"provenance": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["provider", "repositoryId", "workflowSha", "runId", "attempt"],
+					"properties": {
+						"provider": { "const": "github-actions" },
+						"repositoryId": { "$ref": "#/definitions/DecimalId" },
+						"workflowSha": { "$ref": "#/definitions/GitOid" },
+						"runId": { "$ref": "#/definitions/DecimalId" },
+						"attempt": { "type": "integer", "minimum": 1 }
+					}
+				},
+				"redaction": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["excludes"],
+					"properties": {
+						"excludes": {
+							"type": "array",
+							"items": {
+								"enum": [
+									"source-content",
+									"raw-blueprint",
+									"check-output",
+									"credentials",
+									"environment",
+									"model-response"
+								]
+							},
+							"minItems": 6,
+							"maxItems": 6,
+							"uniqueItems": true
+						}
+					}
+				},
+				"summary": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["verdict", "affectedWorkUnitIds", "reasonCodes"],
+					"properties": {
+						"verdict": { "enum": ["pass", "blocked", "error"] },
+						"affectedWorkUnitIds": {
+							"type": "array",
+							"items": { "type": "string", "minLength": 1, "maxLength": 64 },
+							"uniqueItems": true
+						},
+						"reasonCodes": {
+							"type": "array",
+							"items": {
+								"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/ReasonCode"
+							},
+							"uniqueItems": true
+						}
+					}
+				},
+				"artifactName": {
+					"type": "string",
+					"pattern": "^graphrefly-stack-ci-[0-9a-f]{64}$"
+				}
+			}
+		},
+		"CIBundle": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["schema", "invocation", "result", "portableBundle"],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.ci-bundle.v1" },
+				"invocation": { "$ref": "#/definitions/CIInvocation" },
+				"result": { "$ref": "#/definitions/CIResult" },
+				"portableBundle": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/SemanticPortableBundle"
+				}
+			}
+		}
+	}
+}

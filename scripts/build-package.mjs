@@ -22,9 +22,13 @@ await build({
 await chmod(resolve(output, "grfs.js"), 0o755);
 
 const copies = [
+	["contracts/ci", "assets/contracts/ci"],
 	["contracts/repository", "assets/contracts/repository"],
+	["contracts/semantic", "assets/contracts/semantic"],
 	["contracts/v1/schemas", "assets/contracts/v1/schemas"],
 	["fixtures/contracts/v1/golden-suite.json", "assets/fixtures/contracts/v1/golden-suite.json"],
+	["fixtures/contracts/semantic/v1", "assets/fixtures/contracts/semantic/v1"],
+	["fixtures/contracts/ci/v1", "assets/fixtures/contracts/ci/v1"],
 	[
 		"fixtures/flagship/v1/repository-template.json",
 		"assets/fixtures/flagship/v1/repository-template.json",

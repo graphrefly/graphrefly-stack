@@ -19,6 +19,7 @@ const repositoryConfigSchema = await readJson(
 	"contracts/repository/v1/repository-config.schema.json",
 );
 const repositoryReviewSchema = await readJson("contracts/repository/v1/review.schema.json");
+const semanticArtifactsSchema = await readJson("contracts/semantic/v1/artifacts.schema.json");
 
 const ajv = createStrictAjv();
 ajv.addSchema(artifactsSchema);
@@ -54,6 +55,7 @@ test("the generic repository config is strict and path-safe", () => {
 test("the generic review schema compiles with the repository config authority", () => {
 	const repositoryAjv = createStrictAjv();
 	repositoryAjv.addSchema(repositoryConfigSchema);
+	repositoryAjv.addSchema(semanticArtifactsSchema);
 	assert.equal(typeof repositoryAjv.compile(repositoryReviewSchema), "function");
 });
 

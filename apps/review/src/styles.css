@@ -227,6 +227,59 @@ summary:focus-visible {
 	background: #fff1cf;
 }
 
+.semantic-review {
+	margin-top: 24px;
+	padding: 24px;
+	background: var(--paper);
+	border: 1px solid var(--ink);
+}
+.semantic-review .section-heading {
+	align-items: flex-start;
+	gap: 24px;
+}
+.semantic-review h2 {
+	margin: 5px 0;
+}
+.semantic-review .section-heading p:last-child {
+	max-width: 800px;
+	margin: 0;
+	color: var(--muted);
+}
+.semantic-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+	gap: 12px;
+	margin-top: 18px;
+}
+.semantic-grid article {
+	display: grid;
+	gap: 8px;
+	min-width: 0;
+	padding: 16px;
+	background: #f3f7f8;
+	border: 1px solid var(--line);
+}
+.semantic-grid span,
+.semantic-grid code,
+.semantic-grid small {
+	font-family: "SFMono-Regular", Consolas, monospace;
+	font-size: 0.66rem;
+}
+.semantic-grid span {
+	color: var(--blue);
+	font-weight: 800;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+}
+.semantic-grid code {
+	overflow-wrap: anywhere;
+	color: #3e5866;
+}
+.semantic-grid small {
+	display: block;
+	color: var(--muted);
+}
+
 .review-workbench {
 	display: grid;
 	grid-template-columns: 340px minmax(0, 1fr);

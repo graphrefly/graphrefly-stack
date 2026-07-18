@@ -21,6 +21,7 @@ const schemaPaths = [
 	"contracts/repository/v1/review-decision-request.schema.json",
 	"contracts/repository/v1/review-decision.schema.json",
 	"contracts/repository/v1/review-bundle.schema.json",
+	"contracts/semantic/v1/artifacts.schema.json",
 ] as const;
 
 export class RepositoryReviewStateError extends Error {

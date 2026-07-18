@@ -1,13 +1,17 @@
 import { Ajv } from "ajv";
 
+export * from "./ci.js";
 export * from "./jcs.js";
 export * from "./repository-review.js";
+export * from "./semantic.js";
 
 export const CONTRACT_VERSION = "v1" as const;
 export const CLI_RESULT_SCHEMA = "urn:graphrefly-stack:schema:cli-result:v1" as const;
 
 export type CliCommand =
 	| "init"
+	| "ci-init"
+	| "ci-run"
 	| "fixture-create"
 	| "plan"
 	| "gate"

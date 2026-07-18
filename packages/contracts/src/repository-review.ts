@@ -73,7 +73,15 @@ export interface RepositoryReview {
 	};
 	readonly base: RepositoryRevisionEvidence;
 	readonly commits: readonly RepositoryReviewCommit[];
-	readonly semanticStatus: "not-configured";
+	readonly semanticStatus: "not-configured" | "evaluated";
+	readonly semantic?: {
+		readonly plan: Record<string, unknown>;
+		readonly bindings: readonly Record<string, unknown>[];
+		readonly records: readonly Record<string, unknown>[];
+		readonly checks: readonly Record<string, unknown>[];
+		readonly gateResult: Record<string, unknown>;
+		readonly invalidWorkUnitIds: readonly string[];
+	};
 }
 
 export interface RepositoryReviewDecisionRequest {

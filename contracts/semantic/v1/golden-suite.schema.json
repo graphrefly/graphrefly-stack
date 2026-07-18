@@ -1,0 +1,119 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "urn:graphrefly-stack:schema:semantic-golden-suite:v1",
+	"title": "GraphReFly Stack semantic lifecycle golden suite v1",
+	"type": "object",
+	"additionalProperties": false,
+	"required": [
+		"schema",
+		"policy",
+		"plan",
+		"bindings",
+		"records",
+		"checks",
+		"modelContext",
+		"cases"
+	],
+	"properties": {
+		"schema": { "const": "graphrefly.stack.semantic-golden-suite.v1" },
+		"policy": {
+			"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/RepositoryPolicy"
+		},
+		"plan": {
+			"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/AcceptedChangePlan"
+		},
+		"bindings": {
+			"type": "array",
+			"items": {
+				"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/CommitWorkUnitBinding"
+			},
+			"minItems": 1
+		},
+		"records": {
+			"type": "array",
+			"items": {
+				"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/SemanticChangeRecord"
+			},
+			"minItems": 1
+		},
+		"checks": {
+			"type": "array",
+			"items": {
+				"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/CheckResult"
+			},
+			"minItems": 1
+		},
+		"modelContext": {
+			"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/ModelContextManifest"
+		},
+		"cases": {
+			"type": "array",
+			"minItems": 10,
+			"items": {
+				"type": "object",
+				"additionalProperties": false,
+				"required": [
+					"caseId",
+					"category",
+					"states",
+					"expectedGate",
+					"expectedError",
+					"selectiveReplan",
+					"rebindRecord"
+				],
+				"properties": {
+					"caseId": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+					"category": { "enum": ["valid", "blocked", "error", "recovery"] },
+					"states": {
+						"type": "object",
+						"additionalProperties": false,
+						"required": ["binding", "predicate", "scope", "check", "policy", "artifact", "context"],
+						"properties": {
+							"binding": { "enum": ["valid", "missing-trailer", "duplicate-trailer"] },
+							"predicate": {
+								"enum": ["satisfied", "architecture-stale", "ambiguous", "unsupported"]
+							},
+							"scope": { "enum": ["valid", "widened"] },
+							"check": { "enum": ["passed", "undeclared", "missing", "failed"] },
+							"policy": { "enum": ["fresh", "stale"] },
+							"artifact": { "enum": ["valid", "tampered"] },
+							"context": { "enum": ["not-used", "authorized", "unauthorized"] }
+						}
+					},
+					"expectedGate": {
+						"oneOf": [
+							{
+								"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/GateResult"
+							},
+							{ "type": "null" }
+						]
+					},
+					"expectedError": {
+						"oneOf": [
+							{
+								"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/ReasonCode"
+							},
+							{ "type": "null" }
+						]
+					},
+					"selectiveReplan": {
+						"oneOf": [
+							{
+								"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/SelectiveReplan"
+							},
+							{ "type": "null" }
+						]
+					},
+					"rebindRecord": {
+						"oneOf": [
+							{
+								"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/SemanticChangeRecord"
+							},
+							{ "type": "null" }
+						]
+					}
+				}
+			}
+		}
+	}
+}

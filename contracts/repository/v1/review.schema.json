@@ -29,8 +29,51 @@
 			"minItems": 1,
 			"items": { "$ref": "#/definitions/ReviewCommit" }
 		},
-		"semanticStatus": { "const": "not-configured" }
+		"semanticStatus": { "enum": ["not-configured", "evaluated"] },
+		"semantic": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["plan", "bindings", "records", "checks", "gateResult", "invalidWorkUnitIds"],
+			"properties": {
+				"plan": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/AcceptedChangePlan"
+				},
+				"bindings": {
+					"type": "array",
+					"items": {
+						"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/CommitWorkUnitBinding"
+					}
+				},
+				"records": {
+					"type": "array",
+					"items": {
+						"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/SemanticChangeRecord"
+					}
+				},
+				"checks": {
+					"type": "array",
+					"items": {
+						"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/CheckResult"
+					}
+				},
+				"gateResult": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/GateResult"
+				},
+				"invalidWorkUnitIds": {
+					"type": "array",
+					"items": { "type": "string" },
+					"uniqueItems": true
+				}
+			}
+		}
 	},
+	"allOf": [
+		{
+			"if": { "properties": { "semanticStatus": { "const": "evaluated" } } },
+			"then": { "properties": { "semantic": {} }, "required": ["semantic"] },
+			"else": { "not": { "required": ["semantic"] } }
+		}
+	],
 	"definitions": {
 		"GitOid": { "type": "string", "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$" },
 		"Hash": {
