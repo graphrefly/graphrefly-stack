@@ -3,6 +3,7 @@ import { canonicalTopologyBytes, GRAPH_BLUEPRINT_VERSION } from "@graphrefly/ts/
 import type { ExecutionMode } from "@graphrefly-stack/contracts";
 
 export * from "./gate.js";
+export * from "./integration-effects.js";
 
 export const CORE_ARCHITECTURE = {
 	version: "D17",
