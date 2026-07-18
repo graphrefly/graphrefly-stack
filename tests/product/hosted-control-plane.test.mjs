@@ -78,12 +78,15 @@ function authorizer(options = {}) {
 			assert.equal(input.source.runId, ciBundle.invocation.run.id);
 			assert.deepEqual(input.source.head, ciBundle.invocation.event.head);
 			return {
-				tenantId: "018f0000-0000-7000-8000-000000000001",
-				repositoryId: "018f0000-0000-7000-8000-000000000002",
-				provider: "github",
-				providerRepositoryId: input.repository.repositoryId,
-				providerOwnerId: input.repository.ownerId,
-				semanticReviewEnabled: options.semanticReviewEnabled ?? false,
+				repository: {
+					tenantId: "018f0000-0000-7000-8000-000000000001",
+					repositoryId: "018f0000-0000-7000-8000-000000000002",
+					provider: "github",
+					providerRepositoryId: input.repository.repositoryId,
+					providerOwnerId: input.repository.ownerId,
+					semanticReviewEnabled: options.semanticReviewEnabled ?? false,
+				},
+				sourceBundle: structuredClone(options.sourceBundle ?? ciBundle),
 			};
 		},
 	};
@@ -95,6 +98,30 @@ async function gateSummaryEnvelope(claims = baseClaims) {
 		profile: "gate-summary-v1",
 		syncIdentity: claims,
 	});
+}
+
+function ciBundleWithVerdict(verdict) {
+	const bundle = structuredClone(ciBundle);
+	if (verdict !== "pass") {
+		const reason = verdict === "error" ? "REQUIRED_CHECK_FAILED" : "SEMANTIC_PARENT_STALE";
+		bundle.result.gateResult.verdict = verdict;
+		bundle.result.gateResult.units[0].verdict = "invalid";
+		bundle.result.gateResult.units[0].reasonCodes = [reason];
+		bundle.result.outcome = verdict;
+		bundle.result.summary = {
+			verdict,
+			affectedWorkUnitIds: [bundle.result.gateResult.units[0].workUnitId],
+			reasonCodes: [reason],
+		};
+		bundle.portableBundle.artifacts["gate-result.json"] = structuredClone(bundle.result.gateResult);
+		const descriptor = bundle.portableBundle.manifest.artifacts.find(
+			(entry) => entry.path === "gate-result.json",
+		);
+		descriptor.hash.value = sha256Jcs(bundle.result.gateResult);
+		bundle.result.portableBundleDigest.value = sha256Jcs(bundle.portableBundle);
+		bundle.result.artifactName = `graphrefly-stack-ci-${bundle.result.portableBundleDigest.value}`;
+	}
+	return bundle;
 }
 
 test("the control plane verifies RS256 OIDC, provider source-run authorization and scoped idempotency", async () => {
@@ -131,6 +158,31 @@ test("the control plane verifies RS256 OIDC, provider source-run authorization a
 	assert.equal(duplicate.status, 409);
 	assert.deepEqual(duplicate.receipt, created.receipt);
 	assert.equal(persistence.records().length, 1);
+});
+
+test("downloaded pass, blocked and error CI artifacts produce the same immutable hosted verdict", async () => {
+	for (const verdict of ["pass", "blocked", "error"]) {
+		const sourceBundle = ciBundleWithVerdict(verdict);
+		const envelope = await createHostedEnvelope({
+			ciBundle: sourceBundle,
+			profile: "gate-summary-v1",
+			syncIdentity: baseClaims,
+		});
+		const persistence = new InMemoryHostedPersistence();
+		const controlPlane = new HostedControlPlane({
+			oidc: verifier(),
+			authorizer: authorizer({ sourceBundle }),
+			persistence,
+			now: () => now,
+		});
+		await controlPlane.ingest({
+			bearerToken: jwt(),
+			body: canonicalize(envelope),
+			claimedDigest: sha256Jcs(envelope),
+		});
+		assert.equal(persistence.records()[0].gateVerdict, verdict);
+		assert.equal(envelope.payload.gateResult.verdict, verdict);
+	}
 });
 
 test("the control plane rejects invalid signature, expiry, claim binding and unavailable authorization", async () => {
@@ -239,6 +291,35 @@ test("the control plane requires canonical bytes and revalidates nested semantic
 		(error) =>
 			error instanceof HostedControlPlaneError &&
 			error.code === "HOSTED_ENVELOPE_INTEGRITY_INVALID",
+	);
+});
+
+test("a self-consistent forged gate summary is rejected against the downloaded provider CI artifact", async () => {
+	const forged = await gateSummaryEnvelope();
+	forged.payload.outcome = "blocked";
+	forged.payload.gateResult.verdict = "blocked";
+	forged.payload.gateResult.units[0].verdict = "invalid";
+	forged.payload.gateResult.units[0].reasonCodes = ["SEMANTIC_PARENT_STALE"];
+	forged.payload.summary = {
+		verdict: "blocked",
+		affectedWorkUnitIds: [forged.payload.gateResult.units[0].workUnitId],
+		reasonCodes: ["SEMANTIC_PARENT_STALE"],
+	};
+	forged.redaction.includes[0].digest.value = sha256Jcs(forged.payload);
+	const controlPlane = new HostedControlPlane({
+		oidc: verifier(),
+		authorizer: authorizer(),
+		persistence: new InMemoryHostedPersistence(),
+		now: () => now,
+	});
+	await assert.rejects(
+		controlPlane.ingest({
+			bearerToken: jwt(),
+			body: canonicalize(forged),
+			claimedDigest: sha256Jcs(forged),
+		}),
+		(error) =>
+			error instanceof HostedControlPlaneError && error.code === "HOSTED_SOURCE_ARTIFACT_MISMATCH",
 	);
 });
 

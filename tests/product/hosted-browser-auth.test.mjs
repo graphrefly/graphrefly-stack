@@ -16,6 +16,7 @@ const repositoryId = "018f0000-0000-7000-8000-000000000002";
 const actorId = "018f0000-0000-7000-8000-000000000003";
 const accessToken = "github-access-secret";
 const refreshToken = "github-refresh-secret";
+const browserBinding = `browser-${"b".repeat(35)}`;
 
 function credential(overrides = {}) {
 	return {
@@ -35,22 +36,26 @@ class MemoryIdentityStore {
 		this.role = "viewer";
 		this.selected = true;
 		this.membershipActive = true;
+		this.authenticationRejections = [];
 	}
 
 	async createLoginAttempt(attempt) {
 		this.attempts.push(structuredClone(attempt));
 	}
 
-	async consumeLoginAttempt(stateHash, at) {
-		const attempt = this.attempts.find((item) => item.stateHash === stateHash);
+	async consumeLoginAttempt(input) {
+		const attempt = this.attempts.find(
+			(item) =>
+				item.stateHash === input.stateHash && item.browserBindingHash === input.browserBindingHash,
+		);
 		if (
 			attempt === undefined ||
-			this.consumed.has(stateHash) ||
-			Date.parse(attempt.expiresAt) <= at.getTime()
+			this.consumed.has(input.stateHash) ||
+			Date.parse(attempt.expiresAt) <= input.now.getTime()
 		) {
 			return null;
 		}
-		this.consumed.add(stateHash);
+		this.consumed.add(input.stateHash);
 		return structuredClone(attempt);
 	}
 
@@ -61,6 +66,10 @@ class MemoryIdentityStore {
 
 	async createSession(session) {
 		this.sessions.push(structuredClone(session));
+	}
+
+	async recordAuthenticationRejection(input) {
+		this.authenticationRejections.push(structuredClone(input));
 	}
 
 	async loadSession(tokenHash, at) {
@@ -82,7 +91,7 @@ class MemoryIdentityStore {
 		session.credential = structuredClone(input.credential);
 	}
 
-	async revokeSession(sessionId, at) {
+	async revokeSession(_tenantId, sessionId, at) {
 		this.sessions.find((item) => item.id === sessionId).revokedAt = at.toISOString();
 	}
 
@@ -124,7 +133,9 @@ class FakeGitHubProvider {
 
 	async revalidateRepositoryAccess(input) {
 		this.revalidationCalls.push(structuredClone(input));
-		return this.access;
+		return this.access === "granted"
+			? { status: "granted", repositoryUrl: "https://github.com/clfhhc/test-graphrefly" }
+			: { status: this.access };
 	}
 }
 
@@ -148,10 +159,18 @@ function fixture() {
 }
 
 async function login(f) {
-	const started = await f.service.beginLogin({ tenantId, returnTo: "/repositories/stack" });
+	const started = await f.service.beginLogin({
+		tenantId,
+		returnTo: "/repositories/stack",
+		browserBinding,
+	});
 	const url = new URL(started.authorizationUrl);
 	const state = url.searchParams.get("state");
-	const completed = await f.service.completeLogin({ state, code: "one-time-code" });
+	const completed = await f.service.completeLogin({
+		state,
+		code: "one-time-code",
+		browserBinding,
+	});
 	return { started, url, state, completed };
 }
 
@@ -172,6 +191,11 @@ test("browser login binds one-time state, exact redirect URI and S256 PKCE witho
 		createHash("sha256").update(result.state).digest("hex"),
 	);
 	assert.equal(f.store.attempts[0].state, undefined);
+	assert.equal(
+		f.store.attempts[0].browserBindingHash,
+		createHash("sha256").update(browserBinding).digest("hex"),
+	);
+	assert.equal(JSON.stringify(f.store.attempts).includes(browserBinding), false);
 	assert.equal(f.provider.exchangeCalls[0].redirectUri, f.store.attempts[0].redirectUri);
 	assert.equal(f.provider.exchangeCalls[0].codeVerifier.length, 43);
 	assert.equal(
@@ -188,7 +212,11 @@ test("browser login binds one-time state, exact redirect URI and S256 PKCE witho
 		assert.equal(stored.includes(secret), false);
 	}
 	await assert.rejects(
-		f.service.completeLogin({ state: result.state, code: "replayed-code" }),
+		f.service.completeLogin({
+			state: result.state,
+			code: "replayed-code",
+			browserBinding,
+		}),
 		(error) =>
 			error instanceof HostedBrowserAuthError && error.code === "HOSTED_LOGIN_STATE_INVALID",
 	);
@@ -198,7 +226,7 @@ test("unsafe return paths and invalid callback state fail before contacting GitH
 	for (const returnTo of ["https://evil.test", "//evil.test", "/\\evil", "/ok\r\nLocation: evil"]) {
 		const f = fixture();
 		await assert.rejects(
-			f.service.beginLogin({ tenantId, returnTo }),
+			f.service.beginLogin({ tenantId, returnTo, browserBinding }),
 			(error) =>
 				error instanceof HostedBrowserAuthError && error.code === "HOSTED_RETURN_PATH_INVALID",
 		);
@@ -206,11 +234,59 @@ test("unsafe return paths and invalid callback state fail before contacting GitH
 	}
 	const f = fixture();
 	await assert.rejects(
-		f.service.completeLogin({ state: "x".repeat(43), code: "code" }),
+		f.service.completeLogin({
+			state: "x".repeat(43),
+			code: "code",
+			browserBinding,
+		}),
 		(error) =>
 			error instanceof HostedBrowserAuthError && error.code === "HOSTED_LOGIN_STATE_INVALID",
 	);
 	assert.equal(f.provider.exchangeCalls.length, 0);
+});
+
+test("OAuth state is atomically bound to the browser that initiated login", async () => {
+	const f = fixture();
+	const started = await f.service.beginLogin({
+		tenantId,
+		returnTo: "/repositories/stack",
+		browserBinding,
+	});
+	const state = new URL(started.authorizationUrl).searchParams.get("state");
+	await assert.rejects(
+		f.service.completeLogin({
+			state,
+			code: "attacker-code",
+			browserBinding: `attacker-${"a".repeat(34)}`,
+		}),
+		(error) => error.code === "HOSTED_LOGIN_STATE_INVALID",
+	);
+	assert.equal(f.provider.exchangeCalls.length, 0);
+	assert.equal(f.store.consumed.size, 0, "a mismatched browser cannot burn the valid attempt");
+	await f.service.completeLogin({ state, code: "valid-code", browserBinding });
+	assert.equal(f.provider.exchangeCalls.length, 1);
+});
+
+test("a tenant-bound provider login failure emits a rejected authentication audit", async () => {
+	const f = fixture();
+	const started = await f.service.beginLogin({
+		tenantId,
+		returnTo: "/repositories/stack",
+		browserBinding,
+	});
+	f.provider.exchangeAuthorizationCode = async () => {
+		throw new Error("provider denied the code");
+	};
+	await assert.rejects(
+		f.service.completeLogin({
+			state: new URL(started.authorizationUrl).searchParams.get("state"),
+			code: "rejected-code",
+			browserBinding,
+		}),
+		(error) =>
+			error instanceof HostedBrowserAuthError && error.code === "HOSTED_PROVIDER_LOGIN_FAILED",
+	);
+	assert.deepEqual(f.store.authenticationRejections, [{ tenantId, now }]);
 });
 
 test("effective access is membership role intersected with installation selection and live provider access", async () => {
@@ -356,7 +432,14 @@ test("the live GitHub App adapter sends PKCE and rotating refresh grants, then r
 		),
 		new Response(JSON.stringify({ id: 24680, login: "octocat" }), { status: 200 }),
 		new Response(JSON.stringify({ id: 24680, login: "octocat" }), { status: 200 }),
-		new Response(JSON.stringify({ id: 123456789, private: true }), { status: 200 }),
+		new Response(
+			JSON.stringify({
+				id: 123456789,
+				private: true,
+				html_url: "https://github.com/clfhhc/test-graphrefly",
+			}),
+			{ status: 200 },
+		),
 	];
 	const github = new GitHubAppBrowserProvider({
 		clientId: "client-id",
@@ -388,13 +471,16 @@ test("the live GitHub App adapter sends PKCE and rotating refresh grants, then r
 	assert.equal(refresh.grant_type, "refresh_token");
 	assert.equal(refresh.refresh_token, "issued-refresh");
 	assert.equal(await github.getAuthenticatedUser("issued-access").then((user) => user.id), "24680");
-	assert.equal(
+	assert.deepEqual(
 		await github.revalidateRepositoryAccess({
 			accessToken: "issued-access",
 			actorProviderId: "24680",
 			providerRepositoryId: "123456789",
 		}),
-		"granted",
+		{
+			status: "granted",
+			repositoryUrl: "https://github.com/clfhhc/test-graphrefly",
+		},
 	);
 	assert.match(calls[4].url, /\/repositories\/123456789$/u);
 	assert.equal(calls[4].init.headers.Authorization, "Bearer issued-access");
@@ -410,13 +496,13 @@ test("the live GitHub App adapter treats identity drift, denial and transport fa
 			clientSecret: "client-secret",
 			fetch: async () => response,
 		});
-		assert.equal(
+		assert.deepEqual(
 			await github.revalidateRepositoryAccess({
 				accessToken: "token",
 				actorProviderId: "24680",
 				providerRepositoryId: "123456789",
 			}),
-			expected,
+			{ status: expected },
 		);
 	}
 	const unavailable = new GitHubAppBrowserProvider({
@@ -426,12 +512,12 @@ test("the live GitHub App adapter treats identity drift, denial and transport fa
 			throw new Error("network unavailable");
 		},
 	});
-	assert.equal(
+	assert.deepEqual(
 		await unavailable.revalidateRepositoryAccess({
 			accessToken: "token",
 			actorProviderId: "24680",
 			providerRepositoryId: "123456789",
 		}),
-		"unavailable",
+		{ status: "unavailable" },
 	);
 });

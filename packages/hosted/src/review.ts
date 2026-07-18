@@ -7,7 +7,7 @@ import {
 	HOSTED_INDEX_RETENTION_DAYS,
 } from "@graphrefly-stack/contracts";
 
-import type { HostedBrowserAuthService } from "./browser-auth.js";
+import type { HostedBrowserAuthService, HostedRole } from "./browser-auth.js";
 import type {
 	HostedPostgresDatabase,
 	HostedSqlTransaction,
@@ -239,7 +239,8 @@ export class HostedReviewService {
 		requireInternalId(input.tenantId, "tenant ID");
 		requireInternalId(input.repositoryId, "repository ID");
 		requireDigest(input.digest);
-		const actorId = await this.#authorize(input, "read", "envelope", input.digest);
+		const access = await this.#authorize(input, "read", "envelope", input.digest);
+		const actorId = access.actorId;
 		const now = this.#now();
 		const evidence = await this.#store.loadEvidence({ ...input, now });
 		if (evidence.state !== "available" || evidence.canonicalBytes === undefined) {
@@ -276,7 +277,8 @@ export class HostedReviewService {
 			source: object(envelope.source, "hosted source"),
 			redaction: object(envelope.redaction, "hosted redaction"),
 			decisions,
-			sourceReview: { provider: "github", repositoryId: input.repositoryId },
+			access: { role: access.role },
+			sourceReview: { provider: "github", url: access.repositoryUrl },
 		};
 	}
 
@@ -294,7 +296,7 @@ export class HostedReviewService {
 		requireDigest(input.digest);
 		if (input.supersedes !== undefined)
 			requireInternalId(input.supersedes, "predecessor decision ID");
-		const actorId = await this.#authorize(input, "append-decision", "envelope", input.digest);
+		const { actorId } = await this.#authorize(input, "append-decision", "envelope", input.digest);
 		try {
 			if (!(["approve", "request-changes", "defer"] as const).includes(input.decision)) {
 				throw new HostedReviewError(400, "HOSTED_DECISION_INVALID", "decision value is invalid");
@@ -385,16 +387,19 @@ export class HostedReviewService {
 		action: "read" | "append-decision" | "audit-export",
 		targetType: AuditTarget,
 		targetId: string,
-	): Promise<string> {
+	): Promise<{ actorId: string; role: HostedRole; repositoryUrl: string }> {
 		try {
-			return (
-				await this.#auth.authorize({
-					sessionToken: input.sessionToken,
-					tenantId: input.tenantId,
-					repositoryId: input.repositoryId,
-					action,
-				})
-			).actorId;
+			const access = await this.#auth.authorize({
+				sessionToken: input.sessionToken,
+				tenantId: input.tenantId,
+				repositoryId: input.repositoryId,
+				action,
+			});
+			return {
+				actorId: access.actorId,
+				role: access.role,
+				repositoryUrl: access.repositoryUrl,
+			};
 		} catch (error) {
 			await this.#audit(
 				input.tenantId,

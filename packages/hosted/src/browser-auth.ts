@@ -26,6 +26,7 @@ export interface HostedLoginAttempt {
 	id: string;
 	tenantId: string;
 	stateHash: string;
+	browserBindingHash: string;
 	pkceVerifier: SealedCredential;
 	redirectUri: string;
 	returnTo: string;
@@ -40,6 +41,7 @@ export interface HostedBrowserSession {
 	actorProviderId: string;
 	tokenHash: string;
 	credential: SealedCredential;
+	createdAt: string;
 	expiresAt: string;
 	revokedAt: string | null;
 }
@@ -52,7 +54,11 @@ export interface HostedAccessContext {
 
 export interface HostedBrowserIdentityStore {
 	createLoginAttempt(attempt: HostedLoginAttempt): Promise<void>;
-	consumeLoginAttempt(stateHash: string, now: Date): Promise<HostedLoginAttempt | null>;
+	consumeLoginAttempt(input: {
+		stateHash: string;
+		browserBindingHash: string;
+		now: Date;
+	}): Promise<HostedLoginAttempt | null>;
 	upsertActor(input: {
 		tenantId: string;
 		provider: "github";
@@ -61,13 +67,15 @@ export interface HostedBrowserIdentityStore {
 		now: Date;
 	}): Promise<{ actorId: string }>;
 	createSession(session: HostedBrowserSession): Promise<void>;
+	recordAuthenticationRejection(input: { tenantId: string; now: Date }): Promise<void>;
 	loadSession(tokenHash: string, now: Date): Promise<HostedBrowserSession | null>;
 	updateSessionCredential(input: {
+		tenantId: string;
 		sessionId: string;
 		credential: SealedCredential;
 		now: Date;
 	}): Promise<void>;
-	revokeSession(sessionId: string, now: Date): Promise<void>;
+	revokeSession(tenantId: string, sessionId: string, now: Date): Promise<void>;
 	loadAccessContext(input: {
 		tenantId: string;
 		actorId: string;
@@ -89,7 +97,7 @@ export interface GitHubBrowserProvider {
 		accessToken: string;
 		actorProviderId: string;
 		providerRepositoryId: string;
-	}): Promise<"granted" | "denied" | "unavailable">;
+	}): Promise<{ status: "granted"; repositoryUrl: string } | { status: "denied" | "unavailable" }>;
 }
 
 type HostedFetch = (input: string | URL, init?: RequestInit) => Promise<Response>;
@@ -183,22 +191,42 @@ export class GitHubAppBrowserProvider implements GitHubBrowserProvider {
 		accessToken: string;
 		actorProviderId: string;
 		providerRepositoryId: string;
-	}): Promise<"granted" | "denied" | "unavailable"> {
+	}): Promise<{ status: "granted"; repositoryUrl: string } | { status: "denied" | "unavailable" }> {
 		try {
 			const user = await this.#api("/user", input.accessToken);
-			if ([401, 403, 404].includes(user.status)) return "denied";
-			if (!user.ok) return "unavailable";
+			if ([401, 403, 404].includes(user.status)) return { status: "denied" };
+			if (!user.ok) return { status: "unavailable" };
 			const userValue = objectRecord(await user.json());
-			if (userValue === null || String(userValue.id) !== input.actorProviderId) return "denied";
+			if (userValue === null || String(userValue.id) !== input.actorProviderId) {
+				return { status: "denied" };
+			}
 
 			const repository = await this.#api(
 				`/repositories/${encodeURIComponent(input.providerRepositoryId)}`,
 				input.accessToken,
 			);
-			if ([401, 403, 404].includes(repository.status)) return "denied";
-			return repository.ok ? "granted" : "unavailable";
+			if ([401, 403, 404].includes(repository.status)) return { status: "denied" };
+			if (!repository.ok) return { status: "unavailable" };
+			const repositoryValue = objectRecord(await repository.json());
+			if (
+				repositoryValue === null ||
+				String(repositoryValue.id) !== input.providerRepositoryId ||
+				typeof repositoryValue.html_url !== "string"
+			) {
+				return { status: "denied" };
+			}
+			const repositoryUrl = new URL(repositoryValue.html_url);
+			if (
+				repositoryUrl.protocol !== "https:" ||
+				repositoryUrl.origin !== "https://github.com" ||
+				repositoryUrl.username !== "" ||
+				repositoryUrl.password !== ""
+			) {
+				return { status: "unavailable" };
+			}
+			return { status: "granted", repositoryUrl: repositoryUrl.toString() };
 		} catch {
-			return "unavailable";
+			return { status: "unavailable" };
 		}
 	}
 
@@ -384,9 +412,17 @@ export class HostedBrowserAuthService {
 	async beginLogin(input: {
 		tenantId: string;
 		returnTo: string;
+		browserBinding: string;
 		repositoryId?: string;
 	}): Promise<{ authorizationUrl: string; expiresAt: string }> {
 		requireSafeReturnPath(input.returnTo);
+		if (!/^[A-Za-z0-9_-]{43,128}$/u.test(input.browserBinding)) {
+			throw new HostedBrowserAuthError(
+				400,
+				"HOSTED_LOGIN_BINDING_INVALID",
+				"browser login binding is invalid",
+			);
+		}
 		const now = this.#now();
 		const id = this.#id();
 		const state = base64url(this.#random(32));
@@ -397,6 +433,7 @@ export class HostedBrowserAuthService {
 			id,
 			tenantId: input.tenantId,
 			stateHash: sha256(state),
+			browserBindingHash: sha256(input.browserBinding),
 			pkceVerifier: this.#vault.seal(verifier, credentialContext("login", id)),
 			redirectUri: this.#redirectUri,
 			returnTo: input.returnTo,
@@ -415,6 +452,7 @@ export class HostedBrowserAuthService {
 	async completeLogin(input: {
 		state: string;
 		code: string;
+		browserBinding: string;
 	}): Promise<{ sessionToken: string; expiresAt: string; returnTo: string }> {
 		if (
 			input.state.length < 32 ||
@@ -429,12 +467,23 @@ export class HostedBrowserAuthService {
 			);
 		}
 		const now = this.#now();
-		const attempt = await this.#store.consumeLoginAttempt(sha256(input.state), now);
+		if (!/^[A-Za-z0-9_-]{43,128}$/u.test(input.browserBinding)) {
+			throw new HostedBrowserAuthError(
+				401,
+				"HOSTED_LOGIN_STATE_INVALID",
+				"login state is expired, unknown, already consumed, or browser-mismatched",
+			);
+		}
+		const attempt = await this.#store.consumeLoginAttempt({
+			stateHash: sha256(input.state),
+			browserBindingHash: sha256(input.browserBinding),
+			now,
+		});
 		if (attempt === null) {
 			throw new HostedBrowserAuthError(
 				401,
 				"HOSTED_LOGIN_STATE_INVALID",
-				"login state is expired, unknown, or already consumed",
+				"login state is expired, unknown, already consumed, or browser-mismatched",
 			);
 		}
 		let credential: GitHubUserCredential;
@@ -451,6 +500,7 @@ export class HostedBrowserAuthService {
 			});
 			assertRefreshableCredential(credential, now);
 		} catch (error) {
+			await this.#store.recordAuthenticationRejection({ tenantId: attempt.tenantId, now });
 			if (error instanceof HostedBrowserAuthError) throw error;
 			throw new HostedBrowserAuthError(
 				502,
@@ -462,6 +512,7 @@ export class HostedBrowserAuthService {
 		try {
 			providerUser = await this.#provider.getAuthenticatedUser(credential.accessToken);
 		} catch {
+			await this.#store.recordAuthenticationRejection({ tenantId: attempt.tenantId, now });
 			throw new HostedBrowserAuthError(
 				502,
 				"HOSTED_PROVIDER_IDENTITY_INVALID",
@@ -469,6 +520,7 @@ export class HostedBrowserAuthService {
 			);
 		}
 		if (!/^\d+$/u.test(providerUser.id) || providerUser.login.length === 0) {
+			await this.#store.recordAuthenticationRejection({ tenantId: attempt.tenantId, now });
 			throw new HostedBrowserAuthError(
 				502,
 				"HOSTED_PROVIDER_IDENTITY_INVALID",
@@ -494,6 +546,7 @@ export class HostedBrowserAuthService {
 			actorProviderId: providerUser.id,
 			tokenHash: sha256(sessionToken),
 			credential: this.#vault.seal(credential, credentialContext("session", id)),
+			createdAt: now.toISOString(),
 			expiresAt,
 			revokedAt: null,
 		});
@@ -505,7 +558,7 @@ export class HostedBrowserAuthService {
 		tenantId: string;
 		repositoryId: string;
 		action: HostedAction;
-	}): Promise<{ actorId: string; role: HostedRole }> {
+	}): Promise<{ actorId: string; role: HostedRole; repositoryUrl: string }> {
 		const now = this.#now();
 		const session = await this.#store.loadSession(sha256(input.sessionToken), now);
 		if (session === null || session.tenantId !== input.tenantId) {
@@ -522,7 +575,7 @@ export class HostedBrowserAuthService {
 				credentialContext("session", session.id),
 			);
 			if (Date.parse(credential.refreshExpiresAt) <= now.getTime()) {
-				await this.#store.revokeSession(session.id, now);
+				await this.#store.revokeSession(session.tenantId, session.id, now);
 				throw new HostedBrowserAuthError(
 					401,
 					"HOSTED_SESSION_INVALID",
@@ -533,6 +586,7 @@ export class HostedBrowserAuthService {
 				credential = await this.#provider.refreshUserCredential(credential);
 				assertRefreshableCredential(credential, now);
 				await this.#store.updateSessionCredential({
+					tenantId: session.tenantId,
 					sessionId: session.id,
 					credential: this.#vault.seal(credential, credentialContext("session", session.id)),
 					now,
@@ -561,7 +615,7 @@ export class HostedBrowserAuthService {
 			actorProviderId: session.actorProviderId,
 			providerRepositoryId: context.providerRepositoryId,
 		});
-		if (providerAccess === "unavailable") {
+		if (providerAccess.status === "unavailable") {
 			throw new HostedBrowserAuthError(
 				503,
 				"HOSTED_PROVIDER_UNAVAILABLE",
@@ -569,11 +623,15 @@ export class HostedBrowserAuthService {
 			);
 		}
 		if (
-			providerAccess !== "granted" ||
+			providerAccess.status !== "granted" ||
 			roleRank[context.role] < roleRank[minimumRole[input.action]]
 		) {
 			throw new HostedBrowserAuthError(403, "HOSTED_ACCESS_DENIED", "hosted access is denied");
 		}
-		return { actorId: session.actorId, role: context.role };
+		return {
+			actorId: session.actorId,
+			role: context.role,
+			repositoryUrl: providerAccess.repositoryUrl,
+		};
 	}
 }

@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 
 import {
+	assertCiBundleIntegrity,
 	assertHostedEnvelopeIntegrity,
 	CI_ARTIFACTS_SCHEMA,
 	canonicalize,
@@ -35,7 +36,7 @@ export interface HostedProviderAuthorizer {
 			gateInputDigest: { algorithm: "sha256"; value: string };
 			portableBundleDigest: { algorithm: "sha256"; value: string };
 		};
-	}): Promise<HostedRepositoryContext | null>;
+	}): Promise<{ repository: HostedRepositoryContext; sourceBundle: unknown } | null>;
 }
 
 export class HostedControlPlaneError extends Error {
@@ -56,7 +57,7 @@ function object(value: unknown, label: string): JsonObject {
 	return value as JsonObject;
 }
 
-async function envelopeValidator() {
+async function hostedValidators() {
 	const schemaRoot = new URL("../../contracts/dist/schemas/", import.meta.url);
 	const paths = [
 		new URL("semantic/v1/artifacts.schema.json", schemaRoot),
@@ -72,12 +73,15 @@ async function envelopeValidator() {
 	);
 	const ajv = createStrictAjv();
 	for (const schema of schemas) ajv.addSchema(schema);
-	const validate = ajv.getSchema(`${HOSTED_ARTIFACTS_SCHEMA}#/definitions/HostedEnvelope`);
-	if (validate === undefined) throw new Error("hosted envelope validator is unavailable");
-	return validate;
+	const envelope = ajv.getSchema(`${HOSTED_ARTIFACTS_SCHEMA}#/definitions/HostedEnvelope`);
+	const ciBundle = ajv.getSchema(`${CI_ARTIFACTS_SCHEMA}#/definitions/CIBundle`);
+	if (envelope === undefined || ciBundle === undefined) {
+		throw new Error("hosted validators are unavailable");
+	}
+	return { envelope, ciBundle };
 }
 
-let sharedValidator: Awaited<ReturnType<typeof envelopeValidator>> | undefined;
+let sharedValidators: Awaited<ReturnType<typeof hostedValidators>> | undefined;
 
 export class HostedControlPlane {
 	readonly #oidc: GitHubOidcVerifier;
@@ -129,12 +133,12 @@ export class HostedControlPlane {
 				"envelope must use RFC 8785 canonical bytes",
 			);
 		}
-		sharedValidator ??= await envelopeValidator();
-		if (!sharedValidator(envelope)) {
+		sharedValidators ??= await hostedValidators();
+		if (!sharedValidators.envelope(envelope)) {
 			throw new HostedControlPlaneError(
 				400,
 				"HOSTED_ENVELOPE_SCHEMA_INVALID",
-				JSON.stringify(sharedValidator.errors),
+				JSON.stringify(sharedValidators.envelope.errors),
 			);
 		}
 		try {
@@ -195,11 +199,18 @@ export class HostedControlPlane {
 				"verified identity does not match the envelope",
 			);
 		}
+		if (value.profile === "local-review-decisions-v1") {
+			throw new HostedControlPlaneError(
+				403,
+				"HOSTED_PROFILE_UNAUTHORIZED",
+				"local review decisions require the authenticated user upload endpoint",
+			);
+		}
 		const authorized = await this.#authorizer.authorizeUpload({ identity, repository, source });
 		if (
 			authorized === null ||
-			authorized.providerRepositoryId !== repository.repositoryId ||
-			authorized.providerOwnerId !== repository.ownerId
+			authorized.repository.providerRepositoryId !== repository.repositoryId ||
+			authorized.repository.providerOwnerId !== repository.ownerId
 		) {
 			throw new HostedControlPlaneError(
 				403,
@@ -207,10 +218,7 @@ export class HostedControlPlane {
 				"repository authorization is unavailable or denied",
 			);
 		}
-		if (
-			value.profile === "local-review-decisions-v1" ||
-			(value.profile === "semantic-review-v1" && !authorized.semanticReviewEnabled)
-		) {
+		if (value.profile === "semantic-review-v1" && !authorized.repository.semanticReviewEnabled) {
 			throw new HostedControlPlaneError(
 				403,
 				"HOSTED_PROFILE_UNAUTHORIZED",
@@ -218,6 +226,52 @@ export class HostedControlPlane {
 			);
 		}
 		const payload = object(value.payload, "hosted payload");
+		if (!sharedValidators.ciBundle(authorized.sourceBundle)) {
+			throw new HostedControlPlaneError(
+				403,
+				"HOSTED_SOURCE_ARTIFACT_INVALID",
+				"provider source artifact is not a strict CI bundle",
+			);
+		}
+		try {
+			assertCiBundleIntegrity(authorized.sourceBundle);
+		} catch {
+			throw new HostedControlPlaneError(
+				403,
+				"HOSTED_SOURCE_ARTIFACT_INVALID",
+				"provider source artifact integrity is invalid",
+			);
+		}
+		const sourceBundle = object(authorized.sourceBundle, "provider CI bundle");
+		const sourceInvocation = object(sourceBundle.invocation, "provider CI invocation");
+		const sourceResult = object(sourceBundle.result, "provider CI result");
+		const sourceEvent = object(sourceInvocation.event, "provider CI event");
+		const sourceRepository = object(sourceInvocation.repository, "provider CI repository");
+		const sourceRun = object(sourceInvocation.run, "provider CI run");
+		if (
+			sha256Jcs(sourceBundle) !== source.sourceBundleDigest.value ||
+			canonicalize(sourceResult.invocationDigest) !== canonicalize(source.ciInvocationDigest) ||
+			canonicalize(sourceResult.gateInputDigest) !== canonicalize(source.gateInputDigest) ||
+			canonicalize(sourceResult.portableBundleDigest) !==
+				canonicalize(source.portableBundleDigest) ||
+			canonicalize(sourceEvent.head) !== canonicalize(source.head) ||
+			sourceRun.id !== source.runId ||
+			sourceRun.attempt !== source.runAttempt ||
+			sourceRepository.id !== repository.repositoryId ||
+			sourceRepository.ownerId !== repository.ownerId ||
+			(value.profile === "gate-summary-v1" &&
+				(canonicalize(payload.gateResult) !== canonicalize(sourceResult.gateResult) ||
+					canonicalize(payload.summary) !== canonicalize(sourceResult.summary) ||
+					payload.outcome !== sourceResult.outcome)) ||
+			(value.profile === "semantic-review-v1" &&
+				canonicalize(payload.bundle) !== canonicalize(sourceBundle))
+		) {
+			throw new HostedControlPlaneError(
+				403,
+				"HOSTED_SOURCE_ARTIFACT_MISMATCH",
+				"hosted envelope does not match the provider source artifact",
+			);
+		}
 		const gateResult =
 			value.profile === "semantic-review-v1"
 				? object(
@@ -226,7 +280,7 @@ export class HostedControlPlane {
 					)
 				: object(payload.gateResult, "GateResult");
 		const result = await this.#persistence.ingest({
-			repository: authorized,
+			repository: authorized.repository,
 			digest,
 			canonicalBytes: bytes,
 			profile: value.profile as string,

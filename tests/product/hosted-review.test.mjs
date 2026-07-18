@@ -31,7 +31,11 @@ class FakeAuth {
 	async authorize(input) {
 		this.calls.push(structuredClone(input));
 		if (this.denied) throw new Error("denied");
-		return { actorId, role: input.action === "audit-export" ? "admin" : "reviewer" };
+		return {
+			actorId,
+			role: input.action === "audit-export" ? "admin" : "reviewer",
+			repositoryUrl: "https://github.com/clfhhc/test-graphrefly",
+		};
 	}
 }
 
@@ -170,6 +174,10 @@ test("the read-only projection exposes redacted evidence and decision history bu
 		"environment",
 		"model-response",
 	]);
+	assert.deepEqual(projection.sourceReview, {
+		provider: "github",
+		url: "https://github.com/clfhhc/test-graphrefly",
+	});
 	assert.equal(projection.decisions.length, 1);
 	const serialized = JSON.stringify(projection);
 	assert.equal(serialized.includes("uploadIdentity"), false);
