@@ -110,7 +110,7 @@ export function createGraph() {
 		schema: "graphrefly.stack.semantic-policy.v1",
 		policyId: "repository-policy",
 		revision: "rev-1",
-		allowedSourceRoots: ["head.mjs"],
+		allowedSourceRoots: ["head.mjs", "graphrefly-stack.blueprint.mjs"],
 		allowedCapabilities: ["graph-change"],
 		checks: [
 			{
@@ -132,7 +132,7 @@ export function createGraph() {
 				title: "Add the contributor graph effect",
 				intent: "Add one independent graph node on the contributor branch.",
 				dependencies: [],
-				allowedSourceScopes: ["head.mjs"],
+				allowedSourceScopes: ["head.mjs", "graphrefly-stack.blueprint.mjs"],
 				capabilities: ["graph-change"],
 				claims: [
 					{
@@ -297,4 +297,102 @@ test("repository-owned integration runner emits compatible bytes and policy inva
 		path: "head.mjs",
 	});
 	assert.deepEqual(sourceFingerprint(fixture.repository), conflictBefore);
+
+	git(fixture.repository, ["switch", "-c", "execution-target", fixture.mergeBase]);
+	const executionTarget = await commitFile(
+		fixture.repository,
+		"target.mjs",
+		'export function applyTarget(value) { globalThis.__targetApplied = true; value.state(2, { name: "target" }); }\n',
+		"add execution trigger",
+	);
+	git(fixture.repository, ["switch", "-c", "execution-head", fixture.mergeBase]);
+	const executionHead = await commitFile(
+		fixture.repository,
+		"head.mjs",
+		'export function applyHead(value) { if (globalThis.__targetApplied) for (;;) {} value.state(3, { name: "head" }); }\n',
+		"add combined execution guard",
+		"HEAD_GRAPH",
+	);
+	const executionFailure = await runIntegration({
+		repository: fixture.repository,
+		target: executionTarget,
+		head: executionHead,
+		planId: "integration-plan",
+		repositoryIdentity: identity,
+	});
+	assert.equal(executionFailure.result.outcome, "error");
+	assert.deepEqual(executionFailure.result.reasonCodes, ["CANDIDATE_EVALUATION_FAILED"]);
+
+	git(fixture.repository, ["switch", "-c", "execution-recovery", fixture.mergeBase]);
+	const recoveredHead = await commitFile(
+		fixture.repository,
+		"head.mjs",
+		'export function applyHead(value) { value.state(3, { name: "head" }); }\n',
+		"remove combined execution guard",
+		"HEAD_GRAPH",
+	);
+	const recovered = await runIntegration({
+		repository: fixture.repository,
+		target: executionTarget,
+		head: recoveredHead,
+		planId: "integration-plan",
+		repositoryIdentity: identity,
+	});
+	assert.equal(recovered.result.outcome, "compatible");
+	assert.notDeepEqual(recovered.result.candidateDigest, executionFailure.result.candidateDigest);
+
+	git(fixture.repository, ["switch", "-c", "blueprint-head", fixture.mergeBase]);
+	await Promise.all([
+		writeFile(
+			resolve(fixture.repository, "head.mjs"),
+			'export function applyHead(value) { value.state(3, { name: "head" }); }\n',
+		),
+		writeFile(
+			resolve(fixture.repository, "graphrefly-stack.blueprint.mjs"),
+			`import { createHash } from "node:crypto";
+import { withBlueprintHash } from "@graphrefly/ts/graph";
+import { createGraph } from "./graph.mjs";
+const value = withBlueprintHash(createGraph().blueprint({ diagnostics: true }), {
+  algorithm: "sha256",
+  hash: (bytes) => createHash("sha256").update(bytes).digest("hex"),
+});
+if (globalThis.__targetApplied) value.hash.value = "0".repeat(64);
+process.stdout.write(JSON.stringify(value));
+`,
+		),
+	]);
+	git(fixture.repository, ["add", "head.mjs", "graphrefly-stack.blueprint.mjs"]);
+	git(fixture.repository, [
+		"commit",
+		"-m",
+		"add combined Blueprint guard",
+		"-m",
+		"GraphReFly-Work-Unit: HEAD_GRAPH",
+	]);
+	const blueprintHead = git(fixture.repository, ["rev-parse", "HEAD"]);
+	const blueprintFailure = await runIntegration({
+		repository: fixture.repository,
+		target: executionTarget,
+		head: blueprintHead,
+		planId: "integration-plan",
+		repositoryIdentity: identity,
+	});
+	assert.equal(blueprintFailure.result.outcome, "conflict");
+	assert.deepEqual(blueprintFailure.result.reasonCodes, ["CANDIDATE_BLUEPRINT_INVALID"]);
+
+	git(fixture.repository, ["branch", "moving-head", recoveredHead]);
+	const moveHead = setTimeout(() => {
+		git(fixture.repository, ["branch", "-f", "moving-head", fixture.mergeBase]);
+	}, 1000);
+	const moved = await runIntegration({
+		repository: fixture.repository,
+		target: executionTarget,
+		head: "moving-head",
+		planId: "integration-plan",
+		repositoryIdentity: identity,
+	});
+	clearTimeout(moveHead);
+	assert.equal(moved.result.outcome, "error");
+	assert.deepEqual(moved.result.reasonCodes, ["HEAD_MOVED"]);
+	assert.equal(moved.result.observedRevisions.head.value, fixture.mergeBase);
 });

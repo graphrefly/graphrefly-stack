@@ -231,6 +231,40 @@ test("isolated candidate reports text conflict and rejects merge-containing head
 			error.code === "HEAD_RANGE_NON_LINEAR" &&
 			error.context.topology.headRange === "non-linear",
 	);
+
+	const targetTree = git(fixture.repository, ["rev-parse", `${fixture.target}^{tree}`]);
+	const headTree = git(fixture.repository, ["rev-parse", `${fixture.head}^{tree}`]);
+	const targetMerge = git(fixture.repository, [
+		"commit-tree",
+		targetTree,
+		"-p",
+		fixture.target,
+		"-p",
+		fixture.head,
+		"-m",
+		"target criss-cross",
+	]);
+	const headMerge = git(fixture.repository, [
+		"commit-tree",
+		headTree,
+		"-p",
+		fixture.head,
+		"-p",
+		fixture.target,
+		"-m",
+		"head criss-cross",
+	]);
+	await assert.rejects(
+		withIsolatedGitCandidate(
+			{ repository: fixture.repository, target: targetMerge, head: headMerge },
+			async () => undefined,
+		),
+		(error) =>
+			error instanceof IntegrationCandidateError &&
+			error.code === "ANCESTRY_AMBIGUOUS" &&
+			error.context.topology.mergeBase === "ambiguous" &&
+			error.context.revisions.mergeBase === null,
+	);
 });
 
 test("symbolic target movement invalidates candidate before return", async (context) => {
