@@ -171,6 +171,10 @@ export interface IsolatedGraphEvidence {
 		delta: Record<string, unknown>;
 		digest: { algorithm: "sha256"; value: string };
 	};
+	candidateDelta: {
+		delta: Record<string, unknown>;
+		digest: { algorithm: "sha256"; value: string };
+	};
 }
 
 export interface IntegrationCandidateArtifact {
@@ -319,7 +323,7 @@ export async function evaluateIsolatedGraphCandidate(
 			"Integration Blueprint evidence is incomplete",
 		);
 	}
-	const [targetDelta, headDelta] = await Promise.all([
+	const [targetDelta, headDelta, candidateDelta] = await Promise.all([
 		diffRepositoryBlueprintSnapshots({
 			repository: candidate.isolatedRepository,
 			previous: base.blueprint,
@@ -330,6 +334,11 @@ export async function evaluateIsolatedGraphCandidate(
 			previous: base.blueprint,
 			next: head.blueprint,
 		}),
+		diffRepositoryBlueprintSnapshots({
+			repository: candidate.isolatedRepository,
+			previous: base.blueprint,
+			next: merged.blueprint,
+		}),
 	]);
 	return {
 		graphreflyVersion: merged.graphreflyVersion,
@@ -339,6 +348,7 @@ export async function evaluateIsolatedGraphCandidate(
 		candidate: { blueprint: merged.blueprint, blueprintHash: merged.blueprintHash },
 		targetDelta,
 		headDelta,
+		candidateDelta,
 	};
 }
 

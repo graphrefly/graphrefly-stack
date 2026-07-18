@@ -13,6 +13,7 @@ import {
 	withIsolatedGitCandidate,
 } from "../../packages/cli/dist/integration-candidate.js";
 import { assertIntegrationIntegrity, sha256Jcs } from "../../packages/contracts/dist/index.js";
+import { evaluateIntegrationEffects } from "../../packages/core/dist/index.js";
 
 const workspaceNodeModules = fileURLToPath(new URL("../../node_modules", import.meta.url));
 
@@ -256,16 +257,24 @@ test("isolated candidate derives verified four-revision Blueprints and both upst
 	assert.match(JSON.stringify(evidence.headDelta.delta), /head/u);
 	assert.match(evidence.targetDelta.digest.value, /^[0-9a-f]{64}$/u);
 	assert.match(evidence.headDelta.digest.value, /^[0-9a-f]{64}$/u);
+	assert.match(JSON.stringify(evidence.candidateDelta.delta), /target/u);
+	assert.match(JSON.stringify(evidence.candidateDelta.delta), /head/u);
 	assert.equal(artifact.evidence.candidateBlueprint.revision.value, artifact.merge.tree.value);
 	assert.equal(artifact.evidence.targetDelta.deltaDigest.value, evidence.targetDelta.digest.value);
+	const effects = evaluateIntegrationEffects({
+		targetDelta: evidence.targetDelta.delta,
+		headDelta: evidence.headDelta.delta,
+		candidateDelta: evidence.candidateDelta.delta,
+	});
+	assert.deepEqual(effects, { reasonCodes: [], overlaps: [], conflicts: [] });
 	const result = {
 		schema: "graphrefly.stack.integration-result.v1",
 		candidateDigest: { algorithm: "sha256", value: sha256Jcs(artifact) },
 		observedRevisions: { target: artifact.revisions.target, head: artifact.revisions.head },
 		outcome: "compatible",
-		reasonCodes: [],
-		overlaps: [],
-		conflicts: [],
+		reasonCodes: effects.reasonCodes,
+		overlaps: effects.overlaps,
+		conflicts: effects.conflicts,
 	};
 	assertIntegrationIntegrity(artifact, result);
 	assert.deepEqual(sourceFingerprint(fixture.repository), before);

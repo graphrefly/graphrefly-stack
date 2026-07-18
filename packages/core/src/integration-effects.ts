@@ -108,8 +108,21 @@ function fieldChanges(before: unknown, after: unknown, prefix = ""): FieldChange
 }
 
 function nodeChanges(event: JsonObject): FieldChange[] {
+	if (event.type === "node-added") {
+		return fieldChanges({}, event.node).filter((change) => change.path !== "id");
+	}
 	if (event.type !== "node-changed") return [{ path: "*", before: null, after: null }];
 	return fieldChanges(event.before, event.after).filter((change) => change.path !== "id");
+}
+
+function valueAt(value: unknown, path: string): unknown {
+	let current = value;
+	for (const part of path.split(".")) {
+		const record = object(current);
+		if (record === null || !Object.hasOwn(record, part)) return undefined;
+		current = record[part];
+	}
+	return current;
 }
 
 function nodeWitness(nodeId: string, field: string): IntegrationEffectWitness {
@@ -152,10 +165,24 @@ function compareNodeEvents(
 		return;
 	}
 	if (left.type === "node-added" || right.type === "node-added") {
-		if (left.type !== right.type || canonicalize(left.node) !== canonicalize(right.node)) {
+		if (left.type !== right.type) {
 			addUnique(conflicts, {
 				reasonCode: "NODE_INCOMPATIBLE_CHANGE",
 				witness: { kind: "node", nodeId: node.id, field: "*" },
+			});
+			return;
+		}
+		const rightByPath = new Map(rightChanges.map((change) => [change.path, change]));
+		for (const change of leftChanges) {
+			const other = rightByPath.get(change.path);
+			if (other === undefined || encoded(change.after) === encoded(other.after)) continue;
+			const witness = nodeWitness(node.id, change.path);
+			addUnique(conflicts, {
+				reasonCode:
+					witness.kind === "metadata-field"
+						? "METADATA_INCOMPATIBLE_CHANGE"
+						: "NODE_INCOMPATIBLE_CHANGE",
+				witness,
 			});
 		}
 		return;
@@ -178,22 +205,65 @@ function compareNodeEvents(
 export function evaluateIntegrationEffects(options: {
 	targetDelta: Record<string, unknown>;
 	headDelta: Record<string, unknown>;
+	candidateDelta: Record<string, unknown>;
 }): IntegrationEffectEvaluation {
 	const targetEvents = events(options.targetDelta);
 	const headEvents = events(options.headDelta);
+	const candidateEvents = events(options.candidateDelta);
 	const overlaps: IntegrationEffectWitness[] = [];
 	const conflicts: IntegrationEffectConflict[] = [];
 	const nodeTypes = new Set(["node-added", "node-changed", "node-removed"]);
 	const targetNodes = mapBy(targetEvents, nodeTypes, nodeKey);
 	const headNodes = mapBy(headEvents, nodeTypes, nodeKey);
+	const candidateNodes = mapBy(candidateEvents, nodeTypes, nodeKey);
+	const removedNodeIds = new Set(
+		[...targetNodes.values(), ...headNodes.values()]
+			.filter((event) => event.type === "node-removed")
+			.map((event) => nodeFor(event)?.id)
+			.filter((id): id is string => typeof id === "string"),
+	);
 	for (const [identity, left] of targetNodes) {
 		const right = headNodes.get(identity);
 		if (right !== undefined) compareNodeEvents(left, right, overlaps, conflicts);
+	}
+	for (const branchNodes of [targetNodes, headNodes]) {
+		for (const [identity, event] of branchNodes) {
+			const candidateEvent = candidateNodes.get(identity);
+			const node = nodeFor(event);
+			if (typeof node?.id !== "string") continue;
+			if (event.type === "node-removed") {
+				if (candidateEvent?.type !== "node-removed") {
+					addUnique(conflicts, {
+						reasonCode: "NODE_DELETE_CHANGE",
+						witness: { kind: "node", nodeId: node.id, field: "*" },
+					});
+				}
+				continue;
+			}
+			const finalNode =
+				candidateEvent?.type === "node-added"
+					? candidateEvent.node
+					: candidateEvent?.type === "node-changed"
+						? candidateEvent.after
+						: null;
+			for (const change of nodeChanges(event)) {
+				if (encoded(valueAt(finalNode, change.path)) === encoded(change.after)) continue;
+				const witness = nodeWitness(node.id, change.path);
+				addUnique(conflicts, {
+					reasonCode:
+						witness.kind === "metadata-field"
+							? "METADATA_INCOMPATIBLE_CHANGE"
+							: "NODE_INCOMPATIBLE_CHANGE",
+					witness,
+				});
+			}
+		}
 	}
 
 	const edgeTypes = new Set(["edge-added", "edge-removed"]);
 	const targetEdges = mapBy(targetEvents, edgeTypes, edgeKey);
 	const headEdges = mapBy(headEvents, edgeTypes, edgeKey);
+	const candidateEdges = mapBy(candidateEvents, edgeTypes, edgeKey);
 	for (const [identity, left] of targetEdges) {
 		const right = headEdges.get(identity);
 		if (right === undefined) continue;
@@ -205,10 +275,23 @@ export function evaluateIntegrationEffects(options: {
 			addUnique(conflicts, { reasonCode: "EDGE_INCOMPATIBLE_CHANGE", witness });
 		}
 	}
+	for (const branchEdges of [targetEdges, headEdges]) {
+		for (const [identity, event] of branchEdges) {
+			if (candidateEdges.get(identity)?.type === event.type) continue;
+			const edge = edgeFor(event);
+			if (typeof edge?.from !== "string" || typeof edge.to !== "string") continue;
+			if (removedNodeIds.has(edge.from) || removedNodeIds.has(edge.to)) continue;
+			addUnique(conflicts, {
+				reasonCode: "EDGE_INCOMPATIBLE_CHANGE",
+				witness: { kind: "edge", source: edge.from, target: edge.to },
+			});
+		}
+	}
 
 	const subgraphTypes = new Set(["subgraph-added", "subgraph-removed"]);
 	const targetSubgraphs = mapBy(targetEvents, subgraphTypes, (event) => subgraphKey(event));
 	const headSubgraphs = mapBy(headEvents, subgraphTypes, (event) => subgraphKey(event));
+	const candidateSubgraphs = mapBy(candidateEvents, subgraphTypes, (event) => subgraphKey(event));
 	for (const [identity, left] of targetSubgraphs) {
 		const right = headSubgraphs.get(identity);
 		if (right === undefined) continue;
@@ -216,6 +299,23 @@ export function evaluateIntegrationEffects(options: {
 		addUnique(overlaps, witness);
 		if (left.type !== right.type || canonicalize(left.topology) !== canonicalize(right.topology)) {
 			addUnique(conflicts, { reasonCode: "SUBGRAPH_INCOMPATIBLE_CHANGE", witness });
+		}
+	}
+	for (const branchSubgraphs of [targetSubgraphs, headSubgraphs]) {
+		for (const [identity, event] of branchSubgraphs) {
+			const candidateEvent = candidateSubgraphs.get(identity);
+			const preserved =
+				candidateEvent !== undefined &&
+				candidateEvent.type === event.type &&
+				(event.type === "subgraph-removed" ||
+					canonicalize(candidateEvent.topology) === canonicalize(event.topology));
+			if (preserved) {
+				continue;
+			}
+			addUnique(conflicts, {
+				reasonCode: "SUBGRAPH_INCOMPATIBLE_CHANGE",
+				witness: { kind: "subgraph", mountId: identity },
+			});
 		}
 	}
 

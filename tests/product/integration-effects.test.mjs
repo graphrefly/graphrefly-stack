@@ -21,6 +21,13 @@ test("shared node with independent field effects is overlap, not conflict", () =
 	const result = evaluateIntegrationEffects({
 		targetDelta: delta([changed(before, { ...before, name: "target-name" })]),
 		headDelta: delta([changed(before, { ...before, meta: { ...before.meta, owner: "security" } })]),
+		candidateDelta: delta([
+			changed(before, {
+				...before,
+				name: "target-name",
+				meta: { ...before.meta, owner: "security" },
+			}),
+		]),
 	});
 	assert.deepEqual(result.reasonCodes, []);
 	assert.deepEqual(result.conflicts, []);
@@ -35,6 +42,7 @@ test("same node field with different final values is an exact conflict", () => {
 	const result = evaluateIntegrationEffects({
 		targetDelta: delta([changed(before, { ...before, name: "target" })]),
 		headDelta: delta([changed(before, { ...before, name: "head" })]),
+		candidateDelta: delta([changed(before, { ...before, name: "target" })]),
 	});
 	assert.deepEqual(result.reasonCodes, ["NODE_INCOMPATIBLE_CHANGE"]);
 	assert.deepEqual(result.conflicts, [
@@ -50,6 +58,9 @@ test("metadata conflict has a metadata-field witness and stable reason", () => {
 	const result = evaluateIntegrationEffects({
 		targetDelta: delta([changed(before, { ...before, meta: { ...before.meta, owner: "target" } })]),
 		headDelta: delta([changed(before, { ...before, meta: { ...before.meta, owner: "head" } })]),
+		candidateDelta: delta([
+			changed(before, { ...before, meta: { ...before.meta, owner: "target" } }),
+		]),
 	});
 	assert.deepEqual(result.reasonCodes, ["METADATA_INCOMPATIBLE_CHANGE"]);
 	assert.deepEqual(result.conflicts[0], {
@@ -74,6 +85,7 @@ test("node deletion conflicts with another branch edge use", () => {
 				edge: { from: "session", to: "audit" },
 			},
 		]),
+		candidateDelta: delta([{ type: "node-removed", topologyPath: [], node }]),
 	});
 	assert.deepEqual(result.reasonCodes, ["NODE_DELETE_CHANGE"]);
 	assert.deepEqual(result.conflicts, [
@@ -96,6 +108,10 @@ test("edge and subgraph opposite effects produce distinct ordered witnesses", ()
 			{ type: "subgraph-removed", topologyPath: ["audit"], topology },
 			{ type: "edge-removed", topologyPath: [], edge },
 		]),
+		candidateDelta: delta([
+			{ type: "subgraph-added", topologyPath: ["audit"], topology },
+			{ type: "edge-added", topologyPath: [], edge },
+		]),
 	});
 	assert.deepEqual(result.reasonCodes, [
 		"EDGE_INCOMPATIBLE_CHANGE",
@@ -103,4 +119,25 @@ test("edge and subgraph opposite effects produce distinct ordered witnesses", ()
 	]);
 	assert.equal(result.overlaps.length, 2);
 	assert.equal(result.conflicts.length, 2);
+});
+
+test("a nonconflicting branch effect missing from the candidate fails closed", () => {
+	const before = { id: "session", kind: "state", name: "old", meta: { owner: "platform" } };
+	const result = evaluateIntegrationEffects({
+		targetDelta: delta([changed(before, { ...before, name: "target-name" })]),
+		headDelta: delta([changed(before, { ...before, meta: { ...before.meta, owner: "security" } })]),
+		candidateDelta: delta([changed(before, { ...before, name: "target-name" })]),
+	});
+	assert.deepEqual(result.reasonCodes, ["METADATA_INCOMPATIBLE_CHANGE"]);
+	assert.deepEqual(result.conflicts, [
+		{
+			reasonCode: "METADATA_INCOMPATIBLE_CHANGE",
+			witness: {
+				kind: "metadata-field",
+				ownerKind: "node",
+				ownerId: "session",
+				field: "owner",
+			},
+		},
+	]);
 });
