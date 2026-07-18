@@ -52,6 +52,7 @@ export interface HostedPersistence {
 		sourceRunId: string;
 		sourceHead: string;
 		receivedAt: Date;
+		actorProviderId?: string;
 	}): Promise<HostedPersistenceResult>;
 }
 
@@ -76,6 +77,7 @@ export class InMemoryHostedPersistence implements HostedPersistence {
 		sourceRunId: string;
 		sourceHead: string;
 		receivedAt: Date;
+		actorProviderId?: string;
 	}): Promise<HostedPersistenceResult> {
 		const scope = `${input.repository.tenantId}/${input.repository.repositoryId}`;
 		const key = `${scope}/${input.digest}`;

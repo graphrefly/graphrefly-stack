@@ -234,6 +234,7 @@ export class HostedControlPlane {
 			sourceRunId: source.runId,
 			sourceHead: source.head.value,
 			receivedAt: this.#now(),
+			actorProviderId: identity.claims.actorId,
 		});
 		if (result.status === "rate-limit" || result.status === "storage-limit") {
 			throw new HostedControlPlaneError(429, "HOSTED_QUOTA_EXCEEDED", "hosted quota is exceeded");
