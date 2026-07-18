@@ -1,6 +1,7 @@
 import { Ajv } from "ajv";
 
 export * from "./ci.js";
+export * from "./hosted.js";
 export * from "./jcs.js";
 export * from "./repository-review.js";
 export * from "./semantic.js";
@@ -12,6 +13,8 @@ export type CliCommand =
 	| "init"
 	| "ci-init"
 	| "ci-run"
+	| "hosted-init"
+	| "hosted-sync"
 	| "fixture-create"
 	| "plan"
 	| "gate"

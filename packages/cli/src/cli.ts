@@ -19,6 +19,11 @@ import {
 } from "./codex-plan-provider.js";
 import { exportEvidenceBundle, type LiveRunRecord } from "./exporter.js";
 import { createFlagshipFixture, readRuntimeSuite } from "./fixture.js";
+import {
+	HostedRunnerError,
+	initializeHostedWorkflow,
+	syncHostedEvidence,
+} from "./hosted-runner.js";
 import { readPortableEvidenceBundle } from "./portable-bundle.js";
 import { initializeRepository, RepositoryInitError } from "./repository-init.js";
 import { createRepositoryReview, RepositoryReviewError } from "./repository-review.js";
@@ -41,6 +46,8 @@ Usage:
   grfs init [--repo <path>] --graph-module <path> [--graph-export <name>] [--force] [--json]
   grfs ci init [--repo <path>] [--force] [--json]
   grfs ci run [--repo <path>] --event <github-event.json> [--plan-id <id>] --output <artifact.json> [--json]
+  grfs hosted init [--repo <path>] --endpoint <https-url> [--profile gate-summary-v1|semantic-review-v1] [--force] [--json]
+  grfs hosted sync --artifact <ci-artifact.json> --endpoint <https-url> [--profile gate-summary-v1|semantic-review-v1] --json
   grfs review --repo <path> --base <revision> --head <revision> [--host 127.0.0.1] [--port 4173] [--json]
   grfs fixture create [--output <path>] [--force] [--json]
   grfs plan --repo <path> --task <summary> --policy <policy.json> [--proposal <proposal.json>] [--context <manifest.json> --authorize-context] [--mode replay|live] [--accept --accept-by <label>] --json
@@ -71,6 +78,8 @@ function commandFrom(argv: readonly string[]): CliCommand | null {
 	if (argv[0] === "init") return "init";
 	if (argv[0] === "ci" && argv[1] === "init") return "ci-init";
 	if (argv[0] === "ci" && argv[1] === "run") return "ci-run";
+	if (argv[0] === "hosted" && argv[1] === "init") return "hosted-init";
+	if (argv[0] === "hosted" && argv[1] === "sync") return "hosted-sync";
 	if (argv[0] === "fixture" && argv[1] === "create") return "fixture-create";
 	if (["plan", "gate", "replan", "review", "export"].includes(argv[0] ?? "")) {
 		return argv[0] as CliCommand;
@@ -286,6 +295,65 @@ export async function runCli(argv = process.argv.slice(2)): Promise<number> {
 				error instanceof RepositoryReviewError
 			) {
 				return failure(command, json, error.code, error.message);
+			}
+			throw error;
+		}
+	}
+	if (command === "hosted-init") {
+		const endpoint = readOption(argv, "--endpoint");
+		const profile = readOption(argv, "--profile") ?? "gate-summary-v1";
+		if (endpoint === undefined) {
+			return failure(command, json, "HOSTED_ENDPOINT_REQUIRED", "--endpoint is required");
+		}
+		if (profile !== "gate-summary-v1" && profile !== "semantic-review-v1") {
+			return failure(command, json, "HOSTED_PROFILE_INVALID", profile);
+		}
+		try {
+			success(
+				command,
+				"deterministic",
+				await initializeHostedWorkflow({
+					repository: readOption(argv, "--repo") ?? ".",
+					endpoint,
+					profile,
+					force: argv.includes("--force"),
+				}),
+				json,
+			);
+			return 0;
+		} catch (error) {
+			if (error instanceof HostedRunnerError) {
+				return failure(command, json, error.code, error.message);
+			}
+			throw error;
+		}
+	}
+	if (command === "hosted-sync") {
+		const artifact = readOption(argv, "--artifact");
+		const endpoint = readOption(argv, "--endpoint");
+		const profile = readOption(argv, "--profile") ?? "gate-summary-v1";
+		if (artifact === undefined || endpoint === undefined) {
+			return failure(
+				command,
+				json,
+				"HOSTED_SYNC_INPUT_REQUIRED",
+				"--artifact and --endpoint are required",
+			);
+		}
+		if (profile !== "gate-summary-v1" && profile !== "semantic-review-v1") {
+			return failure(command, json, "HOSTED_PROFILE_INVALID", profile);
+		}
+		try {
+			success(
+				command,
+				"deterministic",
+				await syncHostedEvidence({ artifact, endpoint, profile }),
+				true,
+			);
+			return 0;
+		} catch (error) {
+			if (error instanceof HostedRunnerError) {
+				return failure(command, true, error.code, error.message);
 			}
 			throw error;
 		}

@@ -691,6 +691,11 @@ test("the npm tarball installs and reviews an independent GraphReFly 0.3.x repos
 		"package/dist/assets/contracts/ci/v1/golden-suite.schema.json",
 		"package/dist/assets/fixtures/contracts/ci/v1/golden-suite.json",
 		"package/dist/assets/fixtures/contracts/ci/v1/golden-digests.json",
+		"package/dist/assets/contracts/hosted/v1/artifacts.schema.json",
+		"package/dist/assets/contracts/hosted/v1/golden-suite.schema.json",
+		"package/dist/assets/fixtures/contracts/hosted/v1/ci-bundle.json",
+		"package/dist/assets/fixtures/contracts/hosted/v1/golden-suite.json",
+		"package/dist/assets/fixtures/contracts/hosted/v1/golden-digests.json",
 		"package/dist/assets/contracts/semantic/v1/artifacts.schema.json",
 		"package/dist/assets/contracts/semantic/v1/golden-suite.schema.json",
 		"package/dist/assets/fixtures/contracts/semantic/v1/golden-suite.json",
@@ -763,6 +768,36 @@ export function createApplicationGraph() {
 	const registryLayoutCli = resolve(repository, "registry-layout-grfs.js");
 	await symlink(packedCli, registryLayoutCli);
 	assert.match(run(repository, process.execPath, [registryLayoutCli, "--help"]), /Usage:/u);
+	const hostedRepository = resolve(temporary, "hosted-consumer-repository");
+	await mkdir(hostedRepository);
+	run(hostedRepository, "git", ["init", "-q"]);
+	const hostedInitialized = JSON.parse(
+		run(repository, "pnpm", [
+			"exec",
+			"grfs",
+			"hosted",
+			"init",
+			"--repo",
+			hostedRepository,
+			"--endpoint",
+			"https://stack.example.test",
+			"--json",
+		]),
+	);
+	assert.equal(hostedInitialized.command, "hosted-init");
+	assert.equal(hostedInitialized.data.stackVersion, packageVersion);
+	const hostedWorkflow = await readFile(
+		resolve(hostedRepository, hostedInitialized.data.workflow),
+		"utf8",
+	);
+	assert.match(
+		hostedWorkflow,
+		new RegExp(`@graphrefly/stack@${packageVersion.replaceAll(".", "\\.")}`, "u"),
+	);
+	assert.doesNotMatch(
+		hostedWorkflow,
+		/actions\/checkout|contents:|secrets\.|pull-requests: write/u,
+	);
 
 	const initialized = JSON.parse(
 		run(repository, "pnpm", [

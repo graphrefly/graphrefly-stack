@@ -1,0 +1,480 @@
+{
+	"invocation": {
+		"adapter": { "provider": "github-actions", "version": "v1" },
+		"cacheInputs": {
+			"architecture": "x64",
+			"cacheKey": "graphrefly-stack-linux-x64-node-24.18.0-pnpm-11.7.0-manifest-cd22df788b5bb42ca59d7a86e97058250d5716cc4d8698a435aa309a4f7d73d3-lock-17a4ade3f33d9e059827375190e42b8ebdf63e9c102719667b77cc4c2ed3343f-stack-0.1.5-graphrefly-0.3.0",
+			"graphreflyVersion": "0.3.0",
+			"lockfileDigest": {
+				"algorithm": "sha256",
+				"value": "17a4ade3f33d9e059827375190e42b8ebdf63e9c102719667b77cc4c2ed3343f"
+			},
+			"lockfilePath": "pnpm-lock.yaml",
+			"nodeVersion": "24.18.0",
+			"operatingSystem": "linux",
+			"packageManifestDigest": {
+				"algorithm": "sha256",
+				"value": "cd22df788b5bb42ca59d7a86e97058250d5716cc4d8698a435aa309a4f7d73d3"
+			},
+			"pnpmVersion": "11.7.0",
+			"stackVersion": "0.1.5"
+		},
+		"event": {
+			"base": { "algorithm": "sha1", "value": "ab2e60722864dbe13aaf5544a57e6adf3c3c4786" },
+			"head": { "algorithm": "sha1", "value": "371c321272d770d1a6af69f3fa9415f430541b82" },
+			"name": "pull_request",
+			"pullRequestNumber": 1
+		},
+		"identity": { "assurance": "platform-asserted" },
+		"plan": {
+			"id": "ci-proof",
+			"policyDigest": {
+				"algorithm": "sha256",
+				"value": "12d43021c67cf4b9323064252d9d58e5c644930b73d074d5c3dc0860e3eb1266"
+			}
+		},
+		"repository": { "headRepositoryId": "1305053637", "id": "1305053637", "ownerId": "15009605" },
+		"run": {
+			"actorId": "15009605",
+			"attempt": 1,
+			"id": "29654453076",
+			"jobName": "GraphReFly Stack / Semantic Gate"
+		},
+		"schema": "graphrefly.stack.ci-invocation.v1",
+		"workflow": {
+			"ref": "clfhhc/test-graphrefly/.github/workflows/graphrefly-stack.yml@refs/pull/1/merge",
+			"sha": { "algorithm": "sha1", "value": "39b0f76e041e0f2c80891429ab770d7f08fa183d" }
+		}
+	},
+	"portableBundle": {
+		"artifacts": {
+			"bindings.json": [
+				{
+					"changedPaths": ["src/ci-proof.ts"],
+					"commit": { "algorithm": "sha1", "value": "371c321272d770d1a6af69f3fa9415f430541b82" },
+					"diffDigest": {
+						"algorithm": "sha256",
+						"value": "c937874a5e8354dd9b04e23bedb9ec8bad28d484a8bdad79916d6b612b0d0c75"
+					},
+					"parentCommit": {
+						"algorithm": "sha1",
+						"value": "ab2e60722864dbe13aaf5544a57e6adf3c3c4786"
+					},
+					"planId": "ci-proof",
+					"schema": "graphrefly.stack.semantic-binding.v1",
+					"stablePatchId": "7edfd8adc8a9e9ce749be91c91155c5dc27b7cc3",
+					"trailer": { "name": "GraphReFly-Work-Unit", "occurrences": 1, "value": "CI-PROOF" },
+					"workUnitId": "CI-PROOF"
+				}
+			],
+			"checks.json": [
+				{
+					"checkId": "typecheck",
+					"commandDigest": {
+						"algorithm": "sha256",
+						"value": "f34e943ac13a17bd819ec5e55b6792c5c41cf6874f380719bf8de0d5f9dbb660"
+					},
+					"exitCode": 0,
+					"schema": "graphrefly.stack.semantic-check-result.v1",
+					"stderrDigest": {
+						"algorithm": "sha256",
+						"value": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126"
+					},
+					"stdoutDigest": {
+						"algorithm": "sha256",
+						"value": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126"
+					}
+				}
+			],
+			"gate-input.json": {
+				"bindings": [
+					{
+						"changedPaths": ["src/ci-proof.ts"],
+						"commit": { "algorithm": "sha1", "value": "371c321272d770d1a6af69f3fa9415f430541b82" },
+						"diffDigest": {
+							"algorithm": "sha256",
+							"value": "c937874a5e8354dd9b04e23bedb9ec8bad28d484a8bdad79916d6b612b0d0c75"
+						},
+						"parentCommit": {
+							"algorithm": "sha1",
+							"value": "ab2e60722864dbe13aaf5544a57e6adf3c3c4786"
+						},
+						"planId": "ci-proof",
+						"schema": "graphrefly.stack.semantic-binding.v1",
+						"stablePatchId": "7edfd8adc8a9e9ce749be91c91155c5dc27b7cc3",
+						"trailer": { "name": "GraphReFly-Work-Unit", "occurrences": 1, "value": "CI-PROOF" },
+						"workUnitId": "CI-PROOF"
+					}
+				],
+				"checks": [
+					{
+						"checkId": "typecheck",
+						"commandDigest": {
+							"algorithm": "sha256",
+							"value": "f34e943ac13a17bd819ec5e55b6792c5c41cf6874f380719bf8de0d5f9dbb660"
+						},
+						"exitCode": 0,
+						"schema": "graphrefly.stack.semantic-check-result.v1",
+						"stderrDigest": {
+							"algorithm": "sha256",
+							"value": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126"
+						},
+						"stdoutDigest": {
+							"algorithm": "sha256",
+							"value": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126"
+						}
+					}
+				],
+				"currentBlueprintHash": {
+					"algorithm": "sha256",
+					"value": "17ce61c8275fa5f9c258e4f32e414a853784e1413654863994870b0b2ae7b5ee"
+				},
+				"plan": {
+					"acceptedBy": { "identityVerified": false, "label": "PRODUCT-CI verification" },
+					"baseBlueprintHash": {
+						"algorithm": "sha256",
+						"value": "17ce61c8275fa5f9c258e4f32e414a853784e1413654863994870b0b2ae7b5ee"
+					},
+					"baseCommit": {
+						"algorithm": "sha1",
+						"value": "4b1e6444f6b82187544655a1f45c733946733285"
+					},
+					"planId": "ci-proof",
+					"policy": {
+						"digest": {
+							"algorithm": "sha256",
+							"value": "12d43021c67cf4b9323064252d9d58e5c644930b73d074d5c3dc0860e3eb1266"
+						},
+						"policyId": "ci-proof-policy",
+						"revision": "rev-1"
+					},
+					"proposalSource": "human",
+					"schema": "graphrefly.stack.semantic-plan.v1",
+					"taskDigest": {
+						"algorithm": "sha256",
+						"value": "34853e427e5402edfde3fa21f41dcf766b9c8a4bddcc2a88f4b0029f5bc25bcc"
+					},
+					"taskSummary": "Prove published GraphReFly Stack CI parity",
+					"workUnits": [
+						{
+							"allowedSourceScopes": ["src"],
+							"capabilities": [],
+							"claims": [
+								{
+									"id": "source-present",
+									"predicate": {
+										"operator": "present",
+										"selector": { "kind": "node", "nodeId": "source" }
+									},
+									"rationale": "The CI proof preserves the source node."
+								}
+							],
+							"dependencies": [],
+							"id": "CI-PROOF",
+							"intent": "Add a bounded source marker while preserving the accepted GraphReFly architecture.",
+							"requiredChecks": ["typecheck"],
+							"title": "Prove the published CI runner"
+						}
+					]
+				},
+				"policy": {
+					"allowedCapabilities": [],
+					"allowedSourceRoots": ["src"],
+					"checks": [
+						{
+							"argv": ["node", "node_modules/typescript/bin/tsc", "--noEmit"],
+							"id": "typecheck",
+							"network": false,
+							"shell": false,
+							"timeoutMs": 120000
+						}
+					],
+					"policyId": "ci-proof-policy",
+					"revision": "rev-1",
+					"schema": "graphrefly.stack.semantic-policy.v1"
+				},
+				"records": [
+					{
+						"bindingDigest": {
+							"algorithm": "sha256",
+							"value": "9d2b9ac34d98352b5ad6f8094f6e5ef1c1cea850ee43ccda093e4630d4db2545"
+						},
+						"blueprintHash": {
+							"algorithm": "sha256",
+							"value": "17ce61c8275fa5f9c258e4f32e414a853784e1413654863994870b0b2ae7b5ee"
+						},
+						"claimWitnesses": [
+							{
+								"claimId": "source-present",
+								"predicateDigest": {
+									"algorithm": "sha256",
+									"value": "a0eebe067b38d76eb009fb5f1a14fa9a0b96c18f7f578270797e857f0d0dcd18"
+								},
+								"status": "satisfied"
+							}
+						],
+						"planId": "ci-proof",
+						"policyDigest": {
+							"algorithm": "sha256",
+							"value": "12d43021c67cf4b9323064252d9d58e5c644930b73d074d5c3dc0860e3eb1266"
+						},
+						"rebindFrom": null,
+						"recordId": "record-2e8ac9e49733d4269d1b7b2c",
+						"requiredChecks": ["typecheck"],
+						"schema": "graphrefly.stack.semantic-record.v1",
+						"semanticParentRecordId": null,
+						"sourceScopeDigest": {
+							"algorithm": "sha256",
+							"value": "cd7ec5d955cedafed870102d9aaa2e6df13c673ed6b8d681643b403b97e575bc"
+						},
+						"workUnitId": "CI-PROOF"
+					}
+				],
+				"schema": "graphrefly.stack.semantic-gate-input.v1"
+			},
+			"gate-result.json": {
+				"checkIds": ["typecheck"],
+				"gateVersion": "v1",
+				"inputDigest": {
+					"algorithm": "sha256",
+					"value": "b5911e6e37af9f673acd62daea10747b1e4295c2196027cff739bb9a1254559b"
+				},
+				"schema": "graphrefly.stack.semantic-gate-result.v1",
+				"units": [
+					{
+						"invalidDependencies": [],
+						"reasonCodes": [],
+						"recordId": "record-2e8ac9e49733d4269d1b7b2c",
+						"verdict": "valid",
+						"workUnitId": "CI-PROOF"
+					}
+				],
+				"verdict": "pass"
+			},
+			"plan.json": {
+				"acceptedBy": { "identityVerified": false, "label": "PRODUCT-CI verification" },
+				"baseBlueprintHash": {
+					"algorithm": "sha256",
+					"value": "17ce61c8275fa5f9c258e4f32e414a853784e1413654863994870b0b2ae7b5ee"
+				},
+				"baseCommit": { "algorithm": "sha1", "value": "4b1e6444f6b82187544655a1f45c733946733285" },
+				"planId": "ci-proof",
+				"policy": {
+					"digest": {
+						"algorithm": "sha256",
+						"value": "12d43021c67cf4b9323064252d9d58e5c644930b73d074d5c3dc0860e3eb1266"
+					},
+					"policyId": "ci-proof-policy",
+					"revision": "rev-1"
+				},
+				"proposalSource": "human",
+				"schema": "graphrefly.stack.semantic-plan.v1",
+				"taskDigest": {
+					"algorithm": "sha256",
+					"value": "34853e427e5402edfde3fa21f41dcf766b9c8a4bddcc2a88f4b0029f5bc25bcc"
+				},
+				"taskSummary": "Prove published GraphReFly Stack CI parity",
+				"workUnits": [
+					{
+						"allowedSourceScopes": ["src"],
+						"capabilities": [],
+						"claims": [
+							{
+								"id": "source-present",
+								"predicate": {
+									"operator": "present",
+									"selector": { "kind": "node", "nodeId": "source" }
+								},
+								"rationale": "The CI proof preserves the source node."
+							}
+						],
+						"dependencies": [],
+						"id": "CI-PROOF",
+						"intent": "Add a bounded source marker while preserving the accepted GraphReFly architecture.",
+						"requiredChecks": ["typecheck"],
+						"title": "Prove the published CI runner"
+					}
+				]
+			},
+			"policy.json": {
+				"allowedCapabilities": [],
+				"allowedSourceRoots": ["src"],
+				"checks": [
+					{
+						"argv": ["node", "node_modules/typescript/bin/tsc", "--noEmit"],
+						"id": "typecheck",
+						"network": false,
+						"shell": false,
+						"timeoutMs": 120000
+					}
+				],
+				"policyId": "ci-proof-policy",
+				"revision": "rev-1",
+				"schema": "graphrefly.stack.semantic-policy.v1"
+			},
+			"records.json": [
+				{
+					"bindingDigest": {
+						"algorithm": "sha256",
+						"value": "9d2b9ac34d98352b5ad6f8094f6e5ef1c1cea850ee43ccda093e4630d4db2545"
+					},
+					"blueprintHash": {
+						"algorithm": "sha256",
+						"value": "17ce61c8275fa5f9c258e4f32e414a853784e1413654863994870b0b2ae7b5ee"
+					},
+					"claimWitnesses": [
+						{
+							"claimId": "source-present",
+							"predicateDigest": {
+								"algorithm": "sha256",
+								"value": "a0eebe067b38d76eb009fb5f1a14fa9a0b96c18f7f578270797e857f0d0dcd18"
+							},
+							"status": "satisfied"
+						}
+					],
+					"planId": "ci-proof",
+					"policyDigest": {
+						"algorithm": "sha256",
+						"value": "12d43021c67cf4b9323064252d9d58e5c644930b73d074d5c3dc0860e3eb1266"
+					},
+					"rebindFrom": null,
+					"recordId": "record-2e8ac9e49733d4269d1b7b2c",
+					"requiredChecks": ["typecheck"],
+					"schema": "graphrefly.stack.semantic-record.v1",
+					"semanticParentRecordId": null,
+					"sourceScopeDigest": {
+						"algorithm": "sha256",
+						"value": "cd7ec5d955cedafed870102d9aaa2e6df13c673ed6b8d681643b403b97e575bc"
+					},
+					"workUnitId": "CI-PROOF"
+				}
+			]
+		},
+		"manifest": {
+			"artifacts": [
+				{
+					"hash": {
+						"algorithm": "sha256",
+						"value": "12d43021c67cf4b9323064252d9d58e5c644930b73d074d5c3dc0860e3eb1266"
+					},
+					"path": "policy.json"
+				},
+				{
+					"hash": {
+						"algorithm": "sha256",
+						"value": "4d5ddc6e9b88b76dbfddaef386eb4ba14f4f28780df4c8b2c03a3e608e00aaa3"
+					},
+					"path": "plan.json"
+				},
+				{
+					"hash": {
+						"algorithm": "sha256",
+						"value": "fcede307bf09800b248a2867e0d6f0d9e07d2b0c7fef49f08b1907baef28316f"
+					},
+					"path": "bindings.json"
+				},
+				{
+					"hash": {
+						"algorithm": "sha256",
+						"value": "6e1dd3468e724a7e95ef531879c631f986d6f97abb8d3166a9a9b410265a0e0b"
+					},
+					"path": "records.json"
+				},
+				{
+					"hash": {
+						"algorithm": "sha256",
+						"value": "106918423325884218a4cf7689584aa9aa6c0134dd79259ba02266b854e9436a"
+					},
+					"path": "checks.json"
+				},
+				{
+					"hash": {
+						"algorithm": "sha256",
+						"value": "b5911e6e37af9f673acd62daea10747b1e4295c2196027cff739bb9a1254559b"
+					},
+					"path": "gate-input.json"
+				},
+				{
+					"hash": {
+						"algorithm": "sha256",
+						"value": "4babc673112c047ba39080ccfcd140c62df25eeb67f312072b266c61a4a52899"
+					},
+					"path": "gate-result.json"
+				}
+			],
+			"head": { "algorithm": "sha1", "value": "371c321272d770d1a6af69f3fa9415f430541b82" },
+			"inputDigest": {
+				"algorithm": "sha256",
+				"value": "b5911e6e37af9f673acd62daea10747b1e4295c2196027cff739bb9a1254559b"
+			},
+			"planId": "ci-proof",
+			"redaction": {
+				"excludes": [
+					"source-content",
+					"raw-blueprint",
+					"check-output",
+					"credentials",
+					"environment",
+					"model-response"
+				]
+			},
+			"schema": "graphrefly.stack.semantic-export-manifest.v1"
+		},
+		"schema": "graphrefly.stack.semantic-portable-bundle.v1"
+	},
+	"result": {
+		"artifactName": "graphrefly-stack-ci-96ddc20a7fa07215e961754e36ad3ceca90de8cee7000a03e8ca0f651029fcab",
+		"gateInputDigest": {
+			"algorithm": "sha256",
+			"value": "b5911e6e37af9f673acd62daea10747b1e4295c2196027cff739bb9a1254559b"
+		},
+		"gateResult": {
+			"checkIds": ["typecheck"],
+			"gateVersion": "v1",
+			"inputDigest": {
+				"algorithm": "sha256",
+				"value": "b5911e6e37af9f673acd62daea10747b1e4295c2196027cff739bb9a1254559b"
+			},
+			"schema": "graphrefly.stack.semantic-gate-result.v1",
+			"units": [
+				{
+					"invalidDependencies": [],
+					"reasonCodes": [],
+					"recordId": "record-2e8ac9e49733d4269d1b7b2c",
+					"verdict": "valid",
+					"workUnitId": "CI-PROOF"
+				}
+			],
+			"verdict": "pass"
+		},
+		"invocationDigest": {
+			"algorithm": "sha256",
+			"value": "465c49ba960b00100885281ec6ad8b2bac62c6051dd7e1fa141662dddb9b8a64"
+		},
+		"outcome": "pass",
+		"portableBundleDigest": {
+			"algorithm": "sha256",
+			"value": "96ddc20a7fa07215e961754e36ad3ceca90de8cee7000a03e8ca0f651029fcab"
+		},
+		"provenance": {
+			"attempt": 1,
+			"provider": "github-actions",
+			"repositoryId": "1305053637",
+			"runId": "29654453076",
+			"workflowSha": { "algorithm": "sha1", "value": "39b0f76e041e0f2c80891429ab770d7f08fa183d" }
+		},
+		"redaction": {
+			"excludes": [
+				"source-content",
+				"raw-blueprint",
+				"check-output",
+				"credentials",
+				"environment",
+				"model-response"
+			]
+		},
+		"schema": "graphrefly.stack.ci-result.v1",
+		"summary": { "affectedWorkUnitIds": [], "reasonCodes": [], "verdict": "pass" }
+	},
+	"schema": "graphrefly.stack.ci-bundle.v1"
+}

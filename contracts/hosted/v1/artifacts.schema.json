@@ -1,0 +1,426 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "urn:graphrefly-stack:schema:hosted-artifacts:v1",
+	"title": "GraphReFly Stack hosted artifacts v1",
+	"definitions": {
+		"Hash": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["algorithm", "value"],
+			"properties": {
+				"algorithm": { "const": "sha256" },
+				"value": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+			}
+		},
+		"GitOid": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["algorithm", "value"],
+			"properties": {
+				"algorithm": { "enum": ["sha1", "sha256"] },
+				"value": { "type": "string", "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$" }
+			}
+		},
+		"DecimalId": {
+			"type": "string",
+			"pattern": "^[1-9][0-9]*$",
+			"maxLength": 32
+		},
+		"InternalId": {
+			"type": "string",
+			"pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+		},
+		"Timestamp": {
+			"type": "string",
+			"pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]{1,9})?Z$"
+		},
+		"RedactionProfile": {
+			"enum": ["gate-summary-v1", "semantic-review-v1", "local-review-decisions-v1"]
+		},
+		"ExcludedClass": {
+			"enum": [
+				"source-content",
+				"raw-blueprint",
+				"check-output",
+				"credentials",
+				"environment",
+				"model-response"
+			]
+		},
+		"ArtifactDescriptor": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["path", "digest"],
+			"properties": {
+				"path": {
+					"type": "string",
+					"enum": ["ci/gate-summary.json", "ci/semantic-review.json", "review/decisions.json"]
+				},
+				"digest": { "$ref": "#/definitions/Hash" }
+			}
+		},
+		"RepositoryIdentity": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["provider", "repositoryId", "ownerId"],
+			"properties": {
+				"provider": { "const": "github" },
+				"repositoryId": { "$ref": "#/definitions/DecimalId" },
+				"ownerId": { "$ref": "#/definitions/DecimalId" }
+			}
+		},
+		"GitHubOidcClaims": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"schema",
+				"issuer",
+				"audience",
+				"subject",
+				"repositoryId",
+				"repositoryOwnerId",
+				"workflowRef",
+				"workflowSha",
+				"runId",
+				"runAttempt",
+				"actorId",
+				"eventName"
+			],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.github-oidc-claims.v1" },
+				"issuer": { "const": "https://token.actions.githubusercontent.com" },
+				"audience": { "const": "graphrefly-stack-hosted" },
+				"subject": { "type": "string", "minLength": 1, "maxLength": 1024 },
+				"repositoryId": { "$ref": "#/definitions/DecimalId" },
+				"repositoryOwnerId": { "$ref": "#/definitions/DecimalId" },
+				"workflowRef": { "type": "string", "minLength": 1, "maxLength": 1024 },
+				"workflowSha": { "$ref": "#/definitions/GitOid" },
+				"runId": { "$ref": "#/definitions/DecimalId" },
+				"runAttempt": { "type": "integer", "minimum": 1 },
+				"actorId": { "$ref": "#/definitions/DecimalId" },
+				"eventName": { "const": "workflow_run" }
+			}
+		},
+		"GitHubUserUploadIdentity": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["schema", "provider", "providerUserId", "actorId", "identityVerified"],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.github-user-upload.v1" },
+				"provider": { "const": "github" },
+				"providerUserId": { "$ref": "#/definitions/DecimalId" },
+				"actorId": { "$ref": "#/definitions/InternalId" },
+				"identityVerified": { "const": true }
+			}
+		},
+		"HostedSource": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"kind",
+				"sourceBundleDigest",
+				"ciInvocationDigest",
+				"gateInputDigest",
+				"portableBundleDigest",
+				"head",
+				"runId",
+				"runAttempt"
+			],
+			"properties": {
+				"kind": { "const": "ci-bundle" },
+				"sourceBundleDigest": { "$ref": "#/definitions/Hash" },
+				"ciInvocationDigest": { "$ref": "#/definitions/Hash" },
+				"gateInputDigest": { "$ref": "#/definitions/Hash" },
+				"portableBundleDigest": { "$ref": "#/definitions/Hash" },
+				"head": { "$ref": "#/definitions/GitOid" },
+				"runId": { "$ref": "#/definitions/DecimalId" },
+				"runAttempt": { "type": "integer", "minimum": 1 }
+			}
+		},
+		"LocalReviewSource": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["kind", "sourceBundleDigest", "base", "head"],
+			"properties": {
+				"kind": { "const": "review-bundle" },
+				"sourceBundleDigest": { "$ref": "#/definitions/Hash" },
+				"base": { "$ref": "#/definitions/GitOid" },
+				"head": { "$ref": "#/definitions/GitOid" }
+			}
+		},
+		"GateSummaryPayload": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["schema", "outcome", "gateResult", "summary"],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.hosted-gate-summary.v1" },
+				"outcome": { "enum": ["pass", "blocked", "error"] },
+				"gateResult": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/GateResult"
+				},
+				"summary": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["verdict", "affectedWorkUnitIds", "reasonCodes"],
+					"properties": {
+						"verdict": { "enum": ["pass", "blocked", "error"] },
+						"affectedWorkUnitIds": {
+							"type": "array",
+							"items": { "type": "string", "minLength": 1, "maxLength": 64 },
+							"uniqueItems": true
+						},
+						"reasonCodes": {
+							"type": "array",
+							"items": {
+								"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/ReasonCode"
+							},
+							"uniqueItems": true
+						}
+					}
+				}
+			}
+		},
+		"SemanticReviewPayload": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["schema", "bundle"],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.hosted-semantic-review.v1" },
+				"bundle": { "$ref": "urn:graphrefly-stack:schema:ci-artifacts:v1#/definitions/CIBundle" }
+			}
+		},
+		"LocalReviewPayload": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["schema", "bundle"],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.hosted-local-review.v1" },
+				"bundle": {
+					"$ref": "urn:graphrefly-stack:schema:repository-review-bundle:v1"
+				}
+			}
+		},
+		"HostedEnvelope": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"schema",
+				"profile",
+				"policyRevision",
+				"repository",
+				"source",
+				"uploadIdentity",
+				"redaction",
+				"payload"
+			],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.hosted-envelope.v1" },
+				"profile": { "$ref": "#/definitions/RedactionProfile" },
+				"policyRevision": { "const": "hosted-redaction.v1" },
+				"repository": { "$ref": "#/definitions/RepositoryIdentity" },
+				"source": {
+					"oneOf": [
+						{ "$ref": "#/definitions/HostedSource" },
+						{ "$ref": "#/definitions/LocalReviewSource" }
+					]
+				},
+				"uploadIdentity": {
+					"oneOf": [
+						{ "$ref": "#/definitions/GitHubOidcClaims" },
+						{ "$ref": "#/definitions/GitHubUserUploadIdentity" }
+					]
+				},
+				"redaction": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["explicitOptIn", "includes", "excludes"],
+					"properties": {
+						"explicitOptIn": { "type": "boolean" },
+						"includes": {
+							"type": "array",
+							"items": { "$ref": "#/definitions/ArtifactDescriptor" },
+							"minItems": 1,
+							"maxItems": 1
+						},
+						"excludes": {
+							"type": "array",
+							"items": { "$ref": "#/definitions/ExcludedClass" },
+							"minItems": 6,
+							"maxItems": 6,
+							"uniqueItems": true
+						}
+					}
+				},
+				"payload": {
+					"oneOf": [
+						{ "$ref": "#/definitions/GateSummaryPayload" },
+						{ "$ref": "#/definitions/SemanticReviewPayload" },
+						{ "$ref": "#/definitions/LocalReviewPayload" }
+					]
+				}
+			},
+			"allOf": [
+				{
+					"if": {
+						"type": "object",
+						"properties": { "profile": { "const": "gate-summary-v1" } }
+					},
+					"then": {
+						"type": "object",
+						"properties": {
+							"source": { "$ref": "#/definitions/HostedSource" },
+							"uploadIdentity": { "$ref": "#/definitions/GitHubOidcClaims" },
+							"redaction": {
+								"type": "object",
+								"properties": {
+									"explicitOptIn": { "const": false },
+									"includes": {
+										"type": "array",
+										"items": {
+											"type": "object",
+											"properties": { "path": { "const": "ci/gate-summary.json" } }
+										}
+									}
+								}
+							},
+							"payload": { "$ref": "#/definitions/GateSummaryPayload" }
+						}
+					}
+				},
+				{
+					"if": {
+						"type": "object",
+						"properties": { "profile": { "const": "semantic-review-v1" } }
+					},
+					"then": {
+						"type": "object",
+						"properties": {
+							"source": { "$ref": "#/definitions/HostedSource" },
+							"uploadIdentity": { "$ref": "#/definitions/GitHubOidcClaims" },
+							"redaction": {
+								"type": "object",
+								"properties": {
+									"explicitOptIn": { "const": true },
+									"includes": {
+										"type": "array",
+										"items": {
+											"type": "object",
+											"properties": { "path": { "const": "ci/semantic-review.json" } }
+										}
+									}
+								}
+							},
+							"payload": { "$ref": "#/definitions/SemanticReviewPayload" }
+						}
+					}
+				},
+				{
+					"if": {
+						"type": "object",
+						"properties": { "profile": { "const": "local-review-decisions-v1" } }
+					},
+					"then": {
+						"type": "object",
+						"properties": {
+							"source": { "$ref": "#/definitions/LocalReviewSource" },
+							"uploadIdentity": {
+								"$ref": "#/definitions/GitHubUserUploadIdentity"
+							},
+							"redaction": {
+								"type": "object",
+								"properties": {
+									"explicitOptIn": { "const": true },
+									"includes": {
+										"type": "array",
+										"items": {
+											"type": "object",
+											"properties": { "path": { "const": "review/decisions.json" } }
+										}
+									}
+								}
+							},
+							"payload": { "$ref": "#/definitions/LocalReviewPayload" }
+						}
+					}
+				}
+			]
+		},
+		"HostedDecision": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"schema",
+				"id",
+				"tenantId",
+				"repositoryId",
+				"actorId",
+				"identityVerified",
+				"envelopeDigest",
+				"gateInputDigest",
+				"witnessIds",
+				"decision",
+				"summary",
+				"receivedAt"
+			],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.hosted-decision.v1" },
+				"id": { "$ref": "#/definitions/InternalId" },
+				"tenantId": { "$ref": "#/definitions/InternalId" },
+				"repositoryId": { "$ref": "#/definitions/InternalId" },
+				"actorId": { "$ref": "#/definitions/InternalId" },
+				"identityVerified": { "const": true },
+				"envelopeDigest": { "$ref": "#/definitions/Hash" },
+				"gateInputDigest": { "$ref": "#/definitions/Hash" },
+				"witnessIds": {
+					"type": "array",
+					"items": { "type": "string", "minLength": 1, "maxLength": 128 },
+					"minItems": 1,
+					"uniqueItems": true
+				},
+				"decision": { "enum": ["approve", "request-changes", "defer"] },
+				"summary": { "type": "string", "minLength": 1, "maxLength": 1000 },
+				"supersedes": {
+					"anyOf": [{ "$ref": "#/definitions/InternalId" }, { "type": "null" }]
+				},
+				"receivedAt": { "$ref": "#/definitions/Timestamp" }
+			}
+		},
+		"AuditEvent": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"schema",
+				"id",
+				"tenantId",
+				"actorId",
+				"action",
+				"targetType",
+				"targetId",
+				"outcome",
+				"occurredAt"
+			],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.hosted-audit-event.v1" },
+				"id": { "$ref": "#/definitions/InternalId" },
+				"tenantId": { "$ref": "#/definitions/InternalId" },
+				"actorId": { "anyOf": [{ "$ref": "#/definitions/InternalId" }, { "type": "null" }] },
+				"action": {
+					"enum": [
+						"authenticate",
+						"membership-change",
+						"repository-link",
+						"upload",
+						"evidence-read",
+						"decision-append",
+						"authorization-deny",
+						"delete"
+					]
+				},
+				"targetType": { "enum": ["tenant", "membership", "repository", "envelope", "decision"] },
+				"targetId": { "type": "string", "minLength": 1, "maxLength": 128 },
+				"outcome": { "enum": ["accepted", "rejected"] },
+				"occurredAt": { "$ref": "#/definitions/Timestamp" }
+			}
+		}
+	}
+}

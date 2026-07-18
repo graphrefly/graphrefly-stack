@@ -1,0 +1,20 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "urn:graphrefly-stack:schema:hosted-golden-suite:v1",
+	"title": "GraphReFly Stack hosted golden suite v1",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["schema", "envelope", "decision", "auditEvent"],
+	"properties": {
+		"schema": { "const": "graphrefly.stack.hosted-golden-suite.v1" },
+		"envelope": {
+			"$ref": "urn:graphrefly-stack:schema:hosted-artifacts:v1#/definitions/HostedEnvelope"
+		},
+		"decision": {
+			"$ref": "urn:graphrefly-stack:schema:hosted-artifacts:v1#/definitions/HostedDecision"
+		},
+		"auditEvent": {
+			"$ref": "urn:graphrefly-stack:schema:hosted-artifacts:v1#/definitions/AuditEvent"
+		}
+	}
+}

@@ -1,0 +1,135 @@
+{
+	"schema": "graphrefly.stack.hosted-golden-suite.v1",
+	"envelope": {
+		"schema": "graphrefly.stack.hosted-envelope.v1",
+		"profile": "gate-summary-v1",
+		"policyRevision": "hosted-redaction.v1",
+		"repository": {
+			"provider": "github",
+			"repositoryId": "123456",
+			"ownerId": "654321"
+		},
+		"source": {
+			"kind": "ci-bundle",
+			"sourceBundleDigest": {
+				"algorithm": "sha256",
+				"value": "7777777777777777777777777777777777777777777777777777777777777777"
+			},
+			"ciInvocationDigest": {
+				"algorithm": "sha256",
+				"value": "317a4dccc0ce763be4c2f8f1be57d4c65a61126fd3f89cfb1b49aa9f53fbbb92"
+			},
+			"gateInputDigest": {
+				"algorithm": "sha256",
+				"value": "3030303030303030303030303030303030303030303030303030303030303030"
+			},
+			"portableBundleDigest": {
+				"algorithm": "sha256",
+				"value": "6666666666666666666666666666666666666666666666666666666666666666"
+			},
+			"head": {
+				"algorithm": "sha1",
+				"value": "2222222222222222222222222222222222222222"
+			},
+			"runId": "987654321",
+			"runAttempt": 2
+		},
+		"uploadIdentity": {
+			"schema": "graphrefly.stack.github-oidc-claims.v1",
+			"issuer": "https://token.actions.githubusercontent.com",
+			"audience": "graphrefly-stack-hosted",
+			"subject": "repo:graphrefly/example:ref:refs/heads/main",
+			"repositoryId": "123456",
+			"repositoryOwnerId": "654321",
+			"workflowRef": "graphrefly/example/.github/workflows/graphrefly-stack-hosted.yml@refs/heads/main",
+			"workflowSha": {
+				"algorithm": "sha1",
+				"value": "4444444444444444444444444444444444444444"
+			},
+			"runId": "987654322",
+			"runAttempt": 1,
+			"actorId": "24680",
+			"eventName": "workflow_run"
+		},
+		"redaction": {
+			"explicitOptIn": false,
+			"includes": [
+				{
+					"path": "ci/gate-summary.json",
+					"digest": {
+						"algorithm": "sha256",
+						"value": "d166132843cad78c15a9124833c97ae1920b1a2bb2c2e907e1b01d3723cee27a"
+					}
+				}
+			],
+			"excludes": [
+				"source-content",
+				"raw-blueprint",
+				"check-output",
+				"credentials",
+				"environment",
+				"model-response"
+			]
+		},
+		"payload": {
+			"schema": "graphrefly.stack.hosted-gate-summary.v1",
+			"outcome": "pass",
+			"gateResult": {
+				"schema": "graphrefly.stack.semantic-gate-result.v1",
+				"gateVersion": "v1",
+				"inputDigest": {
+					"algorithm": "sha256",
+					"value": "3030303030303030303030303030303030303030303030303030303030303030"
+				},
+				"verdict": "pass",
+				"units": [
+					{
+						"workUnitId": "CONTRACTS",
+						"verdict": "valid",
+						"reasonCodes": [],
+						"invalidDependencies": [],
+						"recordId": "record-contracts-v1"
+					}
+				],
+				"checkIds": ["typecheck"]
+			},
+			"summary": {
+				"verdict": "pass",
+				"affectedWorkUnitIds": [],
+				"reasonCodes": []
+			}
+		}
+	},
+	"decision": {
+		"schema": "graphrefly.stack.hosted-decision.v1",
+		"id": "10000000-0000-4000-8000-000000000001",
+		"tenantId": "10000000-0000-4000-8000-000000000002",
+		"repositoryId": "10000000-0000-4000-8000-000000000003",
+		"actorId": "10000000-0000-4000-8000-000000000004",
+		"identityVerified": true,
+		"envelopeDigest": {
+			"algorithm": "sha256",
+			"value": "cba1906acfd9146a8a78fe3684d362955f5f2ca2eefebff22e230bdf9219c9f3"
+		},
+		"gateInputDigest": {
+			"algorithm": "sha256",
+			"value": "3030303030303030303030303030303030303030303030303030303030303030"
+		},
+		"witnessIds": ["CONTRACTS"],
+		"decision": "approve",
+		"summary": "The immutable gate evidence and witnesses are consistent.",
+		"supersedes": null,
+		"receivedAt": "2026-07-18T20:00:00.000Z"
+	},
+	"auditEvent": {
+		"schema": "graphrefly.stack.hosted-audit-event.v1",
+		"id": "10000000-0000-4000-8000-000000000005",
+		"tenantId": "10000000-0000-4000-8000-000000000002",
+		"actorId": "10000000-0000-4000-8000-000000000004",
+		"action": "decision-append",
+		"targetType": "decision",
+		"targetId": "10000000-0000-4000-8000-000000000001",
+		"outcome": "accepted",
+		"occurredAt": "2026-07-18T20:00:00.000Z"
+	}
+}
