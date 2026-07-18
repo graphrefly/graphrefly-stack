@@ -1,0 +1,17 @@
+{
+	"suite": "35fa8e392df37e1685d212465bfe7b0c91866f16eaba1803782da1a1c68e6f5e",
+	"cases": {
+		"disjoint-compatible": {
+			"candidate": "8996c8aba7a42676ea86ec545d9c2f58bb06bf81f427b0afcdb12083a67241fe",
+			"result": "3d2c42219354233b962c859f16227787ac1499722cff0d440bf9ba777e8c7647"
+		},
+		"shared-node-independent-fields-compatible": {
+			"candidate": "20ac92616d639530119ec31ee9d9ec1fb2aad189cdc879b62fd89bd71ba117b1",
+			"result": "7e75702d506beb6bce72bfd749b56dfeee65bf80f44bf13683ec1a5660dba1e4"
+		},
+		"same-node-incompatible-value": {
+			"candidate": "991798c7de41ef407929da2c70fd86e854c658d25c2f51ffb0c30128059f2e8f",
+			"result": "e209a761f967da3dceecfc69728eca98fd153c415d10ced906ef972a155f4795"
+		}
+	}
+}

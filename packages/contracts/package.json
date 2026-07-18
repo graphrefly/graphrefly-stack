@@ -8,7 +8,7 @@
 		"./jcs": "./dist/jcs.js"
 	},
 	"scripts": {
-		"build": "tsc -p tsconfig.json && mkdir -p dist/schemas/repository/v1 dist/schemas/semantic/v1 dist/schemas/ci/v1 dist/schemas/hosted/v1 && cp ../../contracts/repository/v1/*.json dist/schemas/repository/v1/ && cp ../../contracts/semantic/v1/*.json dist/schemas/semantic/v1/ && cp ../../contracts/ci/v1/*.json dist/schemas/ci/v1/ && cp ../../contracts/hosted/v1/*.json dist/schemas/hosted/v1/"
+		"build": "tsc -p tsconfig.json && mkdir -p dist/schemas/repository/v1 dist/schemas/semantic/v1 dist/schemas/ci/v1 dist/schemas/hosted/v1 dist/schemas/integration/v1 && cp ../../contracts/repository/v1/*.json dist/schemas/repository/v1/ && cp ../../contracts/semantic/v1/*.json dist/schemas/semantic/v1/ && cp ../../contracts/ci/v1/*.json dist/schemas/ci/v1/ && cp ../../contracts/hosted/v1/*.json dist/schemas/hosted/v1/ && cp ../../contracts/integration/v1/*.json dist/schemas/integration/v1/"
 	},
 	"dependencies": {
 		"ajv": "8.20.0"

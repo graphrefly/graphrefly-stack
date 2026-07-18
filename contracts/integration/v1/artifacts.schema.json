@@ -1,0 +1,361 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "urn:graphrefly-stack:schema:integration-artifacts:v1",
+	"title": "GraphReFly Stack pull-request integration artifacts v1",
+	"definitions": {
+		"Hash": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["algorithm", "value"],
+			"properties": {
+				"algorithm": { "const": "sha256" },
+				"value": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+			}
+		},
+		"GitOid": {
+			"oneOf": [
+				{
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["algorithm", "value"],
+					"properties": {
+						"algorithm": { "const": "sha1" },
+						"value": { "type": "string", "pattern": "^[0-9a-f]{40}$" }
+					}
+				},
+				{
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["algorithm", "value"],
+					"properties": {
+						"algorithm": { "const": "sha256" },
+						"value": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+					}
+				}
+			]
+		},
+		"NullableGitOid": { "oneOf": [{ "$ref": "#/definitions/GitOid" }, { "type": "null" }] },
+		"NullableHash": { "oneOf": [{ "$ref": "#/definitions/Hash" }, { "type": "null" }] },
+		"RepositoryIdentity": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["provider", "owner", "name"],
+			"properties": {
+				"provider": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,31}$" },
+				"owner": { "type": "string", "minLength": 1, "maxLength": 128 },
+				"name": { "type": "string", "minLength": 1, "maxLength": 128 }
+			}
+		},
+		"BlueprintEvidence": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["revision", "blueprintHash"],
+			"properties": {
+				"revision": { "$ref": "#/definitions/GitOid" },
+				"blueprintHash": { "$ref": "#/definitions/Hash" }
+			}
+		},
+		"NullableBlueprintEvidence": {
+			"oneOf": [{ "$ref": "#/definitions/BlueprintEvidence" }, { "type": "null" }]
+		},
+		"DeltaEvidence": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["from", "to", "deltaDigest"],
+			"properties": {
+				"from": { "$ref": "#/definitions/GitOid" },
+				"to": { "$ref": "#/definitions/GitOid" },
+				"deltaDigest": { "$ref": "#/definitions/Hash" }
+			}
+		},
+		"NullableDeltaEvidence": {
+			"oneOf": [{ "$ref": "#/definitions/DeltaEvidence" }, { "type": "null" }]
+		},
+		"ReasonCode": {
+			"enum": [
+				"ANCESTRY_AMBIGUOUS",
+				"HEAD_RANGE_NON_LINEAR",
+				"TARGET_MOVED",
+				"HEAD_MOVED",
+				"TEXT_CONFLICT",
+				"CANDIDATE_EVALUATION_FAILED",
+				"CANDIDATE_BLUEPRINT_INVALID",
+				"NODE_DELETE_CHANGE",
+				"NODE_INCOMPATIBLE_CHANGE",
+				"EDGE_INCOMPATIBLE_CHANGE",
+				"SUBGRAPH_INCOMPATIBLE_CHANGE",
+				"METADATA_INCOMPATIBLE_CHANGE",
+				"CLAIM_INVALIDATED",
+				"DEPENDENCY_INVALIDATED",
+				"POLICY_INVALIDATED",
+				"HEAD_GATE_NOT_PASSING",
+				"ARTIFACT_TAMPERED"
+			]
+		},
+		"PathWitness": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["kind", "path"],
+			"properties": {
+				"kind": { "const": "path" },
+				"path": { "type": "string", "minLength": 1, "maxLength": 4096 }
+			}
+		},
+		"NodeWitness": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["kind", "nodeId", "field"],
+			"properties": {
+				"kind": { "const": "node" },
+				"nodeId": { "type": "string", "minLength": 1, "maxLength": 512 },
+				"field": { "type": "string", "minLength": 1, "maxLength": 128 }
+			}
+		},
+		"EdgeWitness": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["kind", "source", "target"],
+			"properties": {
+				"kind": { "const": "edge" },
+				"source": { "type": "string", "minLength": 1, "maxLength": 512 },
+				"target": { "type": "string", "minLength": 1, "maxLength": 512 }
+			}
+		},
+		"SubgraphWitness": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["kind", "mountId"],
+			"properties": {
+				"kind": { "const": "subgraph" },
+				"mountId": { "type": "string", "minLength": 1, "maxLength": 512 }
+			}
+		},
+		"MetadataFieldWitness": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["kind", "ownerKind", "ownerId", "field"],
+			"properties": {
+				"kind": { "const": "metadata-field" },
+				"ownerKind": { "enum": ["graph", "node", "edge", "subgraph"] },
+				"ownerId": { "type": "string", "minLength": 1, "maxLength": 512 },
+				"field": { "type": "string", "minLength": 1, "maxLength": 128 }
+			}
+		},
+		"ClaimWitness": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["kind", "workUnitId", "claimId"],
+			"properties": {
+				"kind": { "const": "claim" },
+				"workUnitId": { "type": "string", "minLength": 1, "maxLength": 64 },
+				"claimId": { "type": "string", "minLength": 1, "maxLength": 128 }
+			}
+		},
+		"DependencyWitness": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["kind", "workUnitId", "dependencyId"],
+			"properties": {
+				"kind": { "const": "dependency" },
+				"workUnitId": { "type": "string", "minLength": 1, "maxLength": 64 },
+				"dependencyId": { "type": "string", "minLength": 1, "maxLength": 64 }
+			}
+		},
+		"PolicyWitness": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["kind", "policyDigest"],
+			"properties": {
+				"kind": { "const": "policy" },
+				"policyDigest": { "$ref": "#/definitions/Hash" }
+			}
+		},
+		"DiagnosticsWitness": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["kind", "code", "path"],
+			"properties": {
+				"kind": { "const": "diagnostics" },
+				"code": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]{0,63}$" },
+				"path": {
+					"oneOf": [{ "type": "string", "minLength": 1, "maxLength": 4096 }, { "type": "null" }]
+				}
+			}
+		},
+		"Witness": {
+			"oneOf": [
+				{ "$ref": "#/definitions/PathWitness" },
+				{ "$ref": "#/definitions/NodeWitness" },
+				{ "$ref": "#/definitions/EdgeWitness" },
+				{ "$ref": "#/definitions/SubgraphWitness" },
+				{ "$ref": "#/definitions/MetadataFieldWitness" },
+				{ "$ref": "#/definitions/ClaimWitness" },
+				{ "$ref": "#/definitions/DependencyWitness" },
+				{ "$ref": "#/definitions/PolicyWitness" },
+				{ "$ref": "#/definitions/DiagnosticsWitness" }
+			]
+		},
+		"OverlapWitness": {
+			"oneOf": [
+				{ "$ref": "#/definitions/PathWitness" },
+				{ "$ref": "#/definitions/NodeWitness" },
+				{ "$ref": "#/definitions/EdgeWitness" },
+				{ "$ref": "#/definitions/SubgraphWitness" },
+				{ "$ref": "#/definitions/MetadataFieldWitness" }
+			]
+		},
+		"Conflict": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["reasonCode", "witness"],
+			"properties": {
+				"reasonCode": { "$ref": "#/definitions/ReasonCode" },
+				"witness": { "$ref": "#/definitions/Witness" }
+			}
+		},
+		"IntegrationCandidate": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"schema",
+				"repository",
+				"provider",
+				"revisions",
+				"topology",
+				"merge",
+				"accepted",
+				"evidence",
+				"headGate",
+				"status"
+			],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.integration-candidate.v1" },
+				"repository": { "$ref": "#/definitions/RepositoryIdentity" },
+				"provider": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["kind", "runtimeVersion"],
+					"properties": {
+						"kind": { "const": "graphrefly" },
+						"runtimeVersion": {
+							"type": "string",
+							"pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$"
+						}
+					}
+				},
+				"revisions": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["mergeBase", "target", "head"],
+					"properties": {
+						"mergeBase": { "$ref": "#/definitions/NullableGitOid" },
+						"target": { "$ref": "#/definitions/GitOid" },
+						"head": { "$ref": "#/definitions/GitOid" }
+					}
+				},
+				"topology": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["mergeBase", "headRange"],
+					"properties": {
+						"mergeBase": { "enum": ["unique", "ambiguous", "missing"] },
+						"headRange": { "enum": ["linear", "non-linear", "unavailable"] }
+					}
+				},
+				"merge": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["algorithm", "revision", "status", "tree"],
+					"properties": {
+						"algorithm": { "const": "git-ort-three-way" },
+						"revision": { "const": "v1" },
+						"status": { "enum": ["merged", "conflict", "unavailable"] },
+						"tree": { "$ref": "#/definitions/NullableGitOid" }
+					}
+				},
+				"accepted": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["planDigest", "policyDigest"],
+					"properties": {
+						"planDigest": { "$ref": "#/definitions/Hash" },
+						"policyDigest": { "$ref": "#/definitions/Hash" }
+					}
+				},
+				"evidence": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": [
+						"baseBlueprint",
+						"targetBlueprint",
+						"headBlueprint",
+						"candidateBlueprint",
+						"targetDelta",
+						"headDelta"
+					],
+					"properties": {
+						"baseBlueprint": { "$ref": "#/definitions/NullableBlueprintEvidence" },
+						"targetBlueprint": { "$ref": "#/definitions/NullableBlueprintEvidence" },
+						"headBlueprint": { "$ref": "#/definitions/NullableBlueprintEvidence" },
+						"candidateBlueprint": { "$ref": "#/definitions/NullableBlueprintEvidence" },
+						"targetDelta": { "$ref": "#/definitions/NullableDeltaEvidence" },
+						"headDelta": { "$ref": "#/definitions/NullableDeltaEvidence" }
+					}
+				},
+				"headGate": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["inputDigest", "resultDigest", "verdict"],
+					"properties": {
+						"inputDigest": { "$ref": "#/definitions/Hash" },
+						"resultDigest": { "$ref": "#/definitions/Hash" },
+						"verdict": { "enum": ["pass", "blocked", "error"] }
+					}
+				},
+				"status": { "enum": ["ready", "conflict", "error"] }
+			}
+		},
+		"IntegrationResult": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"schema",
+				"candidateDigest",
+				"observedRevisions",
+				"outcome",
+				"reasonCodes",
+				"overlaps",
+				"conflicts"
+			],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.integration-result.v1" },
+				"candidateDigest": { "$ref": "#/definitions/Hash" },
+				"observedRevisions": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["target", "head"],
+					"properties": {
+						"target": { "$ref": "#/definitions/GitOid" },
+						"head": { "$ref": "#/definitions/GitOid" }
+					}
+				},
+				"outcome": { "enum": ["compatible", "conflict", "error"] },
+				"reasonCodes": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/ReasonCode" },
+					"uniqueItems": true
+				},
+				"overlaps": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/OverlapWitness" },
+					"uniqueItems": true
+				},
+				"conflicts": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/Conflict" },
+					"uniqueItems": true
+				}
+			}
+		}
+	}
+}

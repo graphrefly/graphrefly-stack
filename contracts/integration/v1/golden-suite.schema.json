@@ -1,0 +1,29 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "urn:graphrefly-stack:schema:integration-golden-suite:v1",
+	"title": "GraphReFly Stack pull-request integration golden suite v1",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["schema", "cases"],
+	"properties": {
+		"schema": { "const": "graphrefly.stack.integration-golden-suite.v1" },
+		"cases": {
+			"type": "array",
+			"minItems": 3,
+			"items": {
+				"type": "object",
+				"additionalProperties": false,
+				"required": ["caseId", "candidate", "result"],
+				"properties": {
+					"caseId": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+					"candidate": {
+						"$ref": "urn:graphrefly-stack:schema:integration-artifacts:v1#/definitions/IntegrationCandidate"
+					},
+					"result": {
+						"$ref": "urn:graphrefly-stack:schema:integration-artifacts:v1#/definitions/IntegrationResult"
+					}
+				}
+			}
+		}
+	}
+}

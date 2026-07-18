@@ -1,0 +1,491 @@
+{
+	"schema": "graphrefly.stack.integration-golden-suite.v1",
+	"cases": [
+		{
+			"caseId": "disjoint-compatible",
+			"candidate": {
+				"schema": "graphrefly.stack.integration-candidate.v1",
+				"repository": {
+					"provider": "github",
+					"owner": "graphrefly",
+					"name": "disjoint"
+				},
+				"provider": {
+					"kind": "graphrefly",
+					"runtimeVersion": "0.3.0"
+				},
+				"revisions": {
+					"mergeBase": {
+						"algorithm": "sha1",
+						"value": "1111111111111111111111111111111111111111"
+					},
+					"target": {
+						"algorithm": "sha1",
+						"value": "2222222222222222222222222222222222222222"
+					},
+					"head": {
+						"algorithm": "sha1",
+						"value": "3333333333333333333333333333333333333333"
+					}
+				},
+				"topology": {
+					"mergeBase": "unique",
+					"headRange": "linear"
+				},
+				"merge": {
+					"algorithm": "git-ort-three-way",
+					"revision": "v1",
+					"status": "merged",
+					"tree": {
+						"algorithm": "sha1",
+						"value": "4444444444444444444444444444444444444444"
+					}
+				},
+				"accepted": {
+					"planDigest": {
+						"algorithm": "sha256",
+						"value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+					},
+					"policyDigest": {
+						"algorithm": "sha256",
+						"value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+					}
+				},
+				"evidence": {
+					"baseBlueprint": {
+						"revision": {
+							"algorithm": "sha1",
+							"value": "1111111111111111111111111111111111111111"
+						},
+						"blueprintHash": {
+							"algorithm": "sha256",
+							"value": "1111111111111111111111111111111111111111111111111111111111111111"
+						}
+					},
+					"targetBlueprint": {
+						"revision": {
+							"algorithm": "sha1",
+							"value": "2222222222222222222222222222222222222222"
+						},
+						"blueprintHash": {
+							"algorithm": "sha256",
+							"value": "2222222222222222222222222222222222222222222222222222222222222222"
+						}
+					},
+					"headBlueprint": {
+						"revision": {
+							"algorithm": "sha1",
+							"value": "3333333333333333333333333333333333333333"
+						},
+						"blueprintHash": {
+							"algorithm": "sha256",
+							"value": "3333333333333333333333333333333333333333333333333333333333333333"
+						}
+					},
+					"candidateBlueprint": {
+						"revision": {
+							"algorithm": "sha1",
+							"value": "4444444444444444444444444444444444444444"
+						},
+						"blueprintHash": {
+							"algorithm": "sha256",
+							"value": "4444444444444444444444444444444444444444444444444444444444444444"
+						}
+					},
+					"targetDelta": {
+						"from": {
+							"algorithm": "sha1",
+							"value": "1111111111111111111111111111111111111111"
+						},
+						"to": {
+							"algorithm": "sha1",
+							"value": "2222222222222222222222222222222222222222"
+						},
+						"deltaDigest": {
+							"algorithm": "sha256",
+							"value": "5555555555555555555555555555555555555555555555555555555555555555"
+						}
+					},
+					"headDelta": {
+						"from": {
+							"algorithm": "sha1",
+							"value": "1111111111111111111111111111111111111111"
+						},
+						"to": {
+							"algorithm": "sha1",
+							"value": "3333333333333333333333333333333333333333"
+						},
+						"deltaDigest": {
+							"algorithm": "sha256",
+							"value": "6666666666666666666666666666666666666666666666666666666666666666"
+						}
+					}
+				},
+				"headGate": {
+					"inputDigest": {
+						"algorithm": "sha256",
+						"value": "7777777777777777777777777777777777777777777777777777777777777777"
+					},
+					"resultDigest": {
+						"algorithm": "sha256",
+						"value": "8888888888888888888888888888888888888888888888888888888888888888"
+					},
+					"verdict": "pass"
+				},
+				"status": "ready"
+			},
+			"result": {
+				"schema": "graphrefly.stack.integration-result.v1",
+				"candidateDigest": {
+					"algorithm": "sha256",
+					"value": "8996c8aba7a42676ea86ec545d9c2f58bb06bf81f427b0afcdb12083a67241fe"
+				},
+				"observedRevisions": {
+					"target": {
+						"algorithm": "sha1",
+						"value": "2222222222222222222222222222222222222222"
+					},
+					"head": {
+						"algorithm": "sha1",
+						"value": "3333333333333333333333333333333333333333"
+					}
+				},
+				"outcome": "compatible",
+				"reasonCodes": [],
+				"overlaps": [],
+				"conflicts": []
+			}
+		},
+		{
+			"caseId": "shared-node-independent-fields-compatible",
+			"candidate": {
+				"schema": "graphrefly.stack.integration-candidate.v1",
+				"repository": {
+					"provider": "github",
+					"owner": "graphrefly",
+					"name": "shared-node"
+				},
+				"provider": {
+					"kind": "graphrefly",
+					"runtimeVersion": "0.3.0"
+				},
+				"revisions": {
+					"mergeBase": {
+						"algorithm": "sha1",
+						"value": "1111111111111111111111111111111111111111"
+					},
+					"target": {
+						"algorithm": "sha1",
+						"value": "2222222222222222222222222222222222222222"
+					},
+					"head": {
+						"algorithm": "sha1",
+						"value": "3333333333333333333333333333333333333333"
+					}
+				},
+				"topology": {
+					"mergeBase": "unique",
+					"headRange": "linear"
+				},
+				"merge": {
+					"algorithm": "git-ort-three-way",
+					"revision": "v1",
+					"status": "merged",
+					"tree": {
+						"algorithm": "sha1",
+						"value": "4444444444444444444444444444444444444444"
+					}
+				},
+				"accepted": {
+					"planDigest": {
+						"algorithm": "sha256",
+						"value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+					},
+					"policyDigest": {
+						"algorithm": "sha256",
+						"value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+					}
+				},
+				"evidence": {
+					"baseBlueprint": {
+						"revision": {
+							"algorithm": "sha1",
+							"value": "1111111111111111111111111111111111111111"
+						},
+						"blueprintHash": {
+							"algorithm": "sha256",
+							"value": "1111111111111111111111111111111111111111111111111111111111111111"
+						}
+					},
+					"targetBlueprint": {
+						"revision": {
+							"algorithm": "sha1",
+							"value": "2222222222222222222222222222222222222222"
+						},
+						"blueprintHash": {
+							"algorithm": "sha256",
+							"value": "2222222222222222222222222222222222222222222222222222222222222222"
+						}
+					},
+					"headBlueprint": {
+						"revision": {
+							"algorithm": "sha1",
+							"value": "3333333333333333333333333333333333333333"
+						},
+						"blueprintHash": {
+							"algorithm": "sha256",
+							"value": "3333333333333333333333333333333333333333333333333333333333333333"
+						}
+					},
+					"candidateBlueprint": {
+						"revision": {
+							"algorithm": "sha1",
+							"value": "4444444444444444444444444444444444444444"
+						},
+						"blueprintHash": {
+							"algorithm": "sha256",
+							"value": "9999999999999999999999999999999999999999999999999999999999999999"
+						}
+					},
+					"targetDelta": {
+						"from": {
+							"algorithm": "sha1",
+							"value": "1111111111111111111111111111111111111111"
+						},
+						"to": {
+							"algorithm": "sha1",
+							"value": "2222222222222222222222222222222222222222"
+						},
+						"deltaDigest": {
+							"algorithm": "sha256",
+							"value": "5555555555555555555555555555555555555555555555555555555555555555"
+						}
+					},
+					"headDelta": {
+						"from": {
+							"algorithm": "sha1",
+							"value": "1111111111111111111111111111111111111111"
+						},
+						"to": {
+							"algorithm": "sha1",
+							"value": "3333333333333333333333333333333333333333"
+						},
+						"deltaDigest": {
+							"algorithm": "sha256",
+							"value": "6666666666666666666666666666666666666666666666666666666666666666"
+						}
+					}
+				},
+				"headGate": {
+					"inputDigest": {
+						"algorithm": "sha256",
+						"value": "7777777777777777777777777777777777777777777777777777777777777777"
+					},
+					"resultDigest": {
+						"algorithm": "sha256",
+						"value": "8888888888888888888888888888888888888888888888888888888888888888"
+					},
+					"verdict": "pass"
+				},
+				"status": "ready"
+			},
+			"result": {
+				"schema": "graphrefly.stack.integration-result.v1",
+				"candidateDigest": {
+					"algorithm": "sha256",
+					"value": "20ac92616d639530119ec31ee9d9ec1fb2aad189cdc879b62fd89bd71ba117b1"
+				},
+				"observedRevisions": {
+					"target": {
+						"algorithm": "sha1",
+						"value": "2222222222222222222222222222222222222222"
+					},
+					"head": {
+						"algorithm": "sha1",
+						"value": "3333333333333333333333333333333333333333"
+					}
+				},
+				"outcome": "compatible",
+				"reasonCodes": [],
+				"overlaps": [
+					{
+						"kind": "node",
+						"nodeId": "session",
+						"field": "metadata.owner"
+					}
+				],
+				"conflicts": []
+			}
+		},
+		{
+			"caseId": "same-node-incompatible-value",
+			"candidate": {
+				"schema": "graphrefly.stack.integration-candidate.v1",
+				"repository": {
+					"provider": "github",
+					"owner": "graphrefly",
+					"name": "same-node-conflict"
+				},
+				"provider": {
+					"kind": "graphrefly",
+					"runtimeVersion": "0.3.0"
+				},
+				"revisions": {
+					"mergeBase": {
+						"algorithm": "sha1",
+						"value": "1111111111111111111111111111111111111111"
+					},
+					"target": {
+						"algorithm": "sha1",
+						"value": "2222222222222222222222222222222222222222"
+					},
+					"head": {
+						"algorithm": "sha1",
+						"value": "3333333333333333333333333333333333333333"
+					}
+				},
+				"topology": {
+					"mergeBase": "unique",
+					"headRange": "linear"
+				},
+				"merge": {
+					"algorithm": "git-ort-three-way",
+					"revision": "v1",
+					"status": "merged",
+					"tree": {
+						"algorithm": "sha1",
+						"value": "4444444444444444444444444444444444444444"
+					}
+				},
+				"accepted": {
+					"planDigest": {
+						"algorithm": "sha256",
+						"value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+					},
+					"policyDigest": {
+						"algorithm": "sha256",
+						"value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+					}
+				},
+				"evidence": {
+					"baseBlueprint": {
+						"revision": {
+							"algorithm": "sha1",
+							"value": "1111111111111111111111111111111111111111"
+						},
+						"blueprintHash": {
+							"algorithm": "sha256",
+							"value": "1111111111111111111111111111111111111111111111111111111111111111"
+						}
+					},
+					"targetBlueprint": {
+						"revision": {
+							"algorithm": "sha1",
+							"value": "2222222222222222222222222222222222222222"
+						},
+						"blueprintHash": {
+							"algorithm": "sha256",
+							"value": "2222222222222222222222222222222222222222222222222222222222222222"
+						}
+					},
+					"headBlueprint": {
+						"revision": {
+							"algorithm": "sha1",
+							"value": "3333333333333333333333333333333333333333"
+						},
+						"blueprintHash": {
+							"algorithm": "sha256",
+							"value": "3333333333333333333333333333333333333333333333333333333333333333"
+						}
+					},
+					"candidateBlueprint": {
+						"revision": {
+							"algorithm": "sha1",
+							"value": "4444444444444444444444444444444444444444"
+						},
+						"blueprintHash": {
+							"algorithm": "sha256",
+							"value": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+						}
+					},
+					"targetDelta": {
+						"from": {
+							"algorithm": "sha1",
+							"value": "1111111111111111111111111111111111111111"
+						},
+						"to": {
+							"algorithm": "sha1",
+							"value": "2222222222222222222222222222222222222222"
+						},
+						"deltaDigest": {
+							"algorithm": "sha256",
+							"value": "5555555555555555555555555555555555555555555555555555555555555555"
+						}
+					},
+					"headDelta": {
+						"from": {
+							"algorithm": "sha1",
+							"value": "1111111111111111111111111111111111111111"
+						},
+						"to": {
+							"algorithm": "sha1",
+							"value": "3333333333333333333333333333333333333333"
+						},
+						"deltaDigest": {
+							"algorithm": "sha256",
+							"value": "6666666666666666666666666666666666666666666666666666666666666666"
+						}
+					}
+				},
+				"headGate": {
+					"inputDigest": {
+						"algorithm": "sha256",
+						"value": "7777777777777777777777777777777777777777777777777777777777777777"
+					},
+					"resultDigest": {
+						"algorithm": "sha256",
+						"value": "8888888888888888888888888888888888888888888888888888888888888888"
+					},
+					"verdict": "pass"
+				},
+				"status": "conflict"
+			},
+			"result": {
+				"schema": "graphrefly.stack.integration-result.v1",
+				"candidateDigest": {
+					"algorithm": "sha256",
+					"value": "991798c7de41ef407929da2c70fd86e854c658d25c2f51ffb0c30128059f2e8f"
+				},
+				"observedRevisions": {
+					"target": {
+						"algorithm": "sha1",
+						"value": "2222222222222222222222222222222222222222"
+					},
+					"head": {
+						"algorithm": "sha1",
+						"value": "3333333333333333333333333333333333333333"
+					}
+				},
+				"outcome": "conflict",
+				"reasonCodes": ["NODE_INCOMPATIBLE_CHANGE"],
+				"overlaps": [
+					{
+						"kind": "node",
+						"nodeId": "session",
+						"field": "metadata.owner"
+					}
+				],
+				"conflicts": [
+					{
+						"reasonCode": "NODE_INCOMPATIBLE_CHANGE",
+						"witness": {
+							"kind": "node",
+							"nodeId": "session",
+							"field": "metadata.owner"
+						}
+					}
+				]
+			}
+		}
+	]
+}
