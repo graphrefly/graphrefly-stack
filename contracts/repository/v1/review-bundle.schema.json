@@ -1,0 +1,49 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "urn:graphrefly-stack:schema:repository-review-bundle:v1",
+	"title": "GraphReFly Stack portable repository review bundle v1",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["schema", "repository", "artifacts"],
+	"properties": {
+		"schema": { "const": "graphrefly.stack.repository-review-bundle.v1" },
+		"repository": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["label", "baseOid", "headOid"],
+			"properties": {
+				"label": { "type": "string", "minLength": 1 },
+				"baseOid": {
+					"$ref": "urn:graphrefly-stack:schema:repository-review:v1#/definitions/GitOid"
+				},
+				"headOid": {
+					"$ref": "urn:graphrefly-stack:schema:repository-review:v1#/definitions/GitOid"
+				}
+			}
+		},
+		"artifacts": {
+			"type": "array",
+			"items": {
+				"type": "object",
+				"additionalProperties": false,
+				"required": ["path", "hash", "record"],
+				"properties": {
+					"path": {
+						"type": "string",
+						"pattern": "^reviews/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\\.json$"
+					},
+					"hash": {
+						"type": "object",
+						"additionalProperties": false,
+						"required": ["algorithm", "value"],
+						"properties": {
+							"algorithm": { "const": "sha256" },
+							"value": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+						}
+					},
+					"record": { "$ref": "urn:graphrefly-stack:schema:repository-review-decision:v1" }
+				}
+			}
+		}
+	}
+}

@@ -343,6 +343,9 @@ export async function runCli(argv = process.argv.slice(2)): Promise<number> {
 
 	let reviewData: unknown;
 	let evidenceBundlePath: string | undefined;
+	let repositoryReviewState:
+		| { repository: string; review: Awaited<ReturnType<typeof createRepositoryReview>> }
+		| undefined;
 	const repository = readOption(argv, "--repo");
 	const base = readOption(argv, "--base");
 	const head = readOption(argv, "--head");
@@ -368,7 +371,9 @@ export async function runCli(argv = process.argv.slice(2)): Promise<number> {
 			);
 		}
 		try {
-			reviewData = await createRepositoryReview({ repository, base, head });
+			const repositoryReview = await createRepositoryReview({ repository, base, head });
+			reviewData = repositoryReview;
+			repositoryReviewState = { repository: resolve(repository), review: repositoryReview };
 		} catch (error) {
 			if (error instanceof RepositoryReviewError) {
 				return failure(command, json, error.code, error.message);
@@ -424,6 +429,7 @@ export async function runCli(argv = process.argv.slice(2)): Promise<number> {
 		port,
 		reviewData,
 		evidenceBundlePath,
+		repositoryReviewState,
 	});
 	process.stderr.write(
 		`GraphReFly Stack review shell (${CORE_ARCHITECTURE.version}) listening at ${running.url}\n`,

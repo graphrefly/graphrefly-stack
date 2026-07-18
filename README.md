@@ -3,9 +3,9 @@
 **Semantic stacked diffs that know when their architectural assumptions expire.**
 
 GraphReFly Stack is an OpenAI Build Week developer tool built with Codex, GPT-5.6, Git, and
-GraphReFly. It adds a semantic validity layer above Git: every work-unit commit is bound to a
-GraphBlueprint witness, an allowed source scope, dependency claims, required checks, and a
-deterministic `GateResult`.
+GraphReFly. Its generic local review binds every stacked commit to the GraphBlueprint generated at
+that Git object and its exact parent diff. Repositories that adopt semantic change records can also
+bind allowed source scopes, dependency claims, required checks, and a deterministic `GateResult`.
 
 Git can report a clean rebase while an agent-generated change is no longer valid under the
 architecture it was planned against. GraphReFly Stack makes that mismatch visible, keeps unaffected
@@ -15,8 +15,8 @@ decides validity.
 ## Install and review a GraphReFly repository
 
 Requirements: macOS or Linux, Node.js 24, pnpm 11.7, and Git. The CLI and local web review shell use
-no hosted service, database, or credentials. Once the package is published, install it in the
-GraphReFly repository you want to review:
+no hosted service, database, or credentials. Install it in the GraphReFly repository you want to
+review:
 
 ```bash
 pnpm add -D @graphrefly/stack
@@ -34,8 +34,17 @@ automatically. Open the printed URL (normally <http://127.0.0.1:4173>), then:
    runtime.
 3. Verify that commit OID, Blueprint hash, upstream Mermaid diagram, delta events, and split code diff
    move together.
-4. Expand repository evidence or commit lineage only when needed. No session, delivery, fixture, or
-   fake semantic-gate state appears in the generic review.
+4. Use **Review changes** to record Approve or Request changes for the exact commit and Blueprint.
+5. Open **Help** for the Git → Blueprint delta → code diff relationship, and expand **Technical
+   details** only when troubleshooting runtime or immutable identities.
+
+Local review decisions and their summaries are strict immutable records under the repository's Git
+common directory at `.git/grfs/reviews`; they never appear in `git status`, change source files, or
+update Git refs. The Technical details disclosure offers an explicit portable review export after a
+decision exists. That content-hashed bundle is the explicit sharing boundary for another reviewer or
+CI. A future hosted GraphReFly Stack can wrap selected exported artifacts in its policy-redacted
+upload envelope; this release neither treats the local export as upload-ready nor uploads review
+state automatically.
 
 `--graph-module` means the repository's root Graph construction module, not the only Graph module
 allowed in the repository. That root module may import, compose, and mount any number of Graphs and
@@ -83,8 +92,10 @@ pnpm exec grfs review --repo . --base "$BASE" --head HEAD --json
 ```
 
 The generic payload is commit-centric. When a repository has not adopted semantic change records,
-the UI says `Semantic gate not configured`; it never turns missing semantic evidence into a passing
-`GateResult`.
+the payload records that internal absence but the primary UI does not advertise an unavailable
+gate, and it never turns missing semantic evidence into a passing `GateResult`. A local human
+decision remains separate from any future semantic gate and does not approve or merge a GitHub pull
+request.
 
 Before registry publication, the same install path is exercised from the packed tarball rather than
 from workspace imports:
@@ -197,8 +208,10 @@ and canonical milestones in `docs/evidence/milestones.jsonl` distinguish that wo
 - The portable bundle is not self-listed in its manifest because that would create a circular hash.
 - Raw provider responses, generated repositories, and sensitive submission drafts stay under
   ignored `.private/` paths.
-- The review server only binds to `127.0.0.1`, sends a restrictive CSP, accepts only GET/HEAD, and
-  exposes no write endpoint.
+- The review server only binds to `127.0.0.1` and sends a restrictive CSP. Its sole write surface is
+  a size-bounded, same-origin `application/json` endpoint that appends validated review decisions
+  below `.git/grfs`; source files, Git objects and refs, repository config, and `GateResult` remain
+  read-only.
 - Generic Blueprint entrypoints run with an empty environment, a five-second timeout, a one-MiB
   stdout bound, read-only filesystem allowlists, and no network or child-process permission.
 - Generic payloads omit Blueprint provenance and reject absolute paths in topology metadata before

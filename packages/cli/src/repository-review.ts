@@ -456,6 +456,30 @@ async function validateReview(review: RepositoryReview): Promise<void> {
 	}
 }
 
+function reviewHeadLabel(repository: string, requested: string, headOid: string): string {
+	try {
+		const symbolic = gitText(repository, ["rev-parse", "--symbolic-full-name", requested]);
+		if (symbolic.startsWith("refs/heads/")) return symbolic.slice("refs/heads/".length);
+	} catch {
+		// A detached or object-id head has no symbolic branch label.
+	}
+	try {
+		const branch = gitText(repository, [
+			"for-each-ref",
+			"--format=%(refname:short)",
+			"--points-at",
+			headOid,
+			"refs/heads",
+		])
+			.split("\n")
+			.find(Boolean);
+		if (branch !== undefined) return branch;
+	} catch {
+		// Fall back to a stable short object identity.
+	}
+	return headOid.slice(0, 12);
+}
+
 export async function createRepositoryReview(options: {
 	repository: string;
 	base: string;
@@ -571,6 +595,7 @@ export async function createRepositoryReview(options: {
 		source: "generic-repository",
 		repository: {
 			label: basename(repository),
+			headLabel: reviewHeadLabel(repository, options.head, headOid),
 			graphreflyVersion: runtime.version,
 			entrypoint: config.blueprint.entrypoint,
 			baseOid,

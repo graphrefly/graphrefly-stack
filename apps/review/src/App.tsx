@@ -673,7 +673,7 @@ export function App() {
 		return <main className="load-state is-error">{error}</main>;
 	}
 	if (reviewData === null) {
-		return <main className="load-state">Loading repository evidence…</main>;
+		return <main className="load-state">Loading repository review…</main>;
 	}
 	if ("schema" in reviewData && reviewData.schema === "graphrefly.stack.review.v1") {
 		return <GenericRepositoryReview review={reviewData} />;

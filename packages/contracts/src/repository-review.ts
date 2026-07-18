@@ -1,5 +1,11 @@
 export const REPOSITORY_CONFIG_SCHEMA = "graphrefly.stack.repository.v1" as const;
 export const REPOSITORY_REVIEW_SCHEMA = "graphrefly.stack.review.v1" as const;
+export const REPOSITORY_REVIEW_DECISION_REQUEST_SCHEMA =
+	"graphrefly.stack.repository-review-decision-request.v1" as const;
+export const REPOSITORY_REVIEW_DECISION_SCHEMA =
+	"graphrefly.stack.repository-review-decision.v1" as const;
+export const REPOSITORY_REVIEW_BUNDLE_SCHEMA =
+	"graphrefly.stack.repository-review-bundle.v1" as const;
 export const SUPPORTED_GRAPHREFLY_RANGE = ">=0.3.0 <0.4.0" as const;
 
 export interface RepositoryConfig {
@@ -59,6 +65,7 @@ export interface RepositoryReview {
 	readonly source: "generic-repository";
 	readonly repository: {
 		readonly label: string;
+		readonly headLabel: string;
 		readonly graphreflyVersion: string;
 		readonly entrypoint: string;
 		readonly baseOid: string;
@@ -67,4 +74,45 @@ export interface RepositoryReview {
 	readonly base: RepositoryRevisionEvidence;
 	readonly commits: readonly RepositoryReviewCommit[];
 	readonly semanticStatus: "not-configured";
+}
+
+export interface RepositoryReviewDecisionRequest {
+	readonly schema: typeof REPOSITORY_REVIEW_DECISION_REQUEST_SCHEMA;
+	readonly commitOid: string;
+	readonly decision: "approve" | "request-changes";
+	readonly reviewerLabel: string;
+	readonly summary: string;
+}
+
+export interface RepositoryReviewTarget {
+	readonly baseOid: string;
+	readonly headOid: string;
+	readonly parentOid: string;
+	readonly commitOid: string;
+	readonly blueprintHash: string;
+}
+
+export interface RepositoryReviewDecision {
+	readonly schema: typeof REPOSITORY_REVIEW_DECISION_SCHEMA;
+	readonly id: string;
+	readonly target: RepositoryReviewTarget;
+	readonly decision: "approve" | "request-changes";
+	readonly reviewerLabel: string;
+	readonly summary: string;
+	readonly recordedAt: string;
+	readonly identityVerified: false;
+}
+
+export interface RepositoryReviewBundle {
+	readonly schema: typeof REPOSITORY_REVIEW_BUNDLE_SCHEMA;
+	readonly repository: {
+		readonly label: string;
+		readonly baseOid: string;
+		readonly headOid: string;
+	};
+	readonly artifacts: readonly {
+		readonly path: string;
+		readonly hash: { readonly algorithm: "sha256"; readonly value: string };
+		readonly record: RepositoryReviewDecision;
+	}[];
 }

@@ -94,6 +94,16 @@ test("the npm tarball installs and reviews an independent GraphReFly 0.3.x repos
 		),
 		true,
 	);
+	for (const schema of [
+		"review-decision-request.schema.json",
+		"review-decision.schema.json",
+		"review-bundle.schema.json",
+	]) {
+		assert.equal(
+			packedPaths.includes(`package/dist/assets/contracts/repository/v1/${schema}`),
+			true,
+		);
+	}
 	assert.equal(
 		packedPaths.some((path) => path.startsWith("package/packages/")),
 		false,
@@ -212,5 +222,47 @@ export function createApplicationGraph() {
 	assert.match(await shellResponse.text(), /<div id="root"><\/div>/u);
 	assert.equal(dataResponse.status, 200);
 	assert.equal((await dataResponse.json()).commits[0].oid, head);
+
+	const statusBeforeDecision = run(repository, "git", ["status", "--short"]);
+	const decisionResponse = await fetch(`${url}/api/review-decisions`, {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+			Origin: url,
+			"X-GraphReFly-Review": "1",
+		},
+		body: JSON.stringify({
+			schema: "graphrefly.stack.repository-review-decision-request.v1",
+			commitOid: head,
+			decision: "approve",
+			reviewerLabel: "Package test",
+			summary: "Installed package review state is durable and portable.",
+		}),
+	});
+	assert.equal(decisionResponse.status, 201);
+	const decision = await decisionResponse.json();
+	assert.equal(decision.target.commitOid, head);
+	assert.equal(decision.target.parentOid, base);
+	assert.equal(decision.identityVerified, false);
+	assert.match(
+		decision.id,
+		/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u,
+	);
+
+	const storedResponse = await fetch(`${url}/api/review-decisions`);
+	assert.equal(storedResponse.status, 200);
+	assert.deepEqual(await storedResponse.json(), [decision]);
+	const exportResponse = await fetch(`${url}/api/review-decisions/export`);
+	assert.equal(exportResponse.status, 200);
+	const bundle = await exportResponse.json();
+	assert.equal(bundle.artifacts[0].record.id, decision.id);
+	assert.match(bundle.artifacts[0].hash.value, /^[0-9a-f]{64}$/u);
+	assert.equal(
+		await readFile(resolve(repository, ".git/grfs/reviews", `${decision.id}.json`), "utf8").then(
+			(value) => JSON.parse(value).id,
+		),
+		decision.id,
+	);
+	assert.equal(run(repository, "git", ["status", "--short"]), statusBeforeDecision);
 	server.kill("SIGTERM");
 });

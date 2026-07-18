@@ -54,6 +54,7 @@ summary:focus-visible {
 .product-header,
 .brand,
 .runtime-badge,
+.header-actions,
 .selection-heading,
 .column-heading,
 .section-heading,
@@ -119,6 +120,45 @@ summary:focus-visible {
 	box-shadow: 0 0 0 3px var(--valid-soft);
 }
 
+.header-actions {
+	gap: 9px;
+}
+.context-badge,
+.help-button {
+	min-height: 34px;
+	font-family: "SFMono-Regular", Consolas, monospace;
+	font-size: 0.64rem;
+	font-weight: 750;
+	background: rgba(251, 252, 253, 0.82);
+	border: 1px solid var(--line-strong);
+}
+.context-badge {
+	display: inline-flex;
+	align-items: center;
+	padding: 7px 11px;
+}
+.help-button {
+	display: inline-flex;
+	gap: 7px;
+	align-items: center;
+	padding: 6px 10px;
+	color: var(--ink);
+	cursor: pointer;
+}
+.help-button span {
+	display: grid;
+	place-items: center;
+	width: 18px;
+	height: 18px;
+	color: #fff;
+	font-weight: 900;
+	background: var(--blue);
+	border-radius: 50%;
+}
+.help-button:hover {
+	background: #e3f0f5;
+}
+
 .selection-heading {
 	justify-content: space-between;
 	gap: 40px;
@@ -149,6 +189,9 @@ summary:focus-visible {
 	margin: 0;
 	color: #49616f;
 	line-height: 1.55;
+}
+.generic-review .selection-heading {
+	padding-bottom: 20px;
 }
 
 .gate-summary {
@@ -494,10 +537,156 @@ summary:focus-visible {
 	font-family: "Avenir Next Condensed", "Arial Narrow", sans-serif;
 	font-size: 1.45rem;
 }
+.section-heading-actions {
+	display: flex;
+	gap: 10px;
+	align-items: center;
+}
 .compare-label {
 	color: var(--muted);
 	font-family: "SFMono-Regular", Consolas, monospace;
 	font-size: 0.62rem;
+}
+.review-status {
+	padding: 6px 8px;
+	font-family: "SFMono-Regular", Consolas, monospace;
+	font-size: 0.58rem;
+	font-weight: 800;
+	text-transform: uppercase;
+	background: #eef3f5;
+	border: 1px solid var(--line);
+}
+.review-status.approve {
+	color: var(--valid);
+	background: var(--valid-soft);
+	border-color: #8dbba9;
+}
+.review-status.request-changes {
+	color: var(--blocked);
+	background: var(--blocked-soft);
+	border-color: #d8a1b8;
+}
+.review-button,
+.review-action {
+	padding: 9px 12px;
+	font-size: 0.68rem;
+	font-weight: 850;
+	cursor: pointer;
+	border: 1px solid var(--ink);
+}
+.review-button {
+	color: #fff;
+	background: var(--ink);
+}
+.review-button:hover {
+	background: #264859;
+}
+.review-panel {
+	padding: 18px 20px 20px;
+	background: #eef5f7;
+	border-bottom: 1px solid var(--line);
+}
+.review-panel header,
+.review-panel footer {
+	display: flex;
+	justify-content: space-between;
+	gap: 20px;
+	align-items: flex-start;
+}
+.review-panel h3 {
+	margin: 4px 0 0;
+	font-size: 1rem;
+}
+.icon-button {
+	display: grid;
+	flex: 0 0 auto;
+	place-items: center;
+	width: 34px;
+	height: 34px;
+	padding: 0;
+	color: var(--ink);
+	font-size: 1.35rem;
+	line-height: 1;
+	background: transparent;
+	border: 1px solid var(--line-strong);
+	cursor: pointer;
+}
+.review-form {
+	display: grid;
+	grid-template-columns: minmax(180px, 0.35fr) minmax(280px, 1fr);
+	gap: 14px;
+	margin-top: 16px;
+}
+.review-form label,
+.review-form label > span {
+	display: block;
+}
+.review-form label > span {
+	margin-bottom: 6px;
+	color: var(--muted);
+	font-family: "SFMono-Regular", Consolas, monospace;
+	font-size: 0.58rem;
+	font-weight: 800;
+	text-transform: uppercase;
+}
+.review-form input,
+.review-form textarea {
+	width: 100%;
+	color: var(--ink);
+	font: inherit;
+	font-size: 0.74rem;
+	background: var(--paper);
+	border: 1px solid var(--line-strong);
+}
+.review-form input {
+	height: 42px;
+	padding: 9px 11px;
+}
+.review-form textarea {
+	min-height: 86px;
+	padding: 10px 11px;
+	resize: vertical;
+}
+.review-panel footer {
+	align-items: center;
+	margin-top: 14px;
+}
+.review-panel footer p {
+	max-width: 620px;
+	margin: 0;
+	color: var(--muted);
+	font-size: 0.65rem;
+	line-height: 1.45;
+}
+.review-panel footer > div {
+	display: flex;
+	gap: 8px;
+}
+.review-action.request {
+	color: var(--blocked);
+	background: var(--paper);
+	border-color: var(--blocked);
+}
+.review-action.approve {
+	color: #fff;
+	background: var(--valid);
+	border-color: var(--valid);
+}
+.review-action:disabled {
+	opacity: 0.55;
+	cursor: wait;
+}
+.review-error,
+.review-state-warning {
+	margin: 0;
+	padding: 10px 20px;
+	color: var(--blocked);
+	font-size: 0.68rem;
+	background: var(--blocked-soft);
+}
+.review-error {
+	margin-top: 10px;
+	padding: 9px 11px;
 }
 .file-diff + .file-diff {
 	border-top: 1px solid var(--line);
@@ -544,6 +733,12 @@ summary:focus-visible {
 	border-collapse: collapse;
 	table-layout: fixed;
 }
+.split-diff .number-column {
+	width: 48px;
+}
+.split-diff .code-column {
+	width: calc((100% - 96px) / 2);
+}
 .split-diff td {
 	border-bottom: 1px solid #e5ecef;
 }
@@ -551,7 +746,6 @@ summary:focus-visible {
 	border-bottom: 0;
 }
 .line-number {
-	width: 48px;
 	padding: 2px 9px;
 	color: #7b8d97;
 	text-align: right;
@@ -570,7 +764,6 @@ summary:focus-visible {
 	line-height: 1.55;
 }
 .code-line {
-	width: calc(50% - 48px);
 	padding: 2px 10px;
 	white-space: pre-wrap;
 	overflow-wrap: anywhere;
@@ -708,7 +901,99 @@ summary:focus-visible {
 	color: var(--blocked);
 }
 .generic-details {
-	grid-template-columns: repeat(2, minmax(0, 1fr));
+	grid-template-columns: minmax(0, 1fr);
+}
+.generic-details .detail-grid {
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.text-link {
+	display: inline-block;
+	margin-top: 5px;
+	color: var(--blue);
+	font-size: 0.7rem;
+	font-weight: 800;
+}
+
+.help-backdrop {
+	position: fixed;
+	z-index: 50;
+	inset: 0;
+	display: grid;
+	place-items: center;
+	padding: 24px;
+	background: rgba(16, 34, 45, 0.66);
+}
+.help-panel {
+	width: min(860px, 100%);
+	max-height: min(760px, calc(100vh - 48px));
+	padding: 24px;
+	overflow: auto;
+	background: var(--paper);
+	border: 1px solid var(--ink);
+	box-shadow: 14px 16px 0 rgba(8, 26, 36, 0.28);
+}
+.help-panel > header {
+	display: flex;
+	justify-content: space-between;
+	gap: 24px;
+	align-items: flex-start;
+}
+.help-panel h2 {
+	max-width: 650px;
+	margin: 6px 0 0;
+	font-family: "Avenir Next Condensed", "Arial Narrow", sans-serif;
+	font-size: clamp(1.8rem, 4vw, 3.2rem);
+	line-height: 1;
+	letter-spacing: -0.035em;
+}
+.help-flow {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+	gap: 12px;
+	align-items: center;
+	margin-top: 26px;
+}
+.help-flow > div {
+	min-height: 124px;
+	padding: 17px;
+	background: #edf5f8;
+	border-top: 4px solid var(--blue);
+}
+.help-flow b,
+.help-flow span {
+	display: block;
+}
+.help-flow b {
+	font-size: 0.8rem;
+}
+.help-flow span {
+	margin-top: 9px;
+	color: #4c6573;
+	font-size: 0.72rem;
+	line-height: 1.5;
+}
+.help-flow > i {
+	color: var(--blue);
+	font-style: normal;
+	font-size: 1.2rem;
+}
+.help-copy {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 24px;
+	margin-top: 24px;
+	padding-top: 20px;
+	border-top: 1px solid var(--line);
+}
+.help-copy h3 {
+	margin: 0 0 7px;
+	font-size: 0.8rem;
+}
+.help-panel .help-copy p {
+	margin: 0;
+	color: #4c6573;
+	font-size: 0.74rem;
+	line-height: 1.6;
 }
 
 @media (max-width: 980px) {
@@ -735,12 +1020,22 @@ summary:focus-visible {
 }
 
 @media (max-width: 650px) {
+	.product-header {
+		flex-wrap: wrap;
+	}
+	.header-actions {
+		justify-content: space-between;
+		width: 100%;
+	}
 	.app-shell {
 		width: min(100% - 20px, 1560px);
 		padding-top: 10px;
 	}
 	.runtime-badge {
 		display: none;
+	}
+	.context-badge {
+		display: inline-flex;
 	}
 	.selection-heading {
 		align-items: flex-start;
@@ -786,8 +1081,42 @@ summary:focus-visible {
 	.section-heading {
 		align-items: flex-start;
 	}
+	.section-heading-actions {
+		flex-wrap: wrap;
+		justify-content: flex-end;
+	}
 	.compare-label {
 		text-align: right;
+	}
+	.review-form,
+	.generic-details .detail-grid,
+	.help-copy {
+		grid-template-columns: 1fr;
+	}
+	.review-panel footer {
+		align-items: stretch;
+		flex-direction: column;
+	}
+	.review-panel footer > div,
+	.review-action {
+		width: 100%;
+	}
+	.review-panel footer > div {
+		flex-direction: column;
+	}
+	.help-backdrop {
+		padding: 10px;
+	}
+	.help-panel {
+		max-height: calc(100vh - 20px);
+		padding: 18px;
+	}
+	.help-flow {
+		grid-template-columns: 1fr;
+	}
+	.help-flow > i {
+		justify-self: center;
+		transform: rotate(90deg);
 	}
 }
 

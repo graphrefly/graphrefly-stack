@@ -1,9 +1,16 @@
 import { createReadStream } from "node:fs";
 import { stat } from "node:fs/promises";
-import { createServer, type Server } from "node:http";
+import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
 import { extname, resolve, sep } from "node:path";
+import type { RepositoryReview } from "@graphrefly-stack/contracts";
 
+import {
+	createRepositoryReviewBundle,
+	RepositoryReviewStateError,
+	readRepositoryReviewDecisions,
+	writeRepositoryReviewDecision,
+} from "./repository-review-state.js";
 import { runtimeReviewDist } from "./runtime-paths.js";
 
 export const defaultReviewDist = runtimeReviewDist();
@@ -22,6 +29,47 @@ export interface ReviewServerOptions {
 	distDir?: string;
 	reviewData?: unknown;
 	evidenceBundlePath?: string;
+	repositoryReviewState?: {
+		repository: string;
+		review: RepositoryReview;
+	};
+}
+
+async function readJsonBody(request: IncomingMessage): Promise<unknown> {
+	const maximumBytes = 32 * 1024;
+	const declaredLength = Number(request.headers["content-length"] ?? "0");
+	if (Number.isFinite(declaredLength) && declaredLength > maximumBytes) {
+		throw new RepositoryReviewStateError(
+			"REVIEW_DECISION_TOO_LARGE",
+			"Review decision request exceeds 32 KiB",
+		);
+	}
+	const chunks: Buffer[] = [];
+	let size = 0;
+	for await (const chunk of request) {
+		const bytes = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+		size += bytes.length;
+		if (size > maximumBytes) {
+			throw new RepositoryReviewStateError(
+				"REVIEW_DECISION_TOO_LARGE",
+				"Review decision request exceeds 32 KiB",
+			);
+		}
+		chunks.push(bytes);
+	}
+	try {
+		return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+	} catch {
+		throw new RepositoryReviewStateError(
+			"REVIEW_DECISION_INVALID",
+			"Review decision request is not valid JSON",
+		);
+	}
+}
+
+function sendJson(response: ServerResponse, status: number, value: unknown): void {
+	response.setHeader("Content-Type", "application/json; charset=utf-8");
+	response.writeHead(status).end(JSON.stringify(value));
 }
 
 export interface RunningReviewServer {
@@ -57,12 +105,52 @@ export async function startReviewServer(
 			"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'",
 		);
 		response.setHeader("X-Content-Type-Options", "nosniff");
+		const pathname = new URL(request.url ?? "/", "http://localhost").pathname;
+
+		if (pathname === "/api/review-decisions" && request.method === "POST") {
+			const state = options.repositoryReviewState;
+			if (state === undefined) {
+				response.writeHead(404).end("Local review state unavailable");
+				return;
+			}
+			const expectedOrigin =
+				request.headers.host === undefined ? undefined : `http://${request.headers.host}`;
+			if (
+				request.headers.origin !== expectedOrigin ||
+				request.headers["x-graphrefly-review"] !== "1"
+			) {
+				response.writeHead(403).end("Same-origin review action required");
+				return;
+			}
+			if (!request.headers["content-type"]?.startsWith("application/json")) {
+				response.writeHead(415).end("application/json required");
+				return;
+			}
+			try {
+				const input = await readJsonBody(request);
+				const record = await writeRepositoryReviewDecision(state.repository, state.review, input);
+				sendJson(response, 201, record);
+			} catch (error) {
+				if (error instanceof RepositoryReviewStateError) {
+					sendJson(response, error.code === "REVIEW_TARGET_STALE" ? 409 : 400, {
+						code: error.code,
+						message: error.message,
+					});
+				} else {
+					sendJson(response, 500, {
+						code: "REVIEW_STATE_FAILED",
+						message: "Local review state could not be updated",
+					});
+				}
+			}
+			return;
+		}
 
 		if (request.method !== "GET" && request.method !== "HEAD") {
 			response.writeHead(405).end("Method not allowed");
 			return;
 		}
-		if (new URL(request.url ?? "/", "http://localhost").pathname === "/api/review-data") {
+		if (pathname === "/api/review-data") {
 			if (options.reviewData === undefined) {
 				response.writeHead(404).end("Review data unavailable");
 				return;
@@ -73,7 +161,45 @@ export async function startReviewServer(
 			else response.end(JSON.stringify(options.reviewData));
 			return;
 		}
-		if (new URL(request.url ?? "/", "http://localhost").pathname === "/api/evidence-bundle") {
+		if (pathname === "/api/review-decisions") {
+			const state = options.repositoryReviewState;
+			if (state === undefined) {
+				response.writeHead(404).end("Local review state unavailable");
+				return;
+			}
+			try {
+				const records = await readRepositoryReviewDecisions(state.repository, state.review);
+				response.setHeader("Content-Type", "application/json; charset=utf-8");
+				response.writeHead(200);
+				if (request.method === "HEAD") response.end();
+				else response.end(JSON.stringify(records));
+			} catch {
+				response.writeHead(500).end("Local review state unavailable");
+			}
+			return;
+		}
+		if (pathname === "/api/review-decisions/export") {
+			const state = options.repositoryReviewState;
+			if (state === undefined) {
+				response.writeHead(404).end("Portable review bundle unavailable");
+				return;
+			}
+			try {
+				const bundle = await createRepositoryReviewBundle(state.repository, state.review);
+				response.setHeader("Content-Type", "application/json; charset=utf-8");
+				response.setHeader(
+					"Content-Disposition",
+					'attachment; filename="graphrefly-stack-reviews.json"',
+				);
+				response.writeHead(200);
+				if (request.method === "HEAD") response.end();
+				else response.end(`${JSON.stringify(bundle, null, 2)}\n`);
+			} catch {
+				response.writeHead(500).end("Portable review bundle unavailable");
+			}
+			return;
+		}
+		if (pathname === "/api/evidence-bundle") {
 			if (evidenceBundlePath === undefined) {
 				response.writeHead(404).end("Portable evidence bundle unavailable");
 				return;

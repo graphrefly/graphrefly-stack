@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import test from "node:test";
 import { defaultReviewDist, startReviewServer } from "../../packages/cli/dist/review-server.js";
-import { createStrictAjv } from "../../packages/contracts/dist/index.js";
+import { createStrictAjv, sha256Jcs } from "../../packages/contracts/dist/index.js";
 import { CORE_ARCHITECTURE } from "../../packages/core/dist/index.js";
 
 const root = new URL("../../", import.meta.url);
@@ -141,4 +141,98 @@ test("the local review shell is served by one loopback HTTP process", async (con
 	assert.equal(download.status, 200);
 	assert.match(download.headers.get("content-disposition") ?? "", /attachment/);
 	assert.deepEqual(await download.json(), { schema: "portable-test" });
+});
+
+test("generic review decisions persist below the Git common directory and export by content hash", async (context) => {
+	const repository = await mkdtemp(resolve(tmpdir(), "graphrefly-review-state-"));
+	context.after(() => rm(repository, { recursive: true, force: true }));
+	const initialized = spawnSync("git", ["init", "-b", "main"], {
+		cwd: repository,
+		encoding: "utf8",
+	});
+	assert.equal(initialized.status, 0, initialized.stderr);
+	const baseOid = "1".repeat(40);
+	const commitOid = "2".repeat(40);
+	const blueprintHash = "3".repeat(64);
+	const review = {
+		schema: "graphrefly.stack.review.v1",
+		source: "generic-repository",
+		repository: {
+			label: "state-test",
+			headLabel: "main",
+			graphreflyVersion: "0.3.0",
+			entrypoint: "graphrefly-stack.blueprint.mjs",
+			baseOid,
+			headOid: commitOid,
+		},
+		base: {},
+		commits: [
+			{
+				oid: commitOid,
+				parentOid: baseOid,
+				blueprint: { hash: { value: blueprintHash } },
+			},
+		],
+		semanticStatus: "not-configured",
+	};
+	const running = await startReviewServer({
+		host: "127.0.0.1",
+		port: 0,
+		distDir: defaultReviewDist,
+		reviewData: review,
+		repositoryReviewState: { repository, review },
+	});
+	context.after(() => new Promise((resolve) => running.server.close(resolve)));
+
+	const request = {
+		schema: "graphrefly.stack.repository-review-decision-request.v1",
+		commitOid,
+		decision: "approve",
+		reviewerLabel: "Local reviewer",
+		summary: "The Blueprint and source diff agree.",
+	};
+	const crossSite = await fetch(`${running.url}/api/review-decisions`, {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify(request),
+	});
+	assert.equal(crossSite.status, 403);
+
+	const saved = await fetch(`${running.url}/api/review-decisions`, {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+			Origin: running.url,
+			"X-GraphReFly-Review": "1",
+		},
+		body: JSON.stringify(request),
+	});
+	const savedBody = await saved.text();
+	assert.equal(saved.status, 201, savedBody);
+	const record = JSON.parse(savedBody);
+	assert.equal(record.schema, "graphrefly.stack.repository-review-decision.v1");
+	assert.deepEqual(record.target, {
+		baseOid,
+		headOid: commitOid,
+		parentOid: baseOid,
+		commitOid,
+		blueprintHash,
+	});
+	assert.equal(record.identityVerified, false);
+
+	const files = await readdir(resolve(repository, ".git/grfs/reviews"));
+	assert.deepEqual(files, [`${record.id}.json`]);
+	const status = spawnSync("git", ["status", "--porcelain"], { cwd: repository, encoding: "utf8" });
+	assert.equal(status.status, 0, status.stderr);
+	assert.equal(status.stdout, "");
+
+	const listed = await fetch(`${running.url}/api/review-decisions`);
+	assert.deepEqual(await listed.json(), [record]);
+	const exported = await fetch(`${running.url}/api/review-decisions/export`);
+	assert.equal(exported.status, 200);
+	assert.match(exported.headers.get("content-disposition") ?? "", /attachment/);
+	const bundle = await exported.json();
+	assert.equal(bundle.schema, "graphrefly.stack.repository-review-bundle.v1");
+	assert.equal(bundle.artifacts[0].path, `reviews/${record.id}.json`);
+	assert.equal(bundle.artifacts[0].hash.value, sha256Jcs(record));
 });

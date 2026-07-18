@@ -11,9 +11,10 @@
 		"repository": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["label", "graphreflyVersion", "entrypoint", "baseOid", "headOid"],
+			"required": ["label", "headLabel", "graphreflyVersion", "entrypoint", "baseOid", "headOid"],
 			"properties": {
 				"label": { "type": "string", "minLength": 1 },
+				"headLabel": { "type": "string", "minLength": 1 },
 				"graphreflyVersion": { "type": "string", "pattern": "^0\\.3\\.[0-9]+$" },
 				"entrypoint": {
 					"$ref": "urn:graphrefly-stack:schema:repository-config:v1#/properties/blueprint/properties/entrypoint"

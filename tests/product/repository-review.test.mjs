@@ -190,6 +190,7 @@ export function createApplicationGraph() {
 	const result = review(repository, base, head);
 	assert.equal(result.schema, "graphrefly.stack.review.v1");
 	assert.equal(result.repository.graphreflyVersion, "0.3.0");
+	assert.equal(result.repository.headLabel, "main");
 	assert.deepEqual(
 		result.commits.map((entry) => entry.subject),
 		["add projected value", "document projected value"],

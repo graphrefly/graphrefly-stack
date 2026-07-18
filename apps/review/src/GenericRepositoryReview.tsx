@@ -54,6 +54,7 @@ export interface GenericReviewData {
 	source: "generic-repository";
 	repository: {
 		label: string;
+		headLabel: string;
 		graphreflyVersion: string;
 		entrypoint: string;
 		baseOid: string;
@@ -63,6 +64,23 @@ export interface GenericReviewData {
 	commits: ReviewCommit[];
 	semanticStatus: "not-configured";
 }
+
+type RepositoryReviewDecision = {
+	schema: "graphrefly.stack.repository-review-decision.v1";
+	id: string;
+	target: {
+		baseOid: string;
+		headOid: string;
+		parentOid: string;
+		commitOid: string;
+		blueprintHash: string;
+	};
+	decision: "approve" | "request-changes";
+	reviewerLabel: string;
+	summary: string;
+	recordedAt: string;
+	identityVerified: false;
+};
 
 function short(value: string, size = 8): string {
 	return value.slice(0, size);
@@ -113,6 +131,12 @@ function StructuredCodeDiff({ files }: { files: FileDiff[] }) {
 					) : (
 						<div className="diff-scroll">
 							<table className="split-diff">
+								<colgroup>
+									<col className="number-column" />
+									<col className="code-column" />
+									<col className="number-column" />
+									<col className="code-column" />
+								</colgroup>
 								<tbody>
 									{file.hunks.flatMap((hunk) => [
 										<tr className="hunk-row" key={`${file.newPath}-${hunk.header}`}>
@@ -152,6 +176,188 @@ function StructuredCodeDiff({ files }: { files: FileDiff[] }) {
 				</details>
 			))}
 		</div>
+	);
+}
+
+function decisionLabel(decision: RepositoryReviewDecision | undefined): string {
+	if (decision?.decision === "approve") return "Approved";
+	if (decision?.decision === "request-changes") return "Changes requested";
+	return "Not reviewed";
+}
+
+function HelpPanel({ onClose }: { onClose: () => void }) {
+	const closeButton = useRef<HTMLButtonElement>(null);
+	useEffect(() => {
+		closeButton.current?.focus();
+		const closeOnEscape = (event: KeyboardEvent) => {
+			if (event.key === "Escape") onClose();
+		};
+		window.addEventListener("keydown", closeOnEscape);
+		return () => window.removeEventListener("keydown", closeOnEscape);
+	}, [onClose]);
+
+	return (
+		<div className="help-backdrop">
+			<section className="help-panel" role="dialog" aria-modal="true" aria-labelledby="help-title">
+				<header>
+					<div>
+						<p className="kicker">How GraphReFly Stack works</p>
+						<h2 id="help-title">Review one commit from three connected views</h2>
+					</div>
+					<button
+						type="button"
+						className="icon-button"
+						onClick={onClose}
+						aria-label="Close help"
+						ref={closeButton}
+					>
+						×
+					</button>
+				</header>
+				<section className="help-flow" aria-label="Git, Blueprint, and code relationship">
+					<div>
+						<b>Git stack</b>
+						<span>Selects one commit and its exact parent.</span>
+					</div>
+					<i aria-hidden="true">→</i>
+					<div>
+						<b>Blueprint delta</b>
+						<span>Compares the GraphReFly Blueprint at those two commits.</span>
+					</div>
+					<i aria-hidden="true">→</i>
+					<div>
+						<b>Code changes</b>
+						<span>Shows the Git diff for the same parent-to-commit pair.</span>
+					</div>
+				</section>
+				<div className="help-copy">
+					<div>
+						<h3>What changes when I select a commit?</h3>
+						<p>
+							The commit identity, highlighted graph changes, Blueprint hash, and split code diff
+							move together. That keeps the architecture view and source review on the same Git
+							boundary.
+						</p>
+					</div>
+					<div>
+						<h3>What does Approve mean here?</h3>
+						<p>
+							It records your local review of that exact commit and Blueprint in Git-scoped
+							metadata. It does not change a semantic check, approve a GitHub pull request, or merge
+							code. Export reviews only when you want to share them.
+						</p>
+					</div>
+				</div>
+			</section>
+		</div>
+	);
+}
+
+function ReviewPanel({
+	commit,
+	current,
+	onClose,
+	onSaved,
+}: {
+	commit: ReviewCommit;
+	current?: RepositoryReviewDecision;
+	onClose: () => void;
+	onSaved: (record: RepositoryReviewDecision) => void;
+}) {
+	const [reviewerLabel, setReviewerLabel] = useState(current?.reviewerLabel ?? "");
+	const [summary, setSummary] = useState(current?.summary ?? "");
+	const [saving, setSaving] = useState<RepositoryReviewDecision["decision"] | null>(null);
+	const [error, setError] = useState<string | null>(null);
+
+	const save = async (decision: RepositoryReviewDecision["decision"]) => {
+		if (reviewerLabel.trim() === "") {
+			setError("Enter a reviewer name before saving.");
+			return;
+		}
+		setSaving(decision);
+		setError(null);
+		try {
+			const response = await fetch("/api/review-decisions", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					"X-GraphReFly-Review": "1",
+				},
+				body: JSON.stringify({
+					schema: "graphrefly.stack.repository-review-decision-request.v1",
+					commitOid: commit.oid,
+					decision,
+					reviewerLabel,
+					summary,
+				}),
+			});
+			if (!response.ok) {
+				const message = (await response.json().catch(() => null)) as { message?: string } | null;
+				throw new Error(message?.message ?? `Review could not be saved (${response.status})`);
+			}
+			onSaved((await response.json()) as RepositoryReviewDecision);
+			onClose();
+		} catch (reason) {
+			setError(reason instanceof Error ? reason.message : "Review could not be saved");
+		} finally {
+			setSaving(null);
+		}
+	};
+
+	return (
+		<section className="review-panel" aria-labelledby="review-panel-title">
+			<header>
+				<div>
+					<p className="kicker">Local review</p>
+					<h3 id="review-panel-title">Review {short(commit.oid, 12)}</h3>
+				</div>
+				<button className="icon-button" type="button" onClick={onClose} aria-label="Close review">
+					×
+				</button>
+			</header>
+			<div className="review-form">
+				<label>
+					<span>Reviewer</span>
+					<input
+						value={reviewerLabel}
+						onChange={(event) => setReviewerLabel(event.target.value)}
+						maxLength={120}
+						placeholder="Your name"
+					/>
+				</label>
+				<label>
+					<span>Summary</span>
+					<textarea
+						value={summary}
+						onChange={(event) => setSummary(event.target.value)}
+						maxLength={10000}
+						placeholder="What should the author know?"
+					/>
+				</label>
+			</div>
+			{error === null ? null : <p className="review-error">{error}</p>}
+			<footer>
+				<p>Saved under this repository's Git metadata. No source files or refs are changed.</p>
+				<div>
+					<button
+						className="review-action request"
+						type="button"
+						disabled={saving !== null}
+						onClick={() => void save("request-changes")}
+					>
+						{saving === "request-changes" ? "Saving…" : "Request changes"}
+					</button>
+					<button
+						className="review-action approve"
+						type="button"
+						disabled={saving !== null}
+						onClick={() => void save("approve")}
+					>
+						{saving === "approve" ? "Saving…" : "Approve"}
+					</button>
+				</div>
+			</footer>
+		</section>
 	);
 }
 
@@ -293,14 +499,40 @@ function eventLabel(event: NonNullable<ReviewCommit["delta"]["events"]>[number])
 
 export function GenericRepositoryReview({ review }: { review: GenericReviewData }) {
 	const [selectedOid, setSelectedOid] = useState(review.commits.at(-1)?.oid ?? "");
+	const [helpOpen, setHelpOpen] = useState(false);
+	const [reviewOpen, setReviewOpen] = useState(false);
+	const [decisions, setDecisions] = useState<RepositoryReviewDecision[]>([]);
+	const [reviewStateError, setReviewStateError] = useState<string | null>(null);
 	const selected = review.commits.find((commit) => commit.oid === selectedOid) ?? review.commits[0];
 	if (selected === undefined) throw new Error("Repository review contains no commits");
 	const events = selected.delta.events ?? [];
 	const hash = selected.blueprint.hash?.value ?? "unavailable";
 	const diagnosticCount = selected.blueprint.diagnostics?.issues?.length ?? 0;
+	const latestDecision = (commitOid: string) =>
+		[...decisions].reverse().find((decision) => decision.target.commitOid === commitOid);
+	const currentDecision = latestDecision(selected.oid);
+
+	useEffect(() => {
+		const controller = new AbortController();
+		fetch("/api/review-decisions", { signal: controller.signal })
+			.then((response) => {
+				if (!response.ok) throw new Error(`Local reviews unavailable (${response.status})`);
+				return response.json() as Promise<RepositoryReviewDecision[]>;
+			})
+			.then(setDecisions)
+			.catch((reason: unknown) => {
+				if (!(reason instanceof DOMException && reason.name === "AbortError")) {
+					setReviewStateError(
+						reason instanceof Error ? reason.message : "Local reviews unavailable",
+					);
+				}
+			});
+		return () => controller.abort();
+	}, []);
 
 	return (
 		<div className="app-shell generic-review">
+			{helpOpen ? <HelpPanel onClose={() => setHelpOpen(false)} /> : null}
 			<header className="product-header">
 				<div className="brand">
 					<span className="brand-glyph" aria-hidden="true">
@@ -311,10 +543,14 @@ export function GenericRepositoryReview({ review }: { review: GenericReviewData 
 						<small>{review.repository.label} / local Git repository</small>
 					</div>
 				</div>
-				<span className="runtime-badge">
-					<i />
-					Real Git · @graphrefly/ts {review.repository.graphreflyVersion}
-				</span>
+				<div className="header-actions">
+					<span className="context-badge">
+						{review.repository.headLabel} · {review.commits.length} commits
+					</span>
+					<button className="help-button" type="button" onClick={() => setHelpOpen(true)}>
+						<span aria-hidden="true">?</span> Help
+					</button>
+				</div>
 			</header>
 
 			<section className="selection-heading">
@@ -323,13 +559,6 @@ export function GenericRepositoryReview({ review }: { review: GenericReviewData 
 						Commit {short(selected.oid, 12)} · Blueprint {short(hash, 12)}
 					</p>
 					<h1>{selected.subject}</h1>
-					<p>
-						One Git commit, its GraphReFly-generated Blueprint delta, and its exact parent diff.
-					</p>
-				</div>
-				<div className="gate-summary is-neutral">
-					<span>Semantic gate not configured</span>
-					<code>evidence only</code>
 				</div>
 			</section>
 
@@ -340,27 +569,35 @@ export function GenericRepositoryReview({ review }: { review: GenericReviewData 
 						<small>{review.commits.length} linear commits</small>
 					</div>
 					<div className="commit-stack">
-						{[...review.commits].reverse().map((commit) => (
-							<button
-								className={`commit-card ${commit.oid === selected.oid ? "is-selected" : ""}`}
-								type="button"
-								aria-pressed={commit.oid === selected.oid}
-								onClick={() => setSelectedOid(commit.oid)}
-								key={commit.oid}
-							>
-								<span className="commit-dot is-evidence" />
-								<span className="commit-main">
-									<strong>{commit.subject}</strong>
-									<small>
-										{short(commit.oid)} · {commit.diff.paths.length} files
-									</small>
-								</span>
-								<span className="commit-meta">
-									<b>{commit.delta.events?.length ?? 0} graph Δ</b>
-									<small>BP {short(commit.blueprint.hash?.value ?? "—")}</small>
-								</span>
-							</button>
-						))}
+						{[...review.commits].reverse().map((commit) => {
+							const commitDecision = latestDecision(commit.oid);
+							return (
+								<button
+									className={`commit-card ${commit.oid === selected.oid ? "is-selected" : ""}`}
+									type="button"
+									aria-pressed={commit.oid === selected.oid}
+									onClick={() => {
+										setSelectedOid(commit.oid);
+										setReviewOpen(false);
+									}}
+									key={commit.oid}
+								>
+									<span
+										className={`commit-dot ${commitDecision?.decision === "approve" ? "is-valid" : commitDecision?.decision === "request-changes" ? "is-invalid" : "is-evidence"}`}
+									/>
+									<span className="commit-main">
+										<strong>{commit.subject}</strong>
+										<small>
+											{short(commit.oid)} · {commit.diff.paths.length} files
+										</small>
+									</span>
+									<span className="commit-meta">
+										<b>{commit.delta.events?.length ?? 0} graph Δ</b>
+										<small>{decisionLabel(commitDecision)}</small>
+									</span>
+								</button>
+							);
+						})}
 						<div className="base-commit">
 							<span className="base-square" />
 							<div>
@@ -379,7 +616,6 @@ export function GenericRepositoryReview({ review }: { review: GenericReviewData 
 								Generated and verified at {short(selected.oid, 12)}
 							</small>
 						</div>
-						<code>blueprintToMermaid</code>
 					</div>
 					<BlueprintDiagram commit={selected} />
 					<div className="delta-bar">
@@ -416,20 +652,50 @@ export function GenericRepositoryReview({ review }: { review: GenericReviewData 
 				<div className="section-heading">
 					<div>
 						<p className="kicker">Code changes</p>
-						<h2 id="code-title">{selected.diff.paths.length} files changed</h2>
+						<h2 id="code-title">
+							{selected.diff.paths.length} {selected.diff.paths.length === 1 ? "file" : "files"}{" "}
+							changed
+						</h2>
 					</div>
-					<span className="compare-label">
-						Split diff · {short(selected.parentOid)} ↔ {short(selected.oid)}
-					</span>
+					<div className="section-heading-actions">
+						<span className={`review-status ${currentDecision?.decision ?? "none"}`}>
+							{decisionLabel(currentDecision)}
+						</span>
+						<span className="compare-label">
+							{short(selected.parentOid)} ↔ {short(selected.oid)}
+						</span>
+						<button
+							className="review-button"
+							type="button"
+							onClick={() => setReviewOpen((open) => !open)}
+						>
+							{currentDecision === undefined ? "Review changes" : "Update review"}
+						</button>
+					</div>
 				</div>
+				{reviewOpen ? (
+					<ReviewPanel
+						key={selected.oid}
+						commit={selected}
+						current={currentDecision}
+						onClose={() => setReviewOpen(false)}
+						onSaved={(record) => {
+							setDecisions((current) => [...current, record]);
+							setReviewStateError(null);
+						}}
+					/>
+				) : null}
+				{reviewStateError === null ? null : (
+					<p className="review-state-warning">{reviewStateError}</p>
+				)}
 				<StructuredCodeDiff files={selected.diff.files} />
 			</section>
 
 			<section className="secondary-details generic-details">
 				<details>
 					<summary>
-						<span>Repository evidence</span>
-						<small>Expandable provenance</small>
+						<span>Technical details</span>
+						<small>Runtime and immutable identities</small>
 					</summary>
 					<div className="detail-grid">
 						<div>
@@ -444,14 +710,6 @@ export function GenericRepositoryReview({ review }: { review: GenericReviewData 
 							<span>Renderer</span>
 							<strong>{selected.diagram.renderer}</strong>
 						</div>
-					</div>
-				</details>
-				<details>
-					<summary>
-						<span>Commit lineage</span>
-						<small>Expandable Git identity</small>
-					</summary>
-					<div className="detail-grid">
 						<div>
 							<span>Parent</span>
 							<strong>{selected.parentOid}</strong>
@@ -464,6 +722,14 @@ export function GenericRepositoryReview({ review }: { review: GenericReviewData 
 							<span>Blueprint</span>
 							<strong>{hash}</strong>
 						</div>
+						{decisions.length > 0 ? (
+							<div>
+								<span>Share reviews</span>
+								<a className="text-link" href="/api/review-decisions/export" download>
+									Export portable review bundle
+								</a>
+							</div>
+						) : null}
 					</div>
 				</details>
 			</section>
