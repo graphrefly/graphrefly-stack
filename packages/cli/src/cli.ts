@@ -24,6 +24,7 @@ import {
 	initializeHostedWorkflow,
 	syncHostedEvidence,
 } from "./hosted-runner.js";
+import { IntegrationCiError, runIntegrationCi } from "./integration-ci.js";
 import { IntegrationRunnerError, runIntegration } from "./integration-runner.js";
 import { readPortableEvidenceBundle } from "./portable-bundle.js";
 import { initializeRepository, RepositoryInitError } from "./repository-init.js";
@@ -50,6 +51,7 @@ Usage:
   grfs hosted init [--repo <path>] --endpoint <https-url> [--profile gate-summary-v1|semantic-review-v1] [--force] [--json]
   grfs hosted sync --artifact <ci-artifact.json> --endpoint <https-url> [--profile gate-summary-v1|semantic-review-v1] --json
   grfs integration --repo <path> --target <revision> --head <revision> --plan-id <id> --provider <provider> --owner <owner> --name <name> [--json]
+  grfs integration ci [--repo <path>] --event <github-event.json> [--plan-id <id>] --output <artifact.json> [--json]
   grfs review --repo <path> --base <revision> --head <revision> [--host 127.0.0.1] [--port 4173] [--json]
   grfs fixture create [--output <path>] [--force] [--json]
   grfs plan --repo <path> --task <summary> --policy <policy.json> [--proposal <proposal.json>] [--context <manifest.json> --authorize-context] [--mode replay|live] [--accept --accept-by <label>] --json
@@ -82,6 +84,7 @@ function commandFrom(argv: readonly string[]): CliCommand | null {
 	if (argv[0] === "ci" && argv[1] === "run") return "ci-run";
 	if (argv[0] === "hosted" && argv[1] === "init") return "hosted-init";
 	if (argv[0] === "hosted" && argv[1] === "sync") return "hosted-sync";
+	if (argv[0] === "integration" && argv[1] === "ci") return "integration-ci";
 	if (argv[0] === "integration") return "integration";
 	if (argv[0] === "fixture" && argv[1] === "create") return "fixture-create";
 	if (["plan", "gate", "replan", "review", "export"].includes(argv[0] ?? "")) {
@@ -402,6 +405,43 @@ export async function runCli(argv = process.argv.slice(2)): Promise<number> {
 		} catch (error) {
 			if (
 				error instanceof IntegrationRunnerError ||
+				error instanceof SemanticRepositoryError ||
+				error instanceof RepositoryReviewError
+			) {
+				return failure(command, json, error.code, error.message);
+			}
+			throw error;
+		}
+	}
+	if (command === "integration-ci") {
+		const eventPath = readOption(argv, "--event");
+		const output = readOption(argv, "--output");
+		if (eventPath === undefined || output === undefined) {
+			return failure(
+				command,
+				json,
+				"INTEGRATION_CI_INPUT_REQUIRED",
+				"--event and --output are required",
+			);
+		}
+		try {
+			const result = await runIntegrationCi({
+				repository: readOption(argv, "--repo") ?? ".",
+				eventPath,
+				output,
+				planId: readOption(argv, "--plan-id"),
+			});
+			success(command, "deterministic", result, json);
+			return result.result.outcome === "compatible"
+				? 0
+				: result.result.outcome === "conflict"
+					? 2
+					: 1;
+		} catch (error) {
+			if (
+				error instanceof IntegrationCiError ||
+				error instanceof IntegrationRunnerError ||
+				error instanceof CiRunnerError ||
 				error instanceof SemanticRepositoryError ||
 				error instanceof RepositoryReviewError
 			) {

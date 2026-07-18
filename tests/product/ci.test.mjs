@@ -61,11 +61,13 @@ test("ci init writes one deterministic least-privilege pull-request workflow", a
 	assert.match(workflow, /cancel-in-progress: true/u);
 	assert.match(workflow, /pnpm install --frozen-lockfile --ignore-scripts/u);
 	assert.match(workflow, /sudo apt-get install --yes --no-install-recommends bubblewrap/u);
+	assert.match(workflow, /grfs integration ci --event/u);
+	assert.match(workflow, /if: \$\{\{ !cancelled\(\) \}\}/u);
 	assert.match(workflow, /retention-days: 7/u);
 	assert.doesNotMatch(workflow, /uses: [^\n]+@v[0-9]+/u);
 	assert.equal(
 		[...workflow.matchAll(/uses: [^@\n]+@([0-9a-f]{40})/gu)].length,
-		4,
+		5,
 		"every external action must be pinned to an immutable commit",
 	);
 	assert.doesNotMatch(workflow, /id-token|secrets\.|contents: write|pull-requests: write/u);

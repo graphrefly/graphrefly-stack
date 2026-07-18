@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import test from "node:test";
@@ -222,6 +222,38 @@ test("repository-owned integration runner emits compatible bytes and policy inva
 	);
 	assert.equal(local.status, 0, local.stderr || local.stdout);
 	assert.deepEqual(JSON.parse(local.stdout).data, compatible);
+	const eventPath = resolve(root, "pull-request.json");
+	const ciOutput = resolve(root, "integration-ci.json");
+	await writeFile(
+		eventPath,
+		`${JSON.stringify({
+			repository: { name: identity.name, owner: { login: identity.owner } },
+			pull_request: { base: { sha: fixture.target }, head: { sha: fixture.head } },
+		})}\n`,
+	);
+	const ci = spawnSync(
+		process.execPath,
+		[
+			cli,
+			"integration",
+			"ci",
+			"--repo",
+			fixture.repository,
+			"--event",
+			eventPath,
+			"--output",
+			ciOutput,
+			"--json",
+		],
+		{ encoding: "utf8", env: { ...process.env, GITHUB_EVENT_NAME: "pull_request" } },
+	);
+	assert.equal(ci.status, 0, ci.stderr || ci.stdout);
+	assert.deepEqual(JSON.parse(await readFile(ciOutput, "utf8")), compatible);
+	const ciEnvelope = JSON.parse(ci.stdout);
+	assert.deepEqual(
+		{ candidate: ciEnvelope.data.candidate, result: ciEnvelope.data.result },
+		compatible,
+	);
 
 	git(fixture.repository, ["switch", "target"]);
 	const stalePolicy = { ...fixture.policy, revision: "rev-2" };

@@ -19,6 +19,7 @@ export type CliCommand =
 	| "hosted-init"
 	| "hosted-sync"
 	| "integration"
+	| "integration-ci"
 	| "fixture-create"
 	| "plan"
 	| "gate"

@@ -35,6 +35,7 @@
 				"ci-init",
 				"ci-run",
 				"integration",
+				"integration-ci",
 				"fixture-create",
 				"plan",
 				"gate",

@@ -203,12 +203,24 @@ jobs:
       - name: Run GraphReFly Stack semantic gate
         id: graphrefly_stack
         run: pnpm exec grfs ci run --event "$GITHUB_EVENT_PATH" --output "$RUNNER_TEMP/graphrefly-stack-ci.json" --json
+      - name: Run GraphReFly Stack semantic integration
+        if: \${{ !cancelled() }}
+        id: graphrefly_stack_integration
+        run: pnpm exec grfs integration ci --event "$GITHUB_EVENT_PATH" --output "$RUNNER_TEMP/graphrefly-stack-integration.json" --json
       - name: Upload redacted GraphReFly Stack evidence
         if: \${{ always() && steps.graphrefly_stack.outputs.artifact-name != '' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: \${{ steps.graphrefly_stack.outputs.artifact-name }}
           path: \${{ steps.graphrefly_stack.outputs.artifact-path }}
+          retention-days: 7
+          if-no-files-found: error
+      - name: Upload GraphReFly Stack integration evidence
+        if: \${{ always() && steps.graphrefly_stack_integration.outputs.artifact-name != '' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: \${{ steps.graphrefly_stack_integration.outputs.artifact-name }}
+          path: \${{ steps.graphrefly_stack_integration.outputs.artifact-path }}
           retention-days: 7
           if-no-files-found: error
 `;
@@ -408,7 +420,11 @@ export function requireSingleTipCoveringPlan(candidates: readonly string[]): str
 	return candidates[0] as string;
 }
 
-async function selectPlan(repository: string, head: string, explicit?: string): Promise<string> {
+export async function selectPlan(
+	repository: string,
+	head: string,
+	explicit?: string,
+): Promise<string> {
 	if (explicit !== undefined) {
 		if (!planPaths(repository, head).includes(`.graphrefly-stack/plans/${explicit}.json`)) {
 			throw new CiRunnerError("CI_PLAN_NOT_FOUND", `Accepted plan was not found: ${explicit}`);
