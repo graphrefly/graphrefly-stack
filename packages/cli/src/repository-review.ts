@@ -13,6 +13,7 @@ import {
 	type RepositoryReview,
 	type RepositoryRevisionEvidence,
 	SUPPORTED_GRAPHREFLY_RANGE,
+	sha256Jcs,
 } from "@graphrefly-stack/contracts";
 import { satisfies, valid } from "semver";
 
@@ -485,9 +486,11 @@ function reviewHeadLabel(repository: string, requested: string, headOid: string)
 export async function createRepositoryBlueprintSnapshot(options: {
 	repository: string;
 	revision: string;
+	requireEntrypointAtRevision?: boolean;
 }): Promise<{
 	repository: string;
 	commit: { algorithm: "sha1" | "sha256"; value: string };
+	graphreflyVersion: string;
 	blueprint: Record<string, unknown>;
 	blueprintHash: { algorithm: "sha256"; value: string };
 }> {
@@ -510,6 +513,16 @@ export async function createRepositoryBlueprintSnapshot(options: {
 	} catch {
 		throw new RepositoryReviewError("REVISION_INVALID", "Revision must resolve to a commit");
 	}
+	if (options.requireEntrypointAtRevision === true) {
+		try {
+			gitObject(repository, commit.value, config.blueprint.entrypoint);
+		} catch {
+			throw new RepositoryReviewError(
+				"ENTRYPOINT_MISSING",
+				`Blueprint entrypoint is missing at ${commit.value.slice(0, 12)}`,
+			);
+		}
+	}
 	const runtime = await resolveTargetRuntime(repository);
 	await validateDependencyContinuity(repository, [commit.value], runtime.version);
 	const blueprint = await executeBlueprint(
@@ -529,8 +542,40 @@ export async function createRepositoryBlueprintSnapshot(options: {
 	return {
 		repository,
 		commit,
+		graphreflyVersion: runtime.version,
 		blueprint,
 		blueprintHash: { algorithm: "sha256", value: hash.value },
+	};
+}
+
+export async function diffRepositoryBlueprintSnapshots(options: {
+	repository: string;
+	previous: Record<string, unknown>;
+	next: Record<string, unknown>;
+}): Promise<{
+	delta: Record<string, unknown>;
+	digest: { algorithm: "sha256"; value: string };
+}> {
+	let repository: string;
+	try {
+		const requested = await realpath(resolve(options.repository));
+		repository = await realpath(gitText(requested, ["rev-parse", "--show-toplevel"]));
+	} catch {
+		throw new RepositoryReviewError(
+			"REPOSITORY_INVALID",
+			"Repository must be a local Git worktree",
+		);
+	}
+	const runtime = await resolveTargetRuntime(repository);
+	let delta: Record<string, unknown>;
+	try {
+		delta = runtime.diffGraphBlueprints(options.previous, options.next);
+	} catch {
+		throw new RepositoryReviewError("BLUEPRINT_DELTA_FAILED", "Blueprint delta failed");
+	}
+	return {
+		delta,
+		digest: { algorithm: "sha256", value: sha256Jcs(delta) },
 	};
 }
 

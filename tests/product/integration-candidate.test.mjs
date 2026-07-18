@@ -1,14 +1,18 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { access, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { access, mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 
 import {
+	evaluateIsolatedGraphCandidate,
 	IntegrationCandidateError,
 	withIsolatedGitCandidate,
 } from "../../packages/cli/dist/integration-candidate.js";
+
+const workspaceNodeModules = fileURLToPath(new URL("../../node_modules", import.meta.url));
 
 function git(repository, args) {
 	const result = spawnSync("git", args, {
@@ -42,6 +46,82 @@ async function createDivergedRepository(root) {
 	const target = await commitFile(repository, "target.txt", "target\n", "target");
 	git(repository, ["switch", "-c", "head", base]);
 	const head = await commitFile(repository, "head.txt", "head\n", "head");
+	return { repository, base, target, head };
+}
+
+async function createGraphRepository(root) {
+	const repository = resolve(root, "graph-repository");
+	await mkdir(repository);
+	git(repository, ["init", "-b", "main"]);
+	await Promise.all([
+		writeFile(
+			resolve(repository, ".graphrefly-stack.json"),
+			`${JSON.stringify({
+				schema: "graphrefly.stack.repository.v1",
+				blueprint: { entrypoint: "graphrefly-stack.blueprint.mjs" },
+			})}\n`,
+		),
+		writeFile(
+			resolve(repository, "package.json"),
+			`${JSON.stringify({
+				name: "integration-graph",
+				private: true,
+				type: "module",
+				dependencies: { "@graphrefly/ts": "0.3.x" },
+			})}\n`,
+		),
+		writeFile(
+			resolve(repository, "pnpm-lock.yaml"),
+			"lockfileVersion: '9.0'\n\nimporters:\n  .:\n    dependencies:\n      '@graphrefly/ts':\n        specifier: 0.3.x\n        version: 0.3.0\n",
+		),
+		writeFile(
+			resolve(repository, "graphrefly-stack.blueprint.mjs"),
+			`import { createHash } from "node:crypto";
+import { withBlueprintHash } from "@graphrefly/ts/graph";
+import { createGraph } from "./graph.mjs";
+const value = withBlueprintHash(createGraph().blueprint({ diagnostics: true }), {
+  algorithm: "sha256",
+  hash: (bytes) => createHash("sha256").update(bytes).digest("hex"),
+});
+process.stdout.write(JSON.stringify(value));
+`,
+		),
+		writeFile(
+			resolve(repository, "graph.mjs"),
+			`import { graph } from "@graphrefly/ts/graph";
+import { applyTarget } from "./target.mjs";
+import { applyHead } from "./head.mjs";
+export function createGraph() {
+  const value = graph({ name: "integration" });
+  value.state(1, { name: "base" });
+  applyTarget(value);
+  applyHead(value);
+  return value;
+}
+`,
+		),
+		writeFile(resolve(repository, "target.mjs"), "export function applyTarget() {}\n"),
+		writeFile(resolve(repository, "head.mjs"), "export function applyHead() {}\n"),
+		writeFile(resolve(repository, ".gitignore"), "node_modules\n"),
+	]);
+	await symlink(workspaceNodeModules, resolve(repository, "node_modules"), "dir");
+	git(repository, ["add", "-A"]);
+	git(repository, ["commit", "-m", "base graph"]);
+	const base = git(repository, ["rev-parse", "HEAD"]);
+	git(repository, ["switch", "-c", "target"]);
+	const target = await commitFile(
+		repository,
+		"target.mjs",
+		'export function applyTarget(value) { value.state(2, { name: "target" }); }\n',
+		"target graph",
+	);
+	git(repository, ["switch", "-c", "head", base]);
+	const head = await commitFile(
+		repository,
+		"head.mjs",
+		'export function applyHead(value) { value.state(3, { name: "head" }); }\n',
+		"head graph",
+	);
 	return { repository, base, target, head };
 }
 
@@ -136,4 +216,25 @@ test("symbolic target movement invalidates candidate before return", async (cont
 		),
 		(error) => error instanceof IntegrationCandidateError && error.code === "TARGET_MOVED",
 	);
+});
+
+test("isolated candidate derives verified four-revision Blueprints and both upstream deltas", async (context) => {
+	const root = await mkdtemp(resolve(tmpdir(), "grfs-integration-graph-"));
+	context.after(() => rm(root, { recursive: true, force: true }));
+	const fixture = await createGraphRepository(root);
+	const before = sourceFingerprint(fixture.repository);
+	const evidence = await withIsolatedGitCandidate(
+		{ repository: fixture.repository, target: fixture.target, head: fixture.head },
+		evaluateIsolatedGraphCandidate,
+	);
+	assert.equal(evidence.graphreflyVersion, "0.3.0");
+	assert.notEqual(evidence.base.blueprintHash.value, evidence.target.blueprintHash.value);
+	assert.notEqual(evidence.base.blueprintHash.value, evidence.head.blueprintHash.value);
+	assert.match(JSON.stringify(evidence.candidate.blueprint), /target/u);
+	assert.match(JSON.stringify(evidence.candidate.blueprint), /head/u);
+	assert.match(JSON.stringify(evidence.targetDelta.delta), /target/u);
+	assert.match(JSON.stringify(evidence.headDelta.delta), /head/u);
+	assert.match(evidence.targetDelta.digest.value, /^[0-9a-f]{64}$/u);
+	assert.match(evidence.headDelta.digest.value, /^[0-9a-f]{64}$/u);
+	assert.deepEqual(sourceFingerprint(fixture.repository), before);
 });

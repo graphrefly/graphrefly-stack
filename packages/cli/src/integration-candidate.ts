@@ -1,7 +1,12 @@
 import { spawnSync } from "node:child_process";
-import { mkdtemp, realpath, rm } from "node:fs/promises";
+import { mkdtemp, realpath, rm, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+
+import {
+	createRepositoryBlueprintSnapshot,
+	diffRepositoryBlueprintSnapshots,
+} from "./repository-review.js";
 
 const maxHeadCommits = 64;
 const maxGitOutput = 16 * 1024 * 1024;
@@ -33,6 +38,15 @@ interface GitResult {
 function runGit(repository: string, args: readonly string[], allowedStatuses = [0]): GitResult {
 	const result = spawnSync("git", ["-C", repository, ...args], {
 		encoding: "utf8",
+		env: {
+			...process.env,
+			GIT_AUTHOR_NAME: "GraphReFly Stack",
+			GIT_AUTHOR_EMAIL: "stack@example.invalid",
+			GIT_AUTHOR_DATE: "2000-01-01T00:00:00Z",
+			GIT_COMMITTER_NAME: "GraphReFly Stack",
+			GIT_COMMITTER_EMAIL: "stack@example.invalid",
+			GIT_COMMITTER_DATE: "2000-01-01T00:00:00Z",
+		},
 		maxBuffer: maxGitOutput,
 		shell: false,
 	});
@@ -119,6 +133,95 @@ export interface IsolatedGitCandidate {
 	tree: { algorithm: "sha1" | "sha256"; value: string };
 	mergeAlgorithm: "git-ort-three-way";
 	mergeRevision: "v1";
+}
+
+export interface IsolatedGraphEvidence {
+	graphreflyVersion: string;
+	base: {
+		blueprint: Record<string, unknown>;
+		blueprintHash: { algorithm: "sha256"; value: string };
+	};
+	target: {
+		blueprint: Record<string, unknown>;
+		blueprintHash: { algorithm: "sha256"; value: string };
+	};
+	head: {
+		blueprint: Record<string, unknown>;
+		blueprintHash: { algorithm: "sha256"; value: string };
+	};
+	candidate: {
+		blueprint: Record<string, unknown>;
+		blueprintHash: { algorithm: "sha256"; value: string };
+	};
+	targetDelta: {
+		delta: Record<string, unknown>;
+		digest: { algorithm: "sha256"; value: string };
+	};
+	headDelta: {
+		delta: Record<string, unknown>;
+		digest: { algorithm: "sha256"; value: string };
+	};
+}
+
+export async function evaluateIsolatedGraphCandidate(
+	candidate: IsolatedGitCandidate,
+): Promise<IsolatedGraphEvidence> {
+	runGit(candidate.isolatedRepository, ["checkout", "--detach", "--force", candidate.target.value]);
+	const sourceNodeModules = await realpath(join(candidate.sourceRepository, "node_modules"));
+	await symlink(sourceNodeModules, join(candidate.isolatedRepository, "node_modules"), "dir");
+	const candidateCommit = gitText(candidate.isolatedRepository, [
+		"commit-tree",
+		candidate.tree.value,
+		"-p",
+		candidate.target.value,
+		"-p",
+		candidate.head.value,
+		"-m",
+		"GraphReFly Stack isolated integration candidate",
+	]);
+	const snapshots = [];
+	for (const revision of [
+		candidate.mergeBase.value,
+		candidate.target.value,
+		candidate.head.value,
+		candidateCommit,
+	]) {
+		snapshots.push(
+			await createRepositoryBlueprintSnapshot({
+				repository: candidate.isolatedRepository,
+				revision,
+				requireEntrypointAtRevision: true,
+			}),
+		);
+	}
+	const [base, target, head, merged] = snapshots;
+	if (base === undefined || target === undefined || head === undefined || merged === undefined) {
+		throw new IntegrationCandidateError(
+			"GIT_FAILED",
+			"Integration Blueprint evidence is incomplete",
+		);
+	}
+	const [targetDelta, headDelta] = await Promise.all([
+		diffRepositoryBlueprintSnapshots({
+			repository: candidate.isolatedRepository,
+			previous: base.blueprint,
+			next: target.blueprint,
+		}),
+		diffRepositoryBlueprintSnapshots({
+			repository: candidate.isolatedRepository,
+			previous: base.blueprint,
+			next: head.blueprint,
+		}),
+	]);
+	return {
+		graphreflyVersion: merged.graphreflyVersion,
+		base: { blueprint: base.blueprint, blueprintHash: base.blueprintHash },
+		target: { blueprint: target.blueprint, blueprintHash: target.blueprintHash },
+		head: { blueprint: head.blueprint, blueprintHash: head.blueprintHash },
+		candidate: { blueprint: merged.blueprint, blueprintHash: merged.blueprintHash },
+		targetDelta,
+		headDelta,
+	};
 }
 
 export async function withIsolatedGitCandidate<T>(
