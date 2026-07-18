@@ -627,6 +627,80 @@ async function proveInstalledCiPass(repository, inputRoot, lifecycle, repository
 	assert.equal(run(repository, "git", ["status", "--short"]), "");
 }
 
+async function proveInstalledIntegration(
+	repository,
+	inputRoot,
+	lifecycle,
+	repositoryName,
+	pullRequest,
+) {
+	assert.equal(run(repository, "git", ["rev-parse", "HEAD"]), lifecycle.head);
+	const statusBefore = run(repository, "git", ["status", "--short"]);
+	const local = invoke(
+		repository,
+		"pnpm",
+		[
+			"exec",
+			"grfs",
+			"integration",
+			"--repo",
+			".",
+			"--target",
+			lifecycle.base,
+			"--head",
+			lifecycle.head,
+			"--plan-id",
+			lifecycle.planId,
+			"--provider",
+			"github",
+			"--owner",
+			"graphrefly",
+			"--name",
+			repositoryName,
+			"--json",
+		],
+		{ env: gitEnvironment },
+	);
+	assert.equal(local.status, 0, local.stderr || local.stdout);
+	const localArtifact = JSON.parse(local.stdout).data;
+	const eventPath = resolve(inputRoot, `${lifecycle.planId}-integration-event.json`);
+	await writeFile(
+		eventPath,
+		`${JSON.stringify({
+			number: pullRequest,
+			repository: { name: repositoryName, owner: { login: "graphrefly" } },
+			pull_request: { base: { sha: lifecycle.base }, head: { sha: lifecycle.head } },
+		})}\n`,
+		"utf8",
+	);
+	const output = resolve(inputRoot, `${lifecycle.planId}-integration-ci.json`);
+	const ci = invoke(
+		repository,
+		"pnpm",
+		[
+			"exec",
+			"grfs",
+			"integration",
+			"ci",
+			"--repo",
+			".",
+			"--event",
+			eventPath,
+			"--plan-id",
+			lifecycle.planId,
+			"--output",
+			output,
+			"--json",
+		],
+		{ env: { ...gitEnvironment, GITHUB_EVENT_NAME: "pull_request" } },
+	);
+	assert.equal(ci.status, 0, ci.stderr || ci.stdout);
+	assert.deepEqual(JSON.parse(await readFile(output, "utf8")), localArtifact);
+	assert.equal(localArtifact.result.outcome, "compatible");
+	assert.equal(localArtifact.candidate.repository.name, repositoryName);
+	assert.equal(run(repository, "git", ["status", "--short"]), statusBefore);
+}
+
 async function waitForServer(child) {
 	return new Promise((resolveReady, rejectReady) => {
 		let stderr = "";
@@ -907,6 +981,13 @@ export function createApplicationGraph() {
 		semanticInputs,
 		"flat-installed",
 		"source",
+	);
+	await proveInstalledIntegration(
+		repository,
+		semanticInputs,
+		flatLifecycle,
+		"independent-flat",
+		42,
 	);
 	const originalPackageJson = await readFile(resolve(repository, "package.json"), "utf8");
 	const ciPackageJson = JSON.parse(originalPackageJson);
@@ -1243,6 +1324,13 @@ export function createApplicationGraph() {
 			"-e",
 			`const fs=require("node:fs");try{fs.writeFileSync(${JSON.stringify(mutationTarget)},"unsafe");process.exitCode=91}catch(error){if(!["EACCES","EPERM","EROFS"].includes(error.code))throw error}`,
 		],
+	);
+	await proveInstalledIntegration(
+		mountedRepository,
+		semanticInputs,
+		mountedLifecycle,
+		"independent-mounted",
+		84,
 	);
 	await assert.rejects(readFile(mutationTarget, "utf8"));
 	await proveInstalledCiPass(mountedRepository, semanticInputs, mountedLifecycle, 234567, 84);

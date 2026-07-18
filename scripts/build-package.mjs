@@ -24,6 +24,7 @@ await chmod(resolve(output, "grfs.js"), 0o755);
 const copies = [
 	["contracts/ci", "assets/contracts/ci"],
 	["contracts/hosted", "assets/contracts/hosted"],
+	["contracts/integration", "assets/contracts/integration"],
 	["contracts/repository", "assets/contracts/repository"],
 	["contracts/semantic", "assets/contracts/semantic"],
 	["contracts/v1/schemas", "assets/contracts/v1/schemas"],
@@ -31,6 +32,7 @@ const copies = [
 	["fixtures/contracts/semantic/v1", "assets/fixtures/contracts/semantic/v1"],
 	["fixtures/contracts/ci/v1", "assets/fixtures/contracts/ci/v1"],
 	["fixtures/contracts/hosted/v1", "assets/fixtures/contracts/hosted/v1"],
+	["fixtures/contracts/integration/v1", "assets/fixtures/contracts/integration/v1"],
 	[
 		"fixtures/flagship/v1/repository-template.json",
 		"assets/fixtures/flagship/v1/repository-template.json",
