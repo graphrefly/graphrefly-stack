@@ -2,6 +2,7 @@ import { access, mkdir, readFile, realpath, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+	assertCiBundleIntegrity,
 	CI_ARTIFACTS_SCHEMA,
 	CI_BUNDLE_SCHEMA,
 	canonicalize,
@@ -19,7 +20,6 @@ import {
 	HOSTED_SYNC_WORKFLOW_PATH,
 	type HostedRedactionProfile,
 	SEMANTIC_ARTIFACTS_SCHEMA,
-	SEMANTIC_REASON_ORDER,
 	sha256Jcs,
 } from "@graphrefly-stack/contracts";
 
@@ -95,10 +95,6 @@ function hash(value: unknown) {
 	return { algorithm: "sha256" as const, value: sha256Jcs(value) };
 }
 
-function equal(left: unknown, right: unknown): boolean {
-	return canonicalize(left) === canonicalize(right);
-}
-
 async function validators() {
 	const [semanticSchema, ciSchema, hostedSchema, ...repositorySchemas] = await Promise.all(
 		[semanticSchemaPath, ciSchemaPath, hostedSchemaPath, ...repositorySchemaPaths].map(
@@ -166,78 +162,6 @@ export function decodeUnverifiedOidcPayload(token: string): JsonObject {
 	}
 }
 
-function verifyCiBundleBindings(ciBundle: JsonObject): void {
-	const invocation = object(ciBundle.invocation, "CI invocation");
-	const result = object(ciBundle.result, "CI result");
-	const portableBundle = object(ciBundle.portableBundle, "portable bundle");
-	const event = object(invocation.event, "CI event");
-	const repository = object(invocation.repository, "CI repository");
-	const workflow = object(invocation.workflow, "CI workflow");
-	const run = object(invocation.run, "CI run");
-	const provenance = object(result.provenance, "CI provenance");
-	const gateResult = object(result.gateResult, "GateResult");
-	const summary = object(result.summary, "CI summary");
-	const redaction = object(result.redaction, "CI redaction");
-	const invocationDigest = object(result.invocationDigest, "CI invocation digest");
-	const gateInputDigest = object(result.gateInputDigest, "CI gate input digest");
-	const portableBundleDigest = object(result.portableBundleDigest, "portable bundle digest");
-	const manifest = object(portableBundle.manifest, "portable bundle manifest");
-	const artifacts = object(portableBundle.artifacts, "portable bundle artifacts");
-	const manifestArtifacts = Array.isArray(manifest.artifacts) ? manifest.artifacts : [];
-	const expectedArtifactPaths = [
-		"policy.json",
-		"plan.json",
-		"bindings.json",
-		"records.json",
-		"checks.json",
-		"gate-input.json",
-		"gate-result.json",
-	];
-	const manifestHashesValid =
-		manifestArtifacts.length === expectedArtifactPaths.length &&
-		manifestArtifacts.every((entry, index) => {
-			const descriptor = object(entry, "portable manifest descriptor");
-			const path = expectedArtifactPaths[index] as string;
-			const digest = object(descriptor.hash, "portable manifest digest");
-			return descriptor.path === path && digest.value === sha256Jcs(artifacts[path]);
-		});
-	const units = Array.isArray(gateResult.units) ? (gateResult.units as JsonObject[]) : [];
-	const affectedWorkUnitIds = units
-		.filter((unit) => unit.verdict === "invalid")
-		.map((unit) => unit.workUnitId);
-	const presentReasons = new Set(
-		units.flatMap((unit) => (Array.isArray(unit.reasonCodes) ? unit.reasonCodes : [])),
-	);
-	const reasonCodes = SEMANTIC_REASON_ORDER.filter((reason) => presentReasons.has(reason));
-
-	if (
-		invocationDigest.value !== sha256Jcs(invocation) ||
-		portableBundleDigest.value !== sha256Jcs(portableBundle) ||
-		!equal(gateInputDigest, gateResult.inputDigest) ||
-		result.outcome !== gateResult.verdict ||
-		summary.verdict !== result.outcome ||
-		provenance.repositoryId !== repository.id ||
-		provenance.runId !== run.id ||
-		provenance.attempt !== run.attempt ||
-		!equal(provenance.workflowSha, workflow.sha) ||
-		event.name !== "pull_request" ||
-		!equal(redaction.excludes, HOSTED_REDACTION_EXCLUDES) ||
-		!manifestHashesValid ||
-		!equal(manifest.redaction, redaction) ||
-		!equal(manifest.head, event.head) ||
-		!equal(manifest.inputDigest, gateInputDigest) ||
-		!equal(artifacts["gate-result.json"], gateResult) ||
-		!equal(summary.affectedWorkUnitIds, affectedWorkUnitIds) ||
-		!equal(summary.reasonCodes, reasonCodes) ||
-		result.artifactName !== `graphrefly-stack-ci-${portableBundleDigest.value as string}`
-	) {
-		throw new HostedRunnerError(
-			"HOSTED_SOURCE_BINDING_INVALID",
-			"CI bundle cross-binding or redaction is invalid",
-		);
-	}
-}
-
 export async function createHostedEnvelope(options: {
 	ciBundle: unknown;
 	profile: Exclude<HostedRedactionProfile, "local-review-decisions-v1">;
@@ -250,7 +174,14 @@ export async function createHostedEnvelope(options: {
 	} = await validators();
 	assertValid(validateCiBundle, options.ciBundle, "HOSTED_SOURCE_SCHEMA_INVALID");
 	const ciBundle = object(options.ciBundle, "CI bundle");
-	verifyCiBundleBindings(ciBundle);
+	try {
+		assertCiBundleIntegrity(ciBundle);
+	} catch {
+		throw new HostedRunnerError(
+			"HOSTED_SOURCE_BINDING_INVALID",
+			"CI bundle cross-binding or redaction is invalid",
+		);
+	}
 	const syncIdentity = normalizeGitHubOidcClaims(options.syncIdentity);
 	assertValid(validateOidc, syncIdentity, "HOSTED_OIDC_CLAIMS_INVALID");
 	const invocation = object(ciBundle.invocation, "CI invocation");

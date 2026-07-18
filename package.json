@@ -26,7 +26,7 @@
 		"access": "public"
 	},
 	"scripts": {
-		"build": "pnpm --filter @graphrefly-stack/contracts build && pnpm --filter @graphrefly-stack/core build && pnpm --filter @graphrefly-stack/review build && pnpm --filter @graphrefly-stack/cli build",
+		"build": "pnpm --filter @graphrefly-stack/contracts build && pnpm --filter @graphrefly-stack/core build && pnpm --filter @graphrefly-stack/review build && pnpm --filter @graphrefly-stack/cli build && pnpm --filter @graphrefly-stack/hosted build",
 		"build:package": "pnpm build && node scripts/build-package.mjs",
 		"check": "pnpm docs:check && pnpm skills:check && pnpm test:compatibility && pnpm test:contracts && pnpm test:architecture && pnpm test:semantic && pnpm test:product && pnpm test:package && pnpm test:live && biome check .",
 		"cli": "node packages/cli/dist/cli.js",

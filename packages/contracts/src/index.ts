@@ -2,6 +2,7 @@ import { Ajv } from "ajv";
 
 export * from "./ci.js";
 export * from "./hosted.js";
+export * from "./hosted-integrity.js";
 export * from "./jcs.js";
 export * from "./repository-review.js";
 export * from "./semantic.js";
