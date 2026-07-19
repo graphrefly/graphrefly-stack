@@ -1,0 +1,156 @@
+{
+	"schema": "graphrefly.stack.dag-golden-suite.v2",
+	"cases": [
+		{
+			"caseId": "linear-subset",
+			"topology": {
+				"schema": "graphrefly.stack.git-topology-slice.v2",
+				"repository": { "provider": "github", "owner": "graphrefly", "name": "linear" },
+				"provider": {
+					"kind": "graphrefly",
+					"runtimeVersion": "0.3.0",
+					"blueprintVersion": "v2"
+				},
+				"base": { "algorithm": "sha1", "value": "1111111111111111111111111111111111111111" },
+				"head": { "algorithm": "sha1", "value": "2222222222222222222222222222222222222222" },
+				"baseBlueprintHash": {
+					"algorithm": "sha256",
+					"value": "1111111111111111111111111111111111111111111111111111111111111111"
+				},
+				"limits": { "maxObjects": 64, "maxWidth": 8, "maxParents": 2 },
+				"objects": [
+					{
+						"oid": { "algorithm": "sha1", "value": "2222222222222222222222222222222222222222" },
+						"parents": [
+							{ "algorithm": "sha1", "value": "1111111111111111111111111111111111111111" }
+						],
+						"layer": 1,
+						"kind": "implementation",
+						"workUnitId": "U1",
+						"blueprintHash": {
+							"algorithm": "sha256",
+							"value": "2222222222222222222222222222222222222222222222222222222222222222"
+						}
+					}
+				],
+				"joins": []
+			}
+		},
+		{
+			"caseId": "binary-clean-join",
+			"topology": {
+				"schema": "graphrefly.stack.git-topology-slice.v2",
+				"repository": { "provider": "github", "owner": "graphrefly", "name": "branches" },
+				"provider": {
+					"kind": "graphrefly",
+					"runtimeVersion": "0.3.0",
+					"blueprintVersion": "v2"
+				},
+				"base": { "algorithm": "sha1", "value": "1111111111111111111111111111111111111111" },
+				"head": { "algorithm": "sha1", "value": "4444444444444444444444444444444444444444" },
+				"baseBlueprintHash": {
+					"algorithm": "sha256",
+					"value": "1111111111111111111111111111111111111111111111111111111111111111"
+				},
+				"limits": { "maxObjects": 64, "maxWidth": 8, "maxParents": 2 },
+				"objects": [
+					{
+						"oid": { "algorithm": "sha1", "value": "2222222222222222222222222222222222222222" },
+						"parents": [
+							{ "algorithm": "sha1", "value": "1111111111111111111111111111111111111111" }
+						],
+						"layer": 1,
+						"kind": "implementation",
+						"workUnitId": "LEFT",
+						"blueprintHash": {
+							"algorithm": "sha256",
+							"value": "2222222222222222222222222222222222222222222222222222222222222222"
+						}
+					},
+					{
+						"oid": { "algorithm": "sha1", "value": "3333333333333333333333333333333333333333" },
+						"parents": [
+							{ "algorithm": "sha1", "value": "1111111111111111111111111111111111111111" }
+						],
+						"layer": 1,
+						"kind": "implementation",
+						"workUnitId": "RIGHT",
+						"blueprintHash": {
+							"algorithm": "sha256",
+							"value": "3333333333333333333333333333333333333333333333333333333333333333"
+						}
+					},
+					{
+						"oid": { "algorithm": "sha1", "value": "4444444444444444444444444444444444444444" },
+						"parents": [
+							{ "algorithm": "sha1", "value": "2222222222222222222222222222222222222222" },
+							{ "algorithm": "sha1", "value": "3333333333333333333333333333333333333333" }
+						],
+						"layer": 2,
+						"kind": "join",
+						"workUnitId": null,
+						"blueprintHash": {
+							"algorithm": "sha256",
+							"value": "4444444444444444444444444444444444444444444444444444444444444444"
+						}
+					}
+				],
+				"joins": [
+					{
+						"schema": "graphrefly.stack.join-binding.v2",
+						"oid": { "algorithm": "sha1", "value": "4444444444444444444444444444444444444444" },
+						"parents": [
+							{ "algorithm": "sha1", "value": "2222222222222222222222222222222222222222" },
+							{ "algorithm": "sha1", "value": "3333333333333333333333333333333333333333" }
+						],
+						"layer": 2,
+						"mergeBase": {
+							"algorithm": "sha1",
+							"value": "1111111111111111111111111111111111111111"
+						},
+						"merge": {
+							"algorithm": "git-ort-three-way",
+							"revision": "v1",
+							"candidateTree": {
+								"algorithm": "sha1",
+								"value": "5555555555555555555555555555555555555555"
+							},
+							"observedTree": {
+								"algorithm": "sha1",
+								"value": "5555555555555555555555555555555555555555"
+							}
+						},
+						"parentDeltas": [
+							{
+								"from": {
+									"algorithm": "sha1",
+									"value": "2222222222222222222222222222222222222222"
+								},
+								"to": { "algorithm": "sha1", "value": "4444444444444444444444444444444444444444" },
+								"deltaDigest": {
+									"algorithm": "sha256",
+									"value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+								}
+							},
+							{
+								"from": {
+									"algorithm": "sha1",
+									"value": "3333333333333333333333333333333333333333"
+								},
+								"to": { "algorithm": "sha1", "value": "4444444444444444444444444444444444444444" },
+								"deltaDigest": {
+									"algorithm": "sha256",
+									"value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+								}
+							}
+						],
+						"joinBlueprintHash": {
+							"algorithm": "sha256",
+							"value": "4444444444444444444444444444444444444444444444444444444444444444"
+						}
+					}
+				]
+			}
+		}
+	]
+}

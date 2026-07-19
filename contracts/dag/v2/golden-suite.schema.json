@@ -1,0 +1,26 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "urn:graphrefly-stack:schema:dag-golden-suite:v2",
+	"title": "GraphReFly Stack bounded DAG golden suite v2",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["schema", "cases"],
+	"properties": {
+		"schema": { "const": "graphrefly.stack.dag-golden-suite.v2" },
+		"cases": {
+			"type": "array",
+			"minItems": 2,
+			"items": {
+				"type": "object",
+				"additionalProperties": false,
+				"required": ["caseId", "topology"],
+				"properties": {
+					"caseId": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,63}$" },
+					"topology": {
+						"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/GitTopologySlice"
+					}
+				}
+			}
+		}
+	}
+}

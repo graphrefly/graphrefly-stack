@@ -1,0 +1,7 @@
+{
+	"suite": "0adf540254ac770caaa1cb39d1b391f187a3b5bb0c35391702a68fa664e10279",
+	"cases": {
+		"linear-subset": "acfdadedc97156bc3e02ead49f9ff7e906baac22ef13c9af88278769897e3049",
+		"binary-clean-join": "4e43b5d1ce0b43c4a78f78a468595dfa105cdf94d5334d9ea73ae9cbe59a4116"
+	}
+}
