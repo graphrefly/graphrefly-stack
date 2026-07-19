@@ -1,13 +1,16 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
 import { createDagGraphEvidence, DagEvidenceError } from "../../packages/cli/dist/dag-evidence.js";
-import { createDagSemanticGate } from "../../packages/cli/dist/dag-semantic-runner.js";
+import {
+	createDagSemanticGate,
+	DagSemanticRunnerError,
+} from "../../packages/cli/dist/dag-semantic-runner.js";
 import { createRepositoryBlueprintSnapshot } from "../../packages/cli/dist/repository-review.js";
 import { assertDagTopologyIntegrity, sha256Jcs } from "../../packages/contracts/dist/index.js";
 
@@ -286,7 +289,7 @@ test("composes a real accepted plan and branched DAG into one selective semantic
 	git(fixture.root, ["commit", "-m", "accept DAG plan"]);
 	const accepted = git(fixture.root, ["rev-parse", "HEAD"]);
 	git(fixture.root, ["switch", "-q", "-c", "left"]);
-	await commitFile(
+	const leftCommit = await commitFile(
 		fixture.root,
 		"left.mjs",
 		'export function applyLeft(value) { value.state(2, { name: "left" }); }\n',
@@ -331,4 +334,78 @@ test("composes a real accepted plan and branched DAG into one selective semantic
 	});
 	assert.equal(sha256Jcs(repeated), sha256Jcs(result));
 	assert.deepEqual(fingerprint(fixture.root), before);
+
+	const originalArtifactBytes = await readFile(result.artifact.path, "utf8");
+	git(fixture.root, ["switch", "-q", "-c", "recovered", accepted]);
+	await commitFile(
+		fixture.root,
+		"graph.mjs",
+		`import { graph } from "@graphrefly/ts/graph";
+import { applyLeft } from "./left.mjs";
+import { applyRight } from "./right.mjs";
+export function createGraph() {
+  const value = graph({ name: "dag-evidence" });
+  value.state(1, { name: "base" });
+  value.state(9, { name: "architecture" });
+  applyLeft(value);
+  applyRight(value);
+  return value;
+}
+`,
+		"change architecture baseline",
+	);
+	git(fixture.root, ["cherry-pick", leftCommit]);
+	git(fixture.root, ["merge", "--no-ff", "-m", "join recovered branch", "right"]);
+	const recoveredBefore = fingerprint(fixture.root);
+	const recovered = await createDagSemanticGate({
+		repository: fixture.root,
+		base: fixture.base,
+		head: "recovered",
+		planId: "plan-dag",
+		repositoryIdentity: { provider: "github", owner: "clfhhc", name: "test-graphrefly" },
+		recovery: {
+			kind: "cherry-pick",
+			priorBundleDigest: result.artifact.digest.value,
+		},
+	});
+	assert.notEqual(recovered.artifact.digest.value, result.artifact.digest.value);
+	assert.equal(await readFile(result.artifact.path, "utf8"), originalArtifactBytes);
+	assert.deepEqual(recovered.cache.units, [
+		{ workUnitId: "LEFT", binding: "rebound", record: "recomputed" },
+		{ workUnitId: "RIGHT", binding: "reused", record: "reused" },
+	]);
+	const originalBindings = new Map(result.bindings.map((binding) => [binding.workUnitId, binding]));
+	const recoveredBindings = new Map(
+		recovered.bindings.map((binding) => [binding.workUnitId, binding]),
+	);
+	assert.deepEqual(recoveredBindings.get("LEFT").rebindFrom, {
+		kind: "cherry-pick",
+		previousBindingDigest: {
+			algorithm: "sha256",
+			value: sha256Jcs(originalBindings.get("LEFT")),
+		},
+		stablePatchId: originalBindings.get("LEFT").stablePatchId,
+	});
+	assert.deepEqual(recoveredBindings.get("RIGHT"), originalBindings.get("RIGHT"));
+	const originalRecords = new Map(result.records.map((record) => [record.workUnitId, record]));
+	const recoveredRecords = new Map(recovered.records.map((record) => [record.workUnitId, record]));
+	assert.equal(recoveredRecords.get("LEFT").rebindFrom, originalRecords.get("LEFT").recordId);
+	assert.deepEqual(recoveredRecords.get("RIGHT"), originalRecords.get("RIGHT"));
+	assert.deepEqual(fingerprint(fixture.root), recoveredBefore);
+	await writeFile(recovered.artifact.path, "{}\n");
+	await assert.rejects(
+		createDagSemanticGate({
+			repository: fixture.root,
+			base: fixture.base,
+			head: "recovered",
+			planId: "plan-dag",
+			repositoryIdentity: { provider: "github", owner: "clfhhc", name: "test-graphrefly" },
+			recovery: {
+				kind: "rebase",
+				priorBundleDigest: recovered.artifact.digest.value,
+			},
+		}),
+		(error) =>
+			error instanceof DagSemanticRunnerError && error.code === "RECOVERY_EVIDENCE_INVALID",
+	);
 });

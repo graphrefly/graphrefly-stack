@@ -78,6 +78,27 @@ export async function repositoryReviewStateRoot(repository: string): Promise<str
 	return safeDirectory(resolve(commonDirectory, "grfs"), commonDirectory);
 }
 
+export async function repositoryStateDirectory(
+	repository: string,
+	...segments: readonly string[]
+): Promise<string> {
+	let parent = await repositoryReviewStateRoot(repository);
+	for (const segment of segments) {
+		if (
+			segment === "." ||
+			segment === ".." ||
+			!/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/u.test(segment)
+		) {
+			throw new RepositoryReviewStateError(
+				"REVIEW_STATE_PATH_UNSAFE",
+				"Local state directory segment is invalid",
+			);
+		}
+		parent = await safeDirectory(resolve(parent, segment), parent);
+	}
+	return parent;
+}
+
 async function decisionsDirectory(repository: string): Promise<string> {
 	const root = await repositoryReviewStateRoot(repository);
 	return safeDirectory(resolve(root, "reviews"), root);

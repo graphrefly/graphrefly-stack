@@ -602,6 +602,53 @@
 				}
 			}
 		},
+		"DagGateBundle": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"schema",
+				"topology",
+				"dependencyGraph",
+				"bindings",
+				"records",
+				"unitEvaluations",
+				"joinEvaluations",
+				"gateInput",
+				"gateResult"
+			],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.dag-gate-bundle.v2" },
+				"topology": {
+					"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/GitTopologySlice"
+				},
+				"dependencyGraph": { "$ref": "#/definitions/SemanticDependencyGraph" },
+				"bindings": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/WorkUnitBinding" },
+					"minItems": 1,
+					"maxItems": 64
+				},
+				"records": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/SemanticChangeRecord" },
+					"minItems": 1,
+					"maxItems": 64
+				},
+				"unitEvaluations": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/UnitEvaluationEvidence" },
+					"minItems": 1,
+					"maxItems": 64
+				},
+				"joinEvaluations": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/JoinEvaluationEvidence" },
+					"maxItems": 63
+				},
+				"gateInput": { "$ref": "#/definitions/DagGateInput" },
+				"gateResult": { "$ref": "#/definitions/DagGateResult" }
+			}
+		},
 		"DagReviewProjection": {
 			"type": "object",
 			"additionalProperties": false,

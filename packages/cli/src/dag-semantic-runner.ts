@@ -1,14 +1,18 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
+import { resolve } from "node:path";
 import {
+	assertDagSemanticIntegrity,
 	createStrictAjv,
+	DAG_GATE_BUNDLE_SCHEMA,
 	DAG_SEMANTIC_ARTIFACTS_SCHEMA,
 	sha256Jcs,
 } from "@graphrefly-stack/contracts";
 import { computeDagGateV2 } from "@graphrefly-stack/core";
 
 import { createDagGraphEvidence } from "./dag-evidence.js";
+import { repositoryStateDirectory } from "./repository-review-state.js";
 import { runtimeAssetPath } from "./runtime-paths.js";
 import { evaluateSemanticPredicate, runRepositoryPolicyChecks } from "./semantic-repository.js";
 import { gitText, SystemGitAdapter } from "./system-git.js";
@@ -26,7 +30,9 @@ export class DagSemanticRunnerError extends Error {
 			| "DEPENDENCY_MISSING"
 			| "DEPENDENCY_CYCLE"
 			| "BINDING_INVALID"
-			| "CONTRACT_INVALID",
+			| "CONTRACT_INVALID"
+			| "RECOVERY_EVIDENCE_INVALID"
+			| "LOCAL_STATE_INVALID",
 		message: string,
 	) {
 		super(message);
@@ -158,6 +164,7 @@ function assertValid(
 }
 
 export type DagSemanticGateBundle = {
+	schema: typeof DAG_GATE_BUNDLE_SCHEMA;
 	topology: JsonObject;
 	dependencyGraph: JsonObject;
 	bindings: JsonObject[];
@@ -168,13 +175,144 @@ export type DagSemanticGateBundle = {
 	gateResult: JsonObject;
 };
 
+type DagRecovery = {
+	kind: "rebase" | "cherry-pick";
+	priorBundleDigest: string;
+};
+
+type DagCacheReport = {
+	priorBundleDigest: string | null;
+	units: Array<{
+		workUnitId: string;
+		binding: "fresh" | "reused" | "rebound";
+		record: "recomputed" | "reused";
+	}>;
+};
+
+export type DagSemanticGateRun = DagSemanticGateBundle & {
+	artifact: { path: string; digest: Hash };
+	cache: DagCacheReport;
+};
+
+async function assertBundle(
+	value: unknown,
+	code: "CONTRACT_INVALID" | "RECOVERY_EVIDENCE_INVALID",
+): Promise<DagSemanticGateBundle> {
+	try {
+		if (typeof value !== "object" || value === null || Array.isArray(value)) {
+			throw new Error("DAG gate bundle must be an object");
+		}
+		const bundle = value as JsonObject;
+		if (bundle.schema !== DAG_GATE_BUNDLE_SCHEMA) {
+			throw new Error("DAG gate bundle shape is unsupported");
+		}
+		const definition = await validators();
+		assertValid(definition("DagGateBundle"), bundle, "DAG gate bundle");
+		for (const [name, values] of [
+			["SemanticDependencyGraph", [bundle.dependencyGraph]],
+			["WorkUnitBinding", bundle.bindings],
+			["SemanticChangeRecord", bundle.records],
+			["UnitEvaluationEvidence", bundle.unitEvaluations],
+			["JoinEvaluationEvidence", bundle.joinEvaluations],
+			["DagGateInput", [bundle.gateInput]],
+			["DagGateResult", [bundle.gateResult]],
+		] as const) {
+			const validate = definition(name);
+			for (const entry of Array.isArray(values) ? values : []) {
+				assertValid(validate, entry, name);
+			}
+		}
+		assertDagSemanticIntegrity({
+			topology: bundle.topology,
+			dependencyGraph: bundle.dependencyGraph,
+			bindings: bundle.bindings,
+			records: bundle.records,
+			unitEvaluations: bundle.unitEvaluations,
+			joinEvaluations: bundle.joinEvaluations,
+			gateInput: bundle.gateInput,
+			gateResult: bundle.gateResult,
+		});
+		return bundle as DagSemanticGateBundle;
+	} catch (error) {
+		if (error instanceof DagSemanticRunnerError && error.code === code) throw error;
+		throw new DagSemanticRunnerError(
+			code,
+			error instanceof Error ? error.message : "Invalid DAG bundle",
+		);
+	}
+}
+
+async function readPriorBundle(
+	repository: string,
+	planId: string,
+	recovery: DagRecovery,
+): Promise<DagSemanticGateBundle> {
+	if (!/^[0-9a-f]{64}$/u.test(recovery.priorBundleDigest)) {
+		throw new DagSemanticRunnerError(
+			"RECOVERY_EVIDENCE_INVALID",
+			"Prior DAG bundle digest is invalid",
+		);
+	}
+	const directory = await repositoryStateDirectory(repository, "dag-gates", planId);
+	const path = resolve(directory, `${recovery.priorBundleDigest}.json`);
+	let value: unknown;
+	try {
+		value = JSON.parse(await readFile(path, "utf8"));
+	} catch {
+		throw new DagSemanticRunnerError(
+			"RECOVERY_EVIDENCE_INVALID",
+			"Prior DAG bundle is missing or malformed",
+		);
+	}
+	if (sha256Jcs(value) !== recovery.priorBundleDigest) {
+		throw new DagSemanticRunnerError(
+			"RECOVERY_EVIDENCE_INVALID",
+			"Prior DAG bundle content address does not match",
+		);
+	}
+	return assertBundle(value, "RECOVERY_EVIDENCE_INVALID");
+}
+
+async function persistBundle(
+	repository: string,
+	planId: string,
+	bundle: DagSemanticGateBundle,
+): Promise<{ path: string; digest: Hash }> {
+	const directory = await repositoryStateDirectory(repository, "dag-gates", planId);
+	const digest = hash(bundle);
+	const path = resolve(directory, `${digest.value}.json`);
+	try {
+		await writeFile(path, `${JSON.stringify(bundle, null, 2)}\n`, {
+			encoding: "utf8",
+			flag: "wx",
+			mode: 0o600,
+		});
+	} catch (error) {
+		if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
+		let existing: unknown;
+		try {
+			existing = JSON.parse(await readFile(path, "utf8"));
+		} catch {
+			throw new DagSemanticRunnerError("LOCAL_STATE_INVALID", "Existing DAG bundle is malformed");
+		}
+		if (sha256Jcs(existing) !== digest.value || sha256Jcs(existing) !== sha256Jcs(bundle)) {
+			throw new DagSemanticRunnerError(
+				"LOCAL_STATE_INVALID",
+				"Existing DAG bundle violates its content address",
+			);
+		}
+	}
+	return { path, digest };
+}
+
 export async function createDagSemanticGate(options: {
 	repository: string;
 	base: string;
 	head: string;
 	planId: string;
 	repositoryIdentity: { provider: string; owner: string; name: string };
-}): Promise<DagSemanticGateBundle> {
+	recovery?: DagRecovery;
+}): Promise<DagSemanticGateRun> {
 	const graphEvidence = await createDagGraphEvidence(options);
 	const topology = graphEvidence.topology;
 	const git = new SystemGitAdapter();
@@ -343,6 +481,30 @@ export async function createDagSemanticGate(options: {
 		}
 	}
 	const order = canonicalWorkUnitOrder(units);
+	const priorBundle =
+		options.recovery === undefined
+			? undefined
+			: await readPriorBundle(options.repository, options.planId, options.recovery);
+	if (
+		priorBundle !== undefined &&
+		(object(priorBundle.gateInput.planDigest, "prior plan digest").value !== hash(plan).value ||
+			priorBundle.dependencyGraph.planId !== options.planId)
+	) {
+		throw new DagSemanticRunnerError(
+			"RECOVERY_EVIDENCE_INVALID",
+			"Prior DAG bundle belongs to a different accepted plan",
+		);
+	}
+	const priorBindingById = new Map(
+		(priorBundle?.bindings ?? []).map(
+			(binding) => [binding.workUnitId as string, binding] as const,
+		),
+	);
+	const priorRecordById = new Map(
+		(priorBundle?.records ?? []).map((record) => [record.workUnitId as string, record] as const),
+	);
+	const bindingStates = new Map<string, "fresh" | "reused" | "rebound">();
+	let recoveryMatches = 0;
 	const unitById = new Map(units.map((unit) => [unit.id as string, unit] as const));
 	const implementationById = new Map(
 		objects(topology.objects, "topology objects")
@@ -373,7 +535,7 @@ export async function createDagSemanticGate(options: {
 		const commit = entry.oid as { algorithm: "sha1" | "sha256"; value: string };
 		const diff = await git.canonicalDiff(options.repository, commit);
 		const changedPaths = [...(await git.changedPaths(options.repository, commit))];
-		const binding = {
+		const binding: JsonObject = {
 			schema: "graphrefly.stack.work-unit-binding.v2",
 			planId: options.planId,
 			workUnitId,
@@ -389,7 +551,36 @@ export async function createDagSemanticGate(options: {
 			blueprintHash: entry.blueprintHash,
 			rebindFrom: null,
 		};
+		const priorBinding = priorBindingById.get(workUnitId);
+		if (priorBinding !== undefined && priorBinding.stablePatchId === binding.stablePatchId) {
+			recoveryMatches += 1;
+			const sameCommit =
+				object(priorBinding.commit, "prior binding commit").value ===
+				object(binding.commit, "binding commit").value;
+			if (sameCommit) {
+				binding.rebindFrom = priorBinding.rebindFrom;
+				bindingStates.set(
+					workUnitId,
+					sha256Jcs(binding) === sha256Jcs(priorBinding) ? "reused" : "fresh",
+				);
+			} else {
+				binding.rebindFrom = {
+					kind: (options.recovery as DagRecovery).kind,
+					previousBindingDigest: hash(priorBinding),
+					stablePatchId: binding.stablePatchId,
+				};
+				bindingStates.set(workUnitId, "rebound");
+			}
+		} else {
+			bindingStates.set(workUnitId, "fresh");
+		}
 		bindings.push(binding);
+	}
+	if (priorBundle !== undefined && recoveryMatches === 0) {
+		throw new DagSemanticRunnerError(
+			"RECOVERY_EVIDENCE_INVALID",
+			"Prior DAG bundle shares no stable patch identity with the current implementation",
+		);
 	}
 	const bindingById = new Map(bindings.map((binding) => [binding.workUnitId as string, binding]));
 	const requiredCheckIds = [
@@ -404,6 +595,7 @@ export async function createDagSemanticGate(options: {
 	const checkById = new Map(checkResults.map((check) => [check.checkId as string, check] as const));
 	const records: JsonObject[] = [];
 	const evaluations: JsonObject[] = [];
+	const recordStates = new Map<string, "recomputed" | "reused">();
 	const recordById = new Map<string, JsonObject>();
 	for (const workUnitId of order) {
 		const unit = unitById.get(workUnitId) as JsonObject;
@@ -456,7 +648,7 @@ export async function createDagSemanticGate(options: {
 			predicateDigest: hash(claim.predicate),
 			status: claims[index]?.valid === true ? "satisfied" : "unsatisfied",
 		}));
-		const recordBody: JsonObject = {
+		let recordBody: JsonObject = {
 			schema: "graphrefly.stack.semantic-record.v2",
 			planId: options.planId,
 			workUnitId,
@@ -473,10 +665,37 @@ export async function createDagSemanticGate(options: {
 			requiredChecks: [...strings(unit.requiredChecks)].sort(),
 			rebindFrom: null,
 		};
-		const record = {
-			...recordBody,
-			recordId: `record-${sha256Jcs(recordBody).slice(0, 24)}`,
-		};
+		const priorRecord = priorRecordById.get(workUnitId);
+		const stableLineage =
+			priorRecord !== undefined &&
+			priorBindingById.get(workUnitId)?.stablePatchId === binding.stablePatchId;
+		let record: JsonObject;
+		if (stableLineage) {
+			const priorRecordBody = { ...priorRecord };
+			delete priorRecordBody.recordId;
+			const reusableBody = {
+				...recordBody,
+				rebindFrom: priorRecord.rebindFrom,
+			};
+			if (sha256Jcs(reusableBody) === sha256Jcs(priorRecordBody)) {
+				record = structuredClone(priorRecord);
+				recordBody = reusableBody;
+				recordStates.set(workUnitId, "reused");
+			} else {
+				recordBody = { ...recordBody, rebindFrom: priorRecord.recordId };
+				record = {
+					...recordBody,
+					recordId: `record-${sha256Jcs(recordBody).slice(0, 24)}`,
+				};
+				recordStates.set(workUnitId, "recomputed");
+			}
+		} else {
+			record = {
+				...recordBody,
+				recordId: `record-${sha256Jcs(recordBody).slice(0, 24)}`,
+			};
+			recordStates.set(workUnitId, "recomputed");
+		}
 		records.push(record);
 		recordById.set(workUnitId, record);
 		evaluations.push({
@@ -528,7 +747,8 @@ export async function createDagSemanticGate(options: {
 			"DAG head moved while semantic evidence was evaluated",
 		);
 	}
-	return {
+	const bundle: DagSemanticGateBundle = {
+		schema: DAG_GATE_BUNDLE_SCHEMA,
 		topology,
 		dependencyGraph,
 		bindings,
@@ -536,5 +756,19 @@ export async function createDagSemanticGate(options: {
 		unitEvaluations: evaluations,
 		joinEvaluations,
 		...computed,
+	};
+	await assertBundle(bundle, "CONTRACT_INVALID");
+	const artifact = await persistBundle(options.repository, options.planId, bundle);
+	return {
+		...bundle,
+		artifact,
+		cache: {
+			priorBundleDigest: options.recovery?.priorBundleDigest ?? null,
+			units: order.map((workUnitId) => ({
+				workUnitId,
+				binding: bindingStates.get(workUnitId) ?? "fresh",
+				record: recordStates.get(workUnitId) ?? "recomputed",
+			})),
+		},
 	};
 }

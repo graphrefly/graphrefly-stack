@@ -7,6 +7,7 @@ import {
 	assertDagSemanticIntegrity,
 	createStrictAjv,
 	DAG_ARTIFACTS_SCHEMA,
+	DAG_GATE_BUNDLE_SCHEMA,
 	DAG_GATE_INPUT_SCHEMA,
 	DAG_GATE_RESULT_SCHEMA,
 	DAG_REASON_ORDER,
@@ -86,6 +87,7 @@ test("DAG semantic v2 exports the additive identities and fixed reason order", (
 	assert.equal(JOIN_EVALUATION_V2_SCHEMA, "graphrefly.stack.join-evaluation.v2");
 	assert.equal(DAG_GATE_INPUT_SCHEMA, "graphrefly.stack.dag-gate-input.v2");
 	assert.equal(DAG_GATE_RESULT_SCHEMA, "graphrefly.stack.dag-gate-result.v2");
+	assert.equal(DAG_GATE_BUNDLE_SCHEMA, "graphrefly.stack.dag-gate-bundle.v2");
 	assert.equal(DAG_REVIEW_SCHEMA, "graphrefly.stack.dag-review.v2");
 	assert.deepEqual(DAG_REASON_ORDER.slice(-3), [
 		"REQUIRED_CHECK_FAILED",
@@ -96,6 +98,18 @@ test("DAG semantic v2 exports the additive identities and fixed reason order", (
 
 test("DAG semantic schemas reject authority and topology widening", () => {
 	const golden = suite.cases[0];
+	const validBundle = {
+		schema: DAG_GATE_BUNDLE_SCHEMA,
+		topology: topologyFor(golden.topologyCaseId),
+		dependencyGraph: golden.dependencyGraph,
+		bindings: golden.bindings,
+		records: golden.records,
+		unitEvaluations: golden.unitEvaluations,
+		joinEvaluations: golden.joinEvaluations,
+		gateInput: golden.gateInput,
+		gateResult: golden.gateResult,
+	};
+	assert.equal(definition("DagGateBundle")(validBundle), true);
 	assert.equal(
 		definition("SemanticDependencyGraph")({ ...golden.dependencyGraph, merge: true }),
 		false,
@@ -105,6 +119,7 @@ test("DAG semantic schemas reject authority and topology widening", () => {
 		false,
 	);
 	assert.equal(definition("DagGateResult")({ ...golden.gateResult, autoMerge: true }), false);
+	assert.equal(definition("DagGateBundle")({ ...validBundle, upload: true }), false);
 	assert.equal(
 		definition("DagReviewProjection")({ ...golden.review, queueManagement: true }),
 		false,
