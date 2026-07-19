@@ -12,7 +12,12 @@ import {
 	DagSemanticRunnerError,
 } from "../../packages/cli/dist/dag-semantic-runner.js";
 import { createRepositoryBlueprintSnapshot } from "../../packages/cli/dist/repository-review.js";
-import { assertDagTopologyIntegrity, sha256Jcs } from "../../packages/contracts/dist/index.js";
+import {
+	assertDagStructuralErrorBundleIntegrity,
+	assertDagTopologyIntegrity,
+	DagStructuralErrorIntegrityError,
+	sha256Jcs,
+} from "../../packages/contracts/dist/index.js";
 
 const workspaceNodeModules = fileURLToPath(new URL("../../node_modules", import.meta.url));
 
@@ -109,6 +114,99 @@ export function createGraph() {
 	return { root, base: git(root, ["rev-parse", "HEAD"]) };
 }
 
+async function structuralErrorRepository(dependencies, options = {}) {
+	const fixture = await repository();
+	const baseSnapshot = await createRepositoryBlueprintSnapshot({
+		repository: fixture.root,
+		revision: fixture.base,
+	});
+	const policy = {
+		schema: "graphrefly.stack.semantic-policy.v1",
+		policyId: "dag-policy",
+		revision: "rev-1",
+		allowedSourceRoots: ["left.mjs", "right.mjs"],
+		allowedCapabilities: ["graph-change"],
+		checks: [
+			{
+				id: "contract",
+				argv: [process.execPath, "-e", "process.exit(0)"],
+				timeoutMs: 10000,
+				network: false,
+				shell: false,
+			},
+		],
+	};
+	const unit = (id, path) => ({
+		id,
+		title: `${id} branch`,
+		intent: `Change only ${id}`,
+		dependencies: dependencies[id],
+		allowedSourceScopes: [path],
+		capabilities: ["graph-change"],
+		claims: [
+			{
+				id: `${id.toLowerCase()}-absence`,
+				predicate: {
+					operator: "absent",
+					selector: { kind: "node", nodeId: `never-${id.toLowerCase()}` },
+				},
+				rationale: "Keep the forbidden node absent",
+			},
+		],
+		requiredChecks: ["contract"],
+	});
+	const plan = {
+		schema: "graphrefly.stack.semantic-plan.v1",
+		planId: "plan-dag",
+		taskDigest: { algorithm: "sha256", value: sha256Jcs({ task: "structural-error" }) },
+		taskSummary: "Exercise structural DAG errors",
+		baseCommit: { algorithm: "sha1", value: fixture.base },
+		baseBlueprintHash: baseSnapshot.blueprintHash,
+		policy: {
+			policyId: policy.policyId,
+			revision: policy.revision,
+			digest: { algorithm: "sha256", value: sha256Jcs(policy) },
+		},
+		proposalSource: "human",
+		acceptedBy: { label: "test", identityVerified: false },
+		workUnits: [unit("RIGHT", "right.mjs"), unit("LEFT", "left.mjs")],
+	};
+	await mkdir(resolve(fixture.root, ".graphrefly-stack/plans"), { recursive: true });
+	await Promise.all([
+		writeFile(
+			resolve(fixture.root, ".graphrefly-stack/policy.json"),
+			`${JSON.stringify(policy, null, 2)}\n`,
+		),
+		writeFile(
+			resolve(fixture.root, ".graphrefly-stack/plans/plan-dag.json"),
+			`${JSON.stringify(plan, null, 2)}\n`,
+		),
+	]);
+	git(fixture.root, ["add", ".graphrefly-stack"]);
+	git(fixture.root, ["commit", "-m", "accept structural plan"]);
+	const accepted = git(fixture.root, ["rev-parse", "HEAD"]);
+	git(fixture.root, ["switch", "-q", "-c", "left"]);
+	await commitFile(
+		fixture.root,
+		"left.mjs",
+		'export function applyLeft(value) { value.state(2, { name: "left" }); }\n',
+		"left graph",
+		"LEFT",
+	);
+	if (options.skipRight === true) return fixture;
+	git(fixture.root, ["switch", "-q", "-c", "right", accepted]);
+	await commitFile(
+		fixture.root,
+		"right.mjs",
+		'export function applyRight(value) { value.state(3, { name: "right" }); }\n',
+		"right graph",
+		"RIGHT",
+	);
+	git(fixture.root, ["switch", "-q", "left"]);
+	git(fixture.root, ["merge", "--no-ff", "-m", "join structural branches", "right"]);
+	return fixture;
+}
+
 test("binds verified Blueprint and ordered parent delta evidence for a real clean DAG", async (t) => {
 	const fixture = await repository();
 	t.after(() => rm(fixture.root, { recursive: true, force: true }));
@@ -200,6 +298,107 @@ test("fails closed when one selected object cannot produce verified Blueprint ev
 		}),
 		(error) => error instanceof DagEvidenceError && error.code === "BLUEPRINT_EVIDENCE_INVALID",
 	);
+});
+
+test("emits verified structural GateResult errors for dependency and binding failures", async (t) => {
+	const cases = [
+		{
+			name: "missing dependency",
+			dependencies: { LEFT: ["MISSING"], RIGHT: [] },
+			expected: [
+				["LEFT", "invalid", ["DEPENDENCY_MISSING"]],
+				["RIGHT", "not-evaluated", []],
+			],
+			cut: ["LEFT"],
+		},
+		{
+			name: "cycle",
+			dependencies: { LEFT: ["RIGHT"], RIGHT: ["LEFT"] },
+			expected: [
+				["LEFT", "invalid", ["DEPENDENCY_CYCLE"]],
+				["RIGHT", "invalid", ["DEPENDENCY_CYCLE"]],
+			],
+			cut: ["LEFT", "RIGHT"],
+		},
+		{
+			name: "missing binding",
+			dependencies: { LEFT: [], RIGHT: [] },
+			options: { skipRight: true },
+			expected: [
+				["LEFT", "not-evaluated", []],
+				["RIGHT", "invalid", ["BINDING_MISSING"]],
+			],
+			cut: ["RIGHT"],
+		},
+		{
+			name: "dependency not ancestor",
+			dependencies: { LEFT: ["RIGHT"], RIGHT: [] },
+			expected: [
+				["LEFT", "invalid", ["DEPENDENCY_NOT_ANCESTOR"]],
+				["RIGHT", "not-evaluated", []],
+			],
+			cut: ["LEFT"],
+		},
+		{
+			name: "ambiguous binding",
+			dependencies: { LEFT: [], RIGHT: [] },
+			mutate: async (fixture) => {
+				await commitFile(
+					fixture.root,
+					"left.mjs",
+					'export function applyLeft(value) { value.state(4, { name: "second-left" }); }\n',
+					"second left binding",
+					"LEFT",
+				);
+			},
+			expected: [
+				["LEFT", "invalid", ["BINDING_AMBIGUOUS"]],
+				["RIGHT", "not-evaluated", []],
+			],
+			cut: ["LEFT"],
+		},
+	];
+	for (const entry of cases) {
+		await t.test(entry.name, async () => {
+			const fixture = await structuralErrorRepository(entry.dependencies, entry.options);
+			t.after(() => rm(fixture.root, { recursive: true, force: true }));
+			await entry.mutate?.(fixture);
+			const before = fingerprint(fixture.root);
+			const result = await createDagSemanticGate({
+				repository: fixture.root,
+				base: fixture.base,
+				head: "left",
+				planId: "plan-dag",
+				repositoryIdentity: { provider: "github", owner: "clfhhc", name: "test-graphrefly" },
+			});
+			assert.equal(result.schema, "graphrefly.stack.dag-structural-error-bundle.v2");
+			assert.equal(result.errorInput.schema, "graphrefly.stack.dag-structural-error-input.v2");
+			assert.equal(result.gateResult.verdict, "error");
+			assert.deepEqual(
+				result.gateResult.units.map((unit) => [unit.workUnitId, unit.verdict, unit.reasonCodes]),
+				entry.expected,
+			);
+			assert.deepEqual(result.gateResult.minimalAffectedCut, entry.cut);
+			const persisted = JSON.parse(await readFile(result.artifact.path, "utf8"));
+			assert.equal(sha256Jcs(persisted), result.artifact.digest.value);
+			assertDagStructuralErrorBundleIntegrity(persisted);
+			const forged = structuredClone(persisted);
+			forged.plan.taskSummary = "forged after evaluation";
+			assert.throws(
+				() => assertDagStructuralErrorBundleIntegrity(forged),
+				DagStructuralErrorIntegrityError,
+			);
+			const repeated = await createDagSemanticGate({
+				repository: fixture.root,
+				base: fixture.base,
+				head: "left",
+				planId: "plan-dag",
+				repositoryIdentity: { provider: "github", owner: "clfhhc", name: "test-graphrefly" },
+			});
+			assert.equal(sha256Jcs(repeated), sha256Jcs(result));
+			assert.deepEqual(fingerprint(fixture.root), before);
+		});
+	}
 });
 
 test("composes a real accepted plan and branched DAG into one selective semantic result", async (t) => {

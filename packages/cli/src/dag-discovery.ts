@@ -103,10 +103,11 @@ function workUnitTrailers(repository: string, revision: string): string[] {
 	});
 }
 
-export async function discoverGitDag(options: {
+async function discoverGitDagInternal(options: {
 	repository: string;
 	base: string;
 	head: string;
+	allowAmbiguousWorkUnits: boolean;
 }): Promise<DiscoveredGitDag> {
 	let repository: string;
 	try {
@@ -217,7 +218,11 @@ export async function discoverGitDag(options: {
 		}
 		const layer = layerOf(revision);
 		if (parents.length === 1) {
-			if (trailers[0] !== undefined && boundWorkUnits.has(trailers[0])) {
+			if (
+				trailers[0] !== undefined &&
+				boundWorkUnits.has(trailers[0]) &&
+				options.allowAmbiguousWorkUnits !== true
+			) {
 				throw new DagDiscoveryError("WORK_UNIT_BINDING_AMBIGUOUS", trailers[0]);
 			}
 			if (trailers[0] !== undefined) boundWorkUnits.add(trailers[0]);
@@ -296,4 +301,20 @@ export async function discoverGitDag(options: {
 		throw new DagDiscoveryError("REVISION_MOVED", "Base or head moved during DAG discovery");
 	}
 	return { repository, base: oid(baseValue), head: oid(headValue), objects, joins };
+}
+
+export function discoverGitDag(options: {
+	repository: string;
+	base: string;
+	head: string;
+}): Promise<DiscoveredGitDag> {
+	return discoverGitDagInternal({ ...options, allowAmbiguousWorkUnits: false });
+}
+
+export function discoverGitDagForSemanticGate(options: {
+	repository: string;
+	base: string;
+	head: string;
+}): Promise<DiscoveredGitDag> {
+	return discoverGitDagInternal({ ...options, allowAmbiguousWorkUnits: true });
 }

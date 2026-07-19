@@ -2,8 +2,16 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-import { sha256Jcs } from "../../packages/contracts/dist/index.js";
-import { computeDagGateV2 } from "../../packages/core/dist/index.js";
+import {
+	assertDagStructuralErrorIntegrity,
+	DagStructuralErrorIntegrityError,
+	sha256Jcs,
+} from "../../packages/contracts/dist/index.js";
+import {
+	computeDagGateV2,
+	computeDagStructuralErrorV2,
+	diagnoseDagDependenciesV2,
+} from "../../packages/core/dist/index.js";
 
 const root = new URL("../../", import.meta.url);
 const readJson = async (path) => JSON.parse(await readFile(new URL(path, root), "utf8"));
@@ -226,4 +234,115 @@ test("DAG gate v2 fails closed for unknown evaluation states and unexplained inv
 	const unexplainedJoin = evidenceFor(topologyFor("binary-clean-join"), { LEFT: [], RIGHT: [] });
 	unexplainedJoin.joinEvaluations[0].valid = false;
 	assert.throws(() => computeDagGateV2(unexplainedJoin), /validity and witnesses/);
+});
+
+test("DAG structural errors use the same GateResult identity and canonical SCC witnesses", () => {
+	const edges = [
+		{ from: "A", to: "B" },
+		{ from: "B", to: "A" },
+	];
+	const diagnostic = (workUnitId) => ({
+		workUnitId,
+		reasonCode: "DEPENDENCY_CYCLE",
+		relatedWorkUnitIds: ["A", "B"],
+		relatedCommits: [],
+		edges,
+	});
+	const errorInput = {
+		schema: "graphrefly.stack.dag-structural-error-input.v2",
+		topologyDigest: fixedHash("1"),
+		dependencyGraphDigest: fixedHash("2"),
+		policyDigest: fixedHash("3"),
+		planDigest: fixedHash("4"),
+		workUnitIds: ["A", "B", "C"],
+		availableEvidenceDigests: [],
+		diagnostics: [diagnostic("A"), diagnostic("B")],
+	};
+	const computed = computeDagStructuralErrorV2(errorInput);
+	assert.equal(computed.gateResult.schema, "graphrefly.stack.dag-gate-result.v2");
+	assert.equal(computed.gateResult.verdict, "error");
+	assert.deepEqual(computed.gateResult.minimalAffectedCut, ["A", "B"]);
+	assert.deepEqual(
+		computed.gateResult.units.map((unit) => [unit.workUnitId, unit.verdict, unit.recordId]),
+		[
+			["A", "invalid", null],
+			["B", "invalid", null],
+			["C", "not-evaluated", null],
+		],
+	);
+	assertDagStructuralErrorIntegrity({ input: errorInput, result: computed.gateResult });
+
+	const reordered = clone(errorInput);
+	reordered.diagnostics.reverse();
+	assert.throws(() => computeDagStructuralErrorV2(reordered), DagStructuralErrorIntegrityError);
+	const forged = clone(computed.gateResult);
+	forged.minimalAffectedCut = ["A"];
+	assert.throws(
+		() => assertDagStructuralErrorIntegrity({ input: errorInput, result: forged }),
+		DagStructuralErrorIntegrityError,
+	);
+});
+
+test("DAG dependency diagnostics are invariant to input order and isolate canonical SCCs", () => {
+	const nodes = [
+		{ workUnitId: "C", dependencies: ["MISSING"] },
+		{ workUnitId: "B", dependencies: ["A"] },
+		{ workUnitId: "D", dependencies: [] },
+		{ workUnitId: "A", dependencies: ["B"] },
+	];
+	const expected = diagnoseDagDependenciesV2(nodes);
+	assert.deepEqual(diagnoseDagDependenciesV2([...nodes].reverse()), expected);
+	assert.deepEqual(expected.workUnitIds, ["A", "B", "C", "D"]);
+	assert.deepEqual(
+		expected.diagnostics.map((entry) => [entry.workUnitId, entry.reasonCode]),
+		[
+			["A", "DEPENDENCY_CYCLE"],
+			["B", "DEPENDENCY_CYCLE"],
+			["C", "DEPENDENCY_MISSING"],
+		],
+	);
+	assert.deepEqual(expected.diagnostics[0].relatedWorkUnitIds, ["A", "B"]);
+	assert.deepEqual(expected.diagnostics[0].edges, [
+		{ from: "A", to: "B" },
+		{ from: "B", to: "A" },
+	]);
+	assert.throws(
+		() =>
+			diagnoseDagDependenciesV2([
+				{ workUnitId: "A", dependencies: [] },
+				{ workUnitId: "A", dependencies: [] },
+			]),
+		/repeats A/,
+	);
+});
+
+test("DAG structural verifier preserves role-ordered commit mismatch witnesses", () => {
+	const expected = { algorithm: "sha1", value: "f".repeat(40) };
+	const observed = { algorithm: "sha1", value: "0".repeat(40) };
+	const input = {
+		schema: "graphrefly.stack.dag-structural-error-input.v2",
+		topologyDigest: fixedHash("1"),
+		dependencyGraphDigest: fixedHash("2"),
+		policyDigest: fixedHash("3"),
+		planDigest: fixedHash("4"),
+		workUnitIds: ["A", "B"],
+		availableEvidenceDigests: [],
+		diagnostics: [
+			{
+				workUnitId: "A",
+				reasonCode: "COMMIT_BINDING_MISMATCH",
+				relatedWorkUnitIds: [],
+				relatedCommits: [expected, observed],
+				edges: [],
+			},
+		],
+	};
+	const computed = computeDagStructuralErrorV2(input);
+	assert.deepEqual(computed.gateResult.units[0].witnesses[0].relatedCommits, [expected, observed]);
+	assert.equal(computed.gateResult.units[1].verdict, "not-evaluated");
+	const swapped = clone(input);
+	swapped.diagnostics[0].relatedCommits.reverse();
+	const swappedResult = computeDagStructuralErrorV2(swapped);
+	assert.notDeepEqual(swappedResult.gateResult.inputDigest, computed.gateResult.inputDigest);
+	assert.notDeepEqual(swappedResult.gateResult, computed.gateResult);
 });

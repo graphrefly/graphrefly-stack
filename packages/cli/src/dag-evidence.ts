@@ -9,7 +9,11 @@ import {
 	sha256Jcs,
 } from "@graphrefly-stack/contracts";
 
-import { type DiscoveredGitDag, discoverGitDag } from "./dag-discovery.js";
+import {
+	type DiscoveredGitDag,
+	discoverGitDag,
+	discoverGitDagForSemanticGate,
+} from "./dag-discovery.js";
 import {
 	createRepositoryBlueprintSnapshot,
 	diffRepositoryBlueprintSnapshots,
@@ -70,13 +74,15 @@ function discoveryDigest(value: DiscoveredGitDag): string {
 	});
 }
 
-export async function createDagGraphEvidence(options: {
+async function createDagGraphEvidenceInternal(options: {
 	repository: string;
 	base: string;
 	head: string;
 	repositoryIdentity: { provider: string; owner: string; name: string };
+	allowAmbiguousWorkUnits: boolean;
 }): Promise<DagGraphEvidence> {
-	const discovered = await discoverGitDag(options);
+	const discover = options.allowAmbiguousWorkUnits ? discoverGitDagForSemanticGate : discoverGitDag;
+	const discovered = await discover(options);
 	const revisions = [discovered.base, ...discovered.objects.map((entry) => entry.oid)];
 	const blueprints: DagGraphEvidence["blueprints"] = [];
 	let graphreflyVersion: string | undefined;
@@ -207,7 +213,7 @@ export async function createDagGraphEvidence(options: {
 	}
 	let observed: DiscoveredGitDag;
 	try {
-		observed = await discoverGitDag(options);
+		observed = await discover(options);
 	} catch {
 		throw new DagEvidenceError("REVISION_MOVED", "Base or head changed during DAG evidence");
 	}
@@ -215,4 +221,22 @@ export async function createDagGraphEvidence(options: {
 		throw new DagEvidenceError("REVISION_MOVED", "Base or head changed during DAG evidence");
 	}
 	return { topology, blueprints, parentDeltas };
+}
+
+export function createDagGraphEvidence(options: {
+	repository: string;
+	base: string;
+	head: string;
+	repositoryIdentity: { provider: string; owner: string; name: string };
+}): Promise<DagGraphEvidence> {
+	return createDagGraphEvidenceInternal({ ...options, allowAmbiguousWorkUnits: false });
+}
+
+export function createDagGraphEvidenceForSemanticGate(options: {
+	repository: string;
+	base: string;
+	head: string;
+	repositoryIdentity: { provider: string; owner: string; name: string };
+}): Promise<DagGraphEvidence> {
+	return createDagGraphEvidenceInternal({ ...options, allowAmbiguousWorkUnits: true });
 }

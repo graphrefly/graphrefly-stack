@@ -14,6 +14,7 @@ import {
 	DAG_REVIEW_SCHEMA,
 	DAG_SEMANTIC_ARTIFACTS_SCHEMA,
 	DAG_SEMANTIC_GOLDEN_SUITE_SCHEMA,
+	DAG_STRUCTURAL_ERROR_INPUT_SCHEMA,
 	DagSemanticIntegrityError,
 	JOIN_EVALUATION_V2_SCHEMA,
 	SEMANTIC_DEPENDENCY_GRAPH_SCHEMA,
@@ -87,6 +88,7 @@ test("DAG semantic v2 exports the additive identities and fixed reason order", (
 	assert.equal(JOIN_EVALUATION_V2_SCHEMA, "graphrefly.stack.join-evaluation.v2");
 	assert.equal(DAG_GATE_INPUT_SCHEMA, "graphrefly.stack.dag-gate-input.v2");
 	assert.equal(DAG_GATE_RESULT_SCHEMA, "graphrefly.stack.dag-gate-result.v2");
+	assert.equal(DAG_STRUCTURAL_ERROR_INPUT_SCHEMA, "graphrefly.stack.dag-structural-error-input.v2");
 	assert.equal(DAG_GATE_BUNDLE_SCHEMA, "graphrefly.stack.dag-gate-bundle.v2");
 	assert.equal(DAG_REVIEW_SCHEMA, "graphrefly.stack.dag-review.v2");
 	assert.deepEqual(DAG_REASON_ORDER.slice(-3), [
@@ -94,6 +96,35 @@ test("DAG semantic v2 exports the additive identities and fixed reason order", (
 		"JOIN_INVALID",
 		"ARTIFACT_HASH_MISMATCH",
 	]);
+});
+
+test("DAG structural error input is strict and keeps infrastructure failure outside the domain", () => {
+	const structural = {
+		schema: DAG_STRUCTURAL_ERROR_INPUT_SCHEMA,
+		topologyDigest: { algorithm: "sha256", value: "1".repeat(64) },
+		dependencyGraphDigest: { algorithm: "sha256", value: "2".repeat(64) },
+		policyDigest: { algorithm: "sha256", value: "3".repeat(64) },
+		planDigest: { algorithm: "sha256", value: "4".repeat(64) },
+		workUnitIds: ["A"],
+		availableEvidenceDigests: [],
+		diagnostics: [
+			{
+				workUnitId: "A",
+				reasonCode: "BINDING_MISSING",
+				relatedWorkUnitIds: [],
+				relatedCommits: [],
+				edges: [],
+			},
+		],
+	};
+	assert.equal(definition("DagStructuralErrorInput")(structural), true);
+	assert.equal(
+		definition("DagStructuralErrorInput")({ ...structural, processError: "ENOENT" }),
+		false,
+	);
+	const runtimeFailure = clone(structural);
+	runtimeFailure.diagnostics[0].reasonCode = "RUNTIME_UNAVAILABLE";
+	assert.equal(definition("DagStructuralErrorInput")(runtimeFailure), false);
 });
 
 test("DAG semantic schemas reject authority and topology widening", () => {

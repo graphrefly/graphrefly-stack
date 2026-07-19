@@ -4,14 +4,23 @@ import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import {
 	assertDagSemanticIntegrity,
+	assertDagStructuralErrorBundleIntegrity,
+	assertDagStructuralErrorIntegrity,
+	canonicalize,
 	createStrictAjv,
 	DAG_GATE_BUNDLE_SCHEMA,
 	DAG_SEMANTIC_ARTIFACTS_SCHEMA,
+	DAG_STRUCTURAL_ERROR_BUNDLE_SCHEMA,
+	DAG_STRUCTURAL_ERROR_INPUT_SCHEMA,
 	sha256Jcs,
 } from "@graphrefly-stack/contracts";
-import { computeDagGateV2 } from "@graphrefly-stack/core";
+import {
+	computeDagGateV2,
+	computeDagStructuralErrorV2,
+	diagnoseDagDependenciesV2,
+} from "@graphrefly-stack/core";
 
-import { createDagGraphEvidence } from "./dag-evidence.js";
+import { createDagGraphEvidenceForSemanticGate } from "./dag-evidence.js";
 import { repositoryStateDirectory } from "./repository-review-state.js";
 import { runtimeAssetPath } from "./runtime-paths.js";
 import { evaluateSemanticPredicate, runRepositoryPolicyChecks } from "./semantic-repository.js";
@@ -194,6 +203,21 @@ export type DagSemanticGateRun = DagSemanticGateBundle & {
 	cache: DagCacheReport;
 };
 
+export type DagStructuralErrorBundle = {
+	schema: typeof DAG_STRUCTURAL_ERROR_BUNDLE_SCHEMA;
+	topology: JsonObject;
+	dependencyGraph: JsonObject;
+	plan: JsonObject;
+	policy: JsonObject;
+	bindings: JsonObject[];
+	errorInput: JsonObject;
+	gateResult: JsonObject;
+};
+
+export type DagStructuralErrorRun = DagStructuralErrorBundle & {
+	artifact: { path: string; digest: Hash };
+};
+
 async function assertBundle(
 	value: unknown,
 	code: "CONTRACT_INVALID" | "RECOVERY_EVIDENCE_INVALID",
@@ -305,6 +329,41 @@ async function persistBundle(
 	return { path, digest };
 }
 
+async function persistStructuralErrorBundle(
+	repository: string,
+	planId: string,
+	bundle: DagStructuralErrorBundle,
+): Promise<{ path: string; digest: Hash }> {
+	const directory = await repositoryStateDirectory(repository, "dag-gate-errors", planId);
+	const digest = hash(bundle);
+	const path = resolve(directory, `${digest.value}.json`);
+	try {
+		await writeFile(path, `${JSON.stringify(bundle, null, 2)}\n`, {
+			encoding: "utf8",
+			flag: "wx",
+			mode: 0o600,
+		});
+	} catch (error) {
+		if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
+		let existing: unknown;
+		try {
+			existing = JSON.parse(await readFile(path, "utf8"));
+		} catch {
+			throw new DagSemanticRunnerError(
+				"LOCAL_STATE_INVALID",
+				"Existing DAG structural error bundle is malformed",
+			);
+		}
+		if (sha256Jcs(existing) !== digest.value || sha256Jcs(existing) !== sha256Jcs(bundle)) {
+			throw new DagSemanticRunnerError(
+				"LOCAL_STATE_INVALID",
+				"Existing DAG structural error bundle violates its content address",
+			);
+		}
+	}
+	return { path, digest };
+}
+
 export async function createDagSemanticGate(options: {
 	repository: string;
 	base: string;
@@ -312,8 +371,8 @@ export async function createDagSemanticGate(options: {
 	planId: string;
 	repositoryIdentity: { provider: string; owner: string; name: string };
 	recovery?: DagRecovery;
-}): Promise<DagSemanticGateRun> {
-	const graphEvidence = await createDagGraphEvidence(options);
+}): Promise<DagSemanticGateRun | DagStructuralErrorRun> {
+	const graphEvidence = await createDagGraphEvidenceForSemanticGate(options);
 	const topology = graphEvidence.topology;
 	const git = new SystemGitAdapter();
 	const resolvedHead = object(topology.head, "topology head").value as string;
@@ -480,7 +539,6 @@ export async function createDagSemanticGate(options: {
 			);
 		}
 	}
-	const order = canonicalWorkUnitOrder(units);
 	const priorBundle =
 		options.recovery === undefined
 			? undefined
@@ -495,6 +553,84 @@ export async function createDagSemanticGate(options: {
 			"Prior DAG bundle belongs to a different accepted plan",
 		);
 	}
+	const emitStructuralError = async (
+		dependencyGraph: JsonObject,
+		workUnitIds: string[],
+		diagnostics: JsonObject[],
+		bindings: JsonObject[] = [],
+	): Promise<DagStructuralErrorRun> => {
+		const availableEvidenceDigests = bindings
+			.map((entry) => ({
+				kind: "binding",
+				workUnitId: entry.workUnitId,
+				digest: hash(entry),
+			}))
+			.sort((left, right) => {
+				const leftKey = canonicalize(left);
+				const rightKey = canonicalize(right);
+				return leftKey < rightKey ? -1 : leftKey > rightKey ? 1 : 0;
+			});
+		const errorInput: JsonObject = {
+			schema: DAG_STRUCTURAL_ERROR_INPUT_SCHEMA,
+			topologyDigest: hash(topology),
+			dependencyGraphDigest: hash(dependencyGraph),
+			policyDigest,
+			planDigest: hash(plan),
+			workUnitIds,
+			availableEvidenceDigests,
+			diagnostics,
+		};
+		const computed = computeDagStructuralErrorV2(errorInput);
+		const definition = await validators();
+		assertValid(definition("DagStructuralErrorInput"), errorInput, "DAG structural error input");
+		assertValid(definition("DagGateResult"), computed.gateResult, "DAG structural GateResult");
+		assertDagStructuralErrorIntegrity({ input: errorInput, result: computed.gateResult });
+		const bundle: DagStructuralErrorBundle = {
+			schema: DAG_STRUCTURAL_ERROR_BUNDLE_SCHEMA,
+			topology,
+			dependencyGraph,
+			plan,
+			policy,
+			bindings,
+			errorInput,
+			gateResult: computed.gateResult,
+		};
+		assertValid(definition("DagStructuralErrorBundle"), bundle, "DAG structural error bundle");
+		assertDagStructuralErrorBundleIntegrity(bundle);
+		const observedHead = await git.resolveCommit(options.repository, options.head);
+		if (observedHead.value !== resolvedHead) {
+			throw new DagSemanticRunnerError(
+				"BINDING_INVALID",
+				"DAG head moved while structural evidence was evaluated",
+			);
+		}
+		const artifact = await persistStructuralErrorBundle(options.repository, options.planId, bundle);
+		return { ...bundle, artifact };
+	};
+	const dependencyDiagnostics = diagnoseDagDependenciesV2(
+		units.map((unit) => ({
+			workUnitId: unit.id as string,
+			dependencies: strings(unit.dependencies),
+		})),
+	);
+	if (dependencyDiagnostics.diagnostics.length > 0) {
+		const unitById = new Map(units.map((unit) => [unit.id as string, unit] as const));
+		const dependencyGraph: JsonObject = {
+			schema: "graphrefly.stack.semantic-dependency-graph.v2",
+			planId: options.planId,
+			topologyDigest: hash(topology),
+			workUnits: dependencyDiagnostics.workUnitIds.map((workUnitId) => ({
+				workUnitId,
+				dependencies: [...strings(unitById.get(workUnitId)?.dependencies)].sort(),
+			})),
+		};
+		return emitStructuralError(
+			dependencyGraph,
+			dependencyDiagnostics.workUnitIds,
+			dependencyDiagnostics.diagnostics,
+		);
+	}
+	const order = canonicalWorkUnitOrder(units);
 	const priorBindingById = new Map(
 		(priorBundle?.bindings ?? []).map(
 			(binding) => [binding.workUnitId as string, binding] as const,
@@ -506,20 +642,6 @@ export async function createDagSemanticGate(options: {
 	const bindingStates = new Map<string, "fresh" | "reused" | "rebound">();
 	let recoveryMatches = 0;
 	const unitById = new Map(units.map((unit) => [unit.id as string, unit] as const));
-	const implementationById = new Map(
-		objects(topology.objects, "topology objects")
-			.filter((entry) => entry.kind === "implementation")
-			.map((entry) => [entry.workUnitId as string, entry] as const),
-	);
-	if (implementationById.size !== order.length || order.some((id) => !implementationById.has(id))) {
-		throw new DagSemanticRunnerError(
-			"WORK_UNIT_SET_MISMATCH",
-			"Accepted plan and reachable implementation WorkUnits differ",
-		);
-	}
-	const blueprintByRevision = new Map(
-		graphEvidence.blueprints.map((entry) => [entry.revision.value, entry] as const),
-	);
 	const dependencyGraph: JsonObject = {
 		schema: "graphrefly.stack.semantic-dependency-graph.v2",
 		planId: options.planId,
@@ -529,6 +651,59 @@ export async function createDagSemanticGate(options: {
 			dependencies: [...strings(unitById.get(workUnitId)?.dependencies)].sort(),
 		})),
 	};
+	const implementationEntries = objects(topology.objects, "topology objects").filter(
+		(entry) => entry.kind === "implementation",
+	);
+	const extraImplementation = implementationEntries.find(
+		(entry) => !unitById.has(entry.workUnitId as string),
+	);
+	if (extraImplementation !== undefined) {
+		throw new DagSemanticRunnerError(
+			"WORK_UNIT_SET_MISMATCH",
+			`Reachable implementation ${String(extraImplementation.workUnitId)} is outside the accepted plan`,
+		);
+	}
+	const candidatesById = new Map<string, JsonObject[]>();
+	for (const entry of implementationEntries) {
+		const id = entry.workUnitId as string;
+		candidatesById.set(id, [...(candidatesById.get(id) ?? []), entry]);
+	}
+	const bindingDiagnostics: JsonObject[] = [];
+	for (const workUnitId of [...order].sort()) {
+		const candidates = candidatesById.get(workUnitId) ?? [];
+		if (candidates.length === 0) {
+			bindingDiagnostics.push({
+				workUnitId,
+				reasonCode: "BINDING_MISSING",
+				relatedWorkUnitIds: [],
+				relatedCommits: [],
+				edges: [],
+			});
+		} else if (candidates.length > 1) {
+			bindingDiagnostics.push({
+				workUnitId,
+				reasonCode: "BINDING_AMBIGUOUS",
+				relatedWorkUnitIds: [],
+				relatedCommits: candidates
+					.map((entry) => entry.oid as JsonObject)
+					.sort((left, right) => {
+						const leftKey = canonicalize(left);
+						const rightKey = canonicalize(right);
+						return leftKey < rightKey ? -1 : leftKey > rightKey ? 1 : 0;
+					}),
+				edges: [],
+			});
+		}
+	}
+	if (bindingDiagnostics.length > 0) {
+		return emitStructuralError(dependencyGraph, [...order].sort(), bindingDiagnostics);
+	}
+	const implementationById = new Map(
+		[...candidatesById].map(([id, entries]) => [id, entries[0] as JsonObject] as const),
+	);
+	const blueprintByRevision = new Map(
+		graphEvidence.blueprints.map((entry) => [entry.revision.value, entry] as const),
+	);
 	const bindings: JsonObject[] = [];
 	for (const workUnitId of order) {
 		const entry = implementationById.get(workUnitId) as JsonObject;
@@ -583,6 +758,33 @@ export async function createDagSemanticGate(options: {
 		);
 	}
 	const bindingById = new Map(bindings.map((binding) => [binding.workUnitId as string, binding]));
+	const ancestryDiagnostics: JsonObject[] = [];
+	for (const workUnitId of [...order].sort()) {
+		const dependent = bindingById.get(workUnitId) as JsonObject;
+		const dependentCommit = dependent.commit as JsonObject;
+		for (const dependencyId of [...strings(unitById.get(workUnitId)?.dependencies)].sort()) {
+			const dependency = bindingById.get(dependencyId) as JsonObject;
+			const dependencyCommit = dependency.commit as JsonObject;
+			if (
+				!gitIsAncestor(
+					options.repository,
+					object(dependencyCommit, "dependency commit").value as string,
+					object(dependentCommit, "dependent commit").value as string,
+				)
+			) {
+				ancestryDiagnostics.push({
+					workUnitId,
+					reasonCode: "DEPENDENCY_NOT_ANCESTOR",
+					relatedWorkUnitIds: [dependencyId],
+					relatedCommits: [dependencyCommit, dependentCommit],
+					edges: [],
+				});
+			}
+		}
+	}
+	if (ancestryDiagnostics.length > 0) {
+		return emitStructuralError(dependencyGraph, [...order].sort(), ancestryDiagnostics, bindings);
+	}
 	const requiredCheckIds = [
 		...new Set(units.flatMap((unit) => strings(unit.requiredChecks))),
 	].sort();

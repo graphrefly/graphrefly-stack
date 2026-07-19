@@ -4,6 +4,7 @@ export * from "./ci.js";
 export * from "./dag.js";
 export * from "./dag-integrity.js";
 export * from "./dag-semantic-integrity.js";
+export * from "./dag-structural-error-integrity.js";
 export * from "./hosted.js";
 export * from "./hosted-integrity.js";
 export * from "./integration.js";

@@ -396,6 +396,125 @@
 				}
 			}
 		},
+		"StructuralReasonCode": {
+			"enum": [
+				"BINDING_MISSING",
+				"BINDING_AMBIGUOUS",
+				"COMMIT_BINDING_MISMATCH",
+				"DEPENDENCY_MISSING",
+				"DEPENDENCY_CYCLE",
+				"DEPENDENCY_NOT_ANCESTOR"
+			]
+		},
+		"StructuralEdge": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["from", "to"],
+			"properties": {
+				"from": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/WorkUnitId"
+				},
+				"to": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/WorkUnitId"
+				}
+			}
+		},
+		"StructuralDiagnostic": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["workUnitId", "reasonCode", "relatedWorkUnitIds", "relatedCommits", "edges"],
+			"properties": {
+				"workUnitId": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/WorkUnitId"
+				},
+				"reasonCode": { "$ref": "#/definitions/StructuralReasonCode" },
+				"relatedWorkUnitIds": {
+					"type": "array",
+					"items": {
+						"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/WorkUnitId"
+					},
+					"maxItems": 64,
+					"uniqueItems": true
+				},
+				"relatedCommits": {
+					"type": "array",
+					"items": {
+						"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/GitOid"
+					},
+					"maxItems": 64,
+					"uniqueItems": true
+				},
+				"edges": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/StructuralEdge" },
+					"maxItems": 64,
+					"uniqueItems": true
+				}
+			}
+		},
+		"StructuralEvidenceDigest": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["kind", "workUnitId", "digest"],
+			"properties": {
+				"kind": { "enum": ["binding", "record", "unit-evaluation"] },
+				"workUnitId": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/WorkUnitId"
+				},
+				"digest": {
+					"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash"
+				}
+			}
+		},
+		"DagStructuralErrorInput": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"schema",
+				"topologyDigest",
+				"dependencyGraphDigest",
+				"policyDigest",
+				"planDigest",
+				"workUnitIds",
+				"availableEvidenceDigests",
+				"diagnostics"
+			],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.dag-structural-error-input.v2" },
+				"topologyDigest": {
+					"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash"
+				},
+				"dependencyGraphDigest": {
+					"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash"
+				},
+				"policyDigest": {
+					"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash"
+				},
+				"planDigest": {
+					"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash"
+				},
+				"workUnitIds": {
+					"type": "array",
+					"items": {
+						"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/WorkUnitId"
+					},
+					"minItems": 1,
+					"maxItems": 64,
+					"uniqueItems": true
+				},
+				"availableEvidenceDigests": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/StructuralEvidenceDigest" },
+					"maxItems": 192
+				},
+				"diagnostics": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/StructuralDiagnostic" },
+					"minItems": 1,
+					"maxItems": 64
+				}
+			}
+		},
 		"ReasonCode": {
 			"enum": [
 				"SCHEMA_INVALID",
@@ -418,6 +537,47 @@
 		},
 		"Witness": {
 			"oneOf": [
+				{
+					"type": "object",
+					"additionalProperties": false,
+					"required": [
+						"kind",
+						"workUnitId",
+						"reasonCode",
+						"relatedWorkUnitIds",
+						"relatedCommits",
+						"edges"
+					],
+					"properties": {
+						"kind": { "const": "structural" },
+						"workUnitId": {
+							"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/WorkUnitId"
+						},
+						"reasonCode": { "$ref": "#/definitions/StructuralReasonCode" },
+						"relatedWorkUnitIds": {
+							"type": "array",
+							"items": {
+								"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/WorkUnitId"
+							},
+							"maxItems": 64,
+							"uniqueItems": true
+						},
+						"relatedCommits": {
+							"type": "array",
+							"items": {
+								"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/GitOid"
+							},
+							"maxItems": 64,
+							"uniqueItems": true
+						},
+						"edges": {
+							"type": "array",
+							"items": { "$ref": "#/definitions/StructuralEdge" },
+							"maxItems": 64,
+							"uniqueItems": true
+						}
+					}
+				},
 				{
 					"type": "object",
 					"additionalProperties": false,
@@ -544,7 +704,7 @@
 				"workUnitId": {
 					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/WorkUnitId"
 				},
-				"verdict": { "enum": ["valid", "invalid"] },
+				"verdict": { "enum": ["valid", "invalid", "not-evaluated"] },
 				"reasonCodes": {
 					"type": "array",
 					"items": { "$ref": "#/definitions/ReasonCode" },
@@ -646,6 +806,40 @@
 					"maxItems": 63
 				},
 				"gateInput": { "$ref": "#/definitions/DagGateInput" },
+				"gateResult": { "$ref": "#/definitions/DagGateResult" }
+			}
+		},
+		"DagStructuralErrorBundle": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"schema",
+				"topology",
+				"dependencyGraph",
+				"plan",
+				"policy",
+				"bindings",
+				"errorInput",
+				"gateResult"
+			],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.dag-structural-error-bundle.v2" },
+				"topology": {
+					"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/GitTopologySlice"
+				},
+				"dependencyGraph": { "$ref": "#/definitions/SemanticDependencyGraph" },
+				"plan": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/AcceptedChangePlan"
+				},
+				"policy": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/RepositoryPolicy"
+				},
+				"bindings": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/WorkUnitBinding" },
+					"maxItems": 64
+				},
+				"errorInput": { "$ref": "#/definitions/DagStructuralErrorInput" },
 				"gateResult": { "$ref": "#/definitions/DagGateResult" }
 			}
 		},

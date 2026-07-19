@@ -3,6 +3,7 @@ import { canonicalTopologyBytes, GRAPH_BLUEPRINT_VERSION } from "@graphrefly/ts/
 import type { ExecutionMode } from "@graphrefly-stack/contracts";
 
 export * from "./dag-gate.js";
+export * from "./dag-structural-error.js";
 export * from "./gate.js";
 export * from "./integration-effects.js";
 

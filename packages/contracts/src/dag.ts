@@ -14,8 +14,12 @@ export const SEMANTIC_RECORD_V2_SCHEMA = "graphrefly.stack.semantic-record.v2" a
 export const UNIT_EVALUATION_V2_SCHEMA = "graphrefly.stack.unit-evaluation.v2" as const;
 export const JOIN_EVALUATION_V2_SCHEMA = "graphrefly.stack.join-evaluation.v2" as const;
 export const DAG_GATE_INPUT_SCHEMA = "graphrefly.stack.dag-gate-input.v2" as const;
+export const DAG_STRUCTURAL_ERROR_INPUT_SCHEMA =
+	"graphrefly.stack.dag-structural-error-input.v2" as const;
 export const DAG_GATE_RESULT_SCHEMA = "graphrefly.stack.dag-gate-result.v2" as const;
 export const DAG_GATE_BUNDLE_SCHEMA = "graphrefly.stack.dag-gate-bundle.v2" as const;
+export const DAG_STRUCTURAL_ERROR_BUNDLE_SCHEMA =
+	"graphrefly.stack.dag-structural-error-bundle.v2" as const;
 export const DAG_REVIEW_SCHEMA = "graphrefly.stack.dag-review.v2" as const;
 
 export const DAG_REASON_ORDER = [
