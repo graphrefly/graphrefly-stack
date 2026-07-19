@@ -35,6 +35,14 @@ export type DagGraphEvidence = {
 	topology: Record<string, unknown>;
 	blueprints: Array<{ revision: GitOid; blueprint: Blueprint; blueprintHash: Hash }>;
 	parentDeltas: DagParentDeltaEvidence[];
+	executionCache: {
+		blueprints: Array<{ revision: GitOid; execution: "executed" | "cache-hit" }>;
+		parentDeltas: Array<{
+			from: GitOid;
+			to: GitOid;
+			execution: "executed" | "cache-hit";
+		}>;
+	};
 };
 
 export class DagEvidenceError extends Error {
@@ -85,14 +93,18 @@ async function createDagGraphEvidenceInternal(options: {
 	const discovered = await discover(options);
 	const revisions = [discovered.base, ...discovered.objects.map((entry) => entry.oid)];
 	const blueprints: DagGraphEvidence["blueprints"] = [];
+	const blueprintExecutions: DagGraphEvidence["executionCache"]["blueprints"] = [];
 	let graphreflyVersion: string | undefined;
 	for (const revision of revisions) {
-		let snapshot: Awaited<ReturnType<typeof createRepositoryBlueprintSnapshot>>;
+		let snapshot: Awaited<ReturnType<typeof createRepositoryBlueprintSnapshot>> & {
+			execution: "executed" | "cache-hit";
+		};
 		try {
 			snapshot = await createRepositoryBlueprintSnapshot({
 				repository: discovered.repository,
 				revision: revision.value,
 				requireEntrypointAtRevision: true,
+				executionCache: true,
 			});
 		} catch (error) {
 			throw new DagEvidenceError(
@@ -112,6 +124,7 @@ async function createDagGraphEvidenceInternal(options: {
 			blueprint: snapshot.blueprint,
 			blueprintHash: snapshot.blueprintHash,
 		});
+		blueprintExecutions.push({ revision, execution: snapshot.execution });
 	}
 	if (graphreflyVersion === undefined) {
 		throw new DagEvidenceError("BLUEPRINT_EVIDENCE_INVALID", "DAG Blueprint evidence is empty");
@@ -120,6 +133,7 @@ async function createDagGraphEvidenceInternal(options: {
 		blueprints.map((entry) => [entry.revision.value, entry] as const),
 	);
 	const parentDeltas: DagParentDeltaEvidence[] = [];
+	const parentDeltaExecutions: DagGraphEvidence["executionCache"]["parentDeltas"] = [];
 	for (const object of discovered.objects) {
 		const next = blueprintByRevision.get(object.oid.value);
 		if (next === undefined) {
@@ -135,12 +149,18 @@ async function createDagGraphEvidenceInternal(options: {
 					repository: discovered.repository,
 					previous: previous.blueprint,
 					next: next.blueprint,
+					executionCache: true,
 				});
 				parentDeltas.push({
 					from: parent,
 					to: object.oid,
 					delta: evidence.delta,
 					deltaDigest: evidence.digest,
+				});
+				parentDeltaExecutions.push({
+					from: parent,
+					to: object.oid,
+					execution: evidence.execution,
 				});
 			} catch (error) {
 				throw new DagEvidenceError(
@@ -220,7 +240,12 @@ async function createDagGraphEvidenceInternal(options: {
 	if (discoveryDigest(observed) !== discoveryDigest(discovered)) {
 		throw new DagEvidenceError("REVISION_MOVED", "Base or head changed during DAG evidence");
 	}
-	return { topology, blueprints, parentDeltas };
+	return {
+		topology,
+		blueprints,
+		parentDeltas,
+		executionCache: { blueprints: blueprintExecutions, parentDeltas: parentDeltaExecutions },
+	};
 }
 
 export function createDagGraphEvidence(options: {

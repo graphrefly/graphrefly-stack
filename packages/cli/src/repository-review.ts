@@ -16,7 +16,11 @@ import {
 	sha256Jcs,
 } from "@graphrefly-stack/contracts";
 import { satisfies, valid } from "semver";
-
+import {
+	DagExecutionCacheError,
+	readDagExecutionCache,
+	writeDagExecutionCache,
+} from "./dag-execution-cache.js";
 import { runtimeAssetPath } from "./runtime-paths.js";
 import { parseStructuredDiff } from "./structured-diff.js";
 import { gitText, SystemGitAdapter } from "./system-git.js";
@@ -32,6 +36,7 @@ const maxEntrypointBytes = 64 * 1024;
 interface TargetGraphReFlyRuntime {
 	version: string;
 	nodeModulesRoot: string;
+	identity: Record<string, unknown>;
 	parseGraphBlueprint(value: unknown): Record<string, unknown>;
 	verifyBlueprintHash(
 		blueprint: Record<string, unknown>,
@@ -198,7 +203,8 @@ async function resolveTargetRuntime(repository: string): Promise<TargetGraphReFl
 		);
 	}
 	const packageRoot = await findPackageRoot(graphCjs);
-	const packageJson = JSON.parse(await readFile(resolve(packageRoot, "package.json"), "utf8")) as {
+	const packageJsonBytes = await readFile(resolve(packageRoot, "package.json"));
+	const packageJson = JSON.parse(packageJsonBytes.toString("utf8")) as {
 		version?: string;
 		exports?: Record<string, unknown>;
 	};
@@ -240,6 +246,19 @@ async function resolveTargetRuntime(repository: string): Promise<TargetGraphReFl
 	return {
 		version: packageJson.version,
 		nodeModulesRoot: await realpath(resolve(repository, "node_modules")),
+		identity: {
+			version: packageJson.version,
+			packageDigest: createHash("sha256").update(packageJsonBytes).digest("hex"),
+			graphModuleDigest: createHash("sha256")
+				.update(await readFile(resolve(packageRoot, graphEntry)))
+				.digest("hex"),
+			renderModuleDigest: createHash("sha256")
+				.update(await readFile(resolve(packageRoot, renderEntry)))
+				.digest("hex"),
+			nodeVersion: process.version,
+			platform: process.platform,
+			arch: process.arch,
+		},
 		parseGraphBlueprint: graphModule.parseGraphBlueprint,
 		verifyBlueprintHash: graphModule.verifyBlueprintHash,
 		blueprintToMermaid: renderModule.blueprintToMermaid,
@@ -483,17 +502,32 @@ function reviewHeadLabel(repository: string, requested: string, headOid: string)
 	return headOid.slice(0, 12);
 }
 
-export async function createRepositoryBlueprintSnapshot(options: {
-	repository: string;
-	revision: string;
-	requireEntrypointAtRevision?: boolean;
-}): Promise<{
+type RepositoryBlueprintSnapshot = {
 	repository: string;
 	commit: { algorithm: "sha1" | "sha256"; value: string };
 	graphreflyVersion: string;
 	blueprint: Record<string, unknown>;
 	blueprintHash: { algorithm: "sha256"; value: string };
-}> {
+};
+
+export function createRepositoryBlueprintSnapshot(options: {
+	repository: string;
+	revision: string;
+	requireEntrypointAtRevision?: boolean;
+	executionCache: true;
+}): Promise<RepositoryBlueprintSnapshot & { execution: "executed" | "cache-hit" }>;
+export function createRepositoryBlueprintSnapshot(options: {
+	repository: string;
+	revision: string;
+	requireEntrypointAtRevision?: boolean;
+	executionCache?: false;
+}): Promise<RepositoryBlueprintSnapshot>;
+export async function createRepositoryBlueprintSnapshot(options: {
+	repository: string;
+	revision: string;
+	requireEntrypointAtRevision?: boolean;
+	executionCache?: boolean;
+}): Promise<RepositoryBlueprintSnapshot & { execution?: "executed" | "cache-hit" }> {
 	let repository: string;
 	try {
 		const requested = await realpath(resolve(options.repository));
@@ -505,7 +539,6 @@ export async function createRepositoryBlueprintSnapshot(options: {
 		);
 	}
 	const config = await readRepositoryConfig(repository);
-	const entrypointSource = await readConfiguredEntrypoint(repository, config.blueprint.entrypoint);
 	const git = new SystemGitAdapter();
 	let commit: { algorithm: "sha1" | "sha256"; value: string };
 	try {
@@ -523,15 +556,58 @@ export async function createRepositoryBlueprintSnapshot(options: {
 			);
 		}
 	}
+	const entrypointSource =
+		options.requireEntrypointAtRevision === true
+			? new Uint8Array()
+			: await readConfiguredEntrypoint(repository, config.blueprint.entrypoint);
 	const runtime = await resolveTargetRuntime(repository);
 	await validateDependencyContinuity(repository, [commit.value], runtime.version);
-	const blueprint = await executeBlueprint(
-		repository,
-		commit.value,
-		config.blueprint.entrypoint,
-		entrypointSource,
-		runtime,
-	);
+	const cacheInput = {
+		revision: 1,
+		commit,
+		tree: gitText(repository, ["show", "-s", "--format=%T", commit.value]),
+		parents: gitText(repository, ["show", "-s", "--format=%P", commit.value])
+			.split(" ")
+			.filter(Boolean),
+		configDigest: sha256Jcs(config),
+		entrypoint: config.blueprint.entrypoint,
+		runtime: runtime.identity,
+	};
+	let blueprint: Record<string, unknown>;
+	let execution: "executed" | "cache-hit" = "executed";
+	try {
+		const cached =
+			options.executionCache === true
+				? await readDagExecutionCache(repository, "blueprints", cacheInput)
+				: { hit: false as const, key: "" };
+		if (cached.hit) {
+			if (
+				typeof cached.value !== "object" ||
+				cached.value === null ||
+				Array.isArray(cached.value)
+			) {
+				throw new DagExecutionCacheError("Cached Blueprint must be an object");
+			}
+			blueprint = cached.value as Record<string, unknown>;
+			execution = "cache-hit";
+		} else {
+			blueprint = await executeBlueprint(
+				repository,
+				commit.value,
+				config.blueprint.entrypoint,
+				entrypointSource,
+				runtime,
+			);
+			if (options.executionCache === true) {
+				await writeDagExecutionCache(repository, "blueprints", cacheInput, blueprint);
+			}
+		}
+	} catch (error) {
+		if (error instanceof DagExecutionCacheError) {
+			throw new RepositoryReviewError("EXECUTION_CACHE_INVALID", error.message);
+		}
+		throw error;
+	}
 	const hash = blueprint.hash as { algorithm?: unknown; value?: unknown } | undefined;
 	if (hash?.algorithm !== "sha256" || typeof hash.value !== "string") {
 		throw new RepositoryReviewError(
@@ -539,23 +615,61 @@ export async function createRepositoryBlueprintSnapshot(options: {
 			`GraphBlueprint hash is unavailable at ${commit.value.slice(0, 12)}`,
 		);
 	}
-	return {
+	if (
+		blueprint.version !== "graphrefly.blueprint.v2" ||
+		(blueprint.diagnostics as { ok?: unknown } | undefined)?.ok !== true ||
+		containsAbsolutePath(blueprint.topology) ||
+		Object.hasOwn(blueprint, "provenance")
+	) {
+		throw new RepositoryReviewError(
+			"EXECUTION_CACHE_INVALID",
+			`Cached GraphBlueprint violates public evidence constraints at ${commit.value.slice(0, 12)}`,
+		);
+	}
+	if (
+		!(await runtime.verifyBlueprintHash(blueprint, {
+			algorithm: "sha256",
+			hash: (bytes) => createHash("sha256").update(bytes).digest("hex"),
+		}))
+	) {
+		throw new RepositoryReviewError(
+			"EXECUTION_CACHE_INVALID",
+			`Cached GraphBlueprint hash verification failed at ${commit.value.slice(0, 12)}`,
+		);
+	}
+	const snapshot: RepositoryBlueprintSnapshot = {
 		repository,
 		commit,
 		graphreflyVersion: runtime.version,
 		blueprint,
 		blueprintHash: { algorithm: "sha256", value: hash.value },
 	};
+	return options.executionCache === true ? { ...snapshot, execution } : snapshot;
 }
 
+type RepositoryBlueprintDelta = {
+	delta: Record<string, unknown>;
+	digest: { algorithm: "sha256"; value: string };
+};
+
+export function diffRepositoryBlueprintSnapshots(options: {
+	repository: string;
+	previous: Record<string, unknown>;
+	next: Record<string, unknown>;
+	executionCache: true;
+}): Promise<RepositoryBlueprintDelta & { execution: "executed" | "cache-hit" }>;
+export function diffRepositoryBlueprintSnapshots(options: {
+	repository: string;
+	previous: Record<string, unknown>;
+	next: Record<string, unknown>;
+	executionCache?: false;
+}): Promise<RepositoryBlueprintDelta>;
 export async function diffRepositoryBlueprintSnapshots(options: {
 	repository: string;
 	previous: Record<string, unknown>;
 	next: Record<string, unknown>;
-}): Promise<{
-	delta: Record<string, unknown>;
-	digest: { algorithm: "sha256"; value: string };
-}> {
+	executionCache?: boolean;
+}): Promise<RepositoryBlueprintDelta & { execution?: "executed" | "cache-hit" }> {
 	let repository: string;
 	try {
 		const requested = await realpath(resolve(options.repository));
@@ -568,15 +682,45 @@ export async function diffRepositoryBlueprintSnapshots(options: {
 	}
 	const runtime = await resolveTargetRuntime(repository);
 	let delta: Record<string, unknown>;
+	let execution: "executed" | "cache-hit" = "executed";
+	const cacheInput = {
+		revision: 1,
+		previousDigest: sha256Jcs(options.previous),
+		nextDigest: sha256Jcs(options.next),
+		runtime: runtime.identity,
+	};
 	try {
-		delta = runtime.diffGraphBlueprints(options.previous, options.next);
-	} catch {
+		const cached =
+			options.executionCache === true
+				? await readDagExecutionCache(repository, "blueprint-deltas", cacheInput)
+				: { hit: false as const, key: "" };
+		if (cached.hit) {
+			if (
+				typeof cached.value !== "object" ||
+				cached.value === null ||
+				Array.isArray(cached.value)
+			) {
+				throw new DagExecutionCacheError("Cached Blueprint delta must be an object");
+			}
+			delta = cached.value as Record<string, unknown>;
+			execution = "cache-hit";
+		} else {
+			delta = runtime.diffGraphBlueprints(options.previous, options.next);
+			if (options.executionCache === true) {
+				await writeDagExecutionCache(repository, "blueprint-deltas", cacheInput, delta);
+			}
+		}
+	} catch (error) {
+		if (error instanceof DagExecutionCacheError) {
+			throw new RepositoryReviewError("EXECUTION_CACHE_INVALID", error.message);
+		}
 		throw new RepositoryReviewError("BLUEPRINT_DELTA_FAILED", "Blueprint delta failed");
 	}
-	return {
+	const evidence: RepositoryBlueprintDelta = {
 		delta,
 		digest: { algorithm: "sha256", value: sha256Jcs(delta) },
 	};
+	return options.executionCache === true ? { ...evidence, execution } : evidence;
 }
 
 export async function createRepositoryReview(options: {

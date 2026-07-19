@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import test from "node:test";
@@ -12,6 +12,10 @@ import {
 	DagSemanticRunnerError,
 } from "../../packages/cli/dist/dag-semantic-runner.js";
 import { createRepositoryBlueprintSnapshot } from "../../packages/cli/dist/repository-review.js";
+import {
+	runRepositoryPolicyChecksWithCacheReport,
+	SemanticRepositoryError,
+} from "../../packages/cli/dist/semantic-repository.js";
 import {
 	assertDagStructuralErrorBundleIntegrity,
 	assertDagTopologyIntegrity,
@@ -269,6 +273,8 @@ test("binds verified Blueprint and ordered parent delta evidence for a real clea
 			),
 		),
 	);
+	assert.ok(first.executionCache.blueprints.every((entry) => entry.execution === "executed"));
+	assert.ok(first.executionCache.parentDeltas.every((entry) => entry.execution === "executed"));
 	const second = await createDagGraphEvidence({
 		repository: fixture.root,
 		base: fixture.base,
@@ -276,7 +282,27 @@ test("binds verified Blueprint and ordered parent delta evidence for a real clea
 		repositoryIdentity: { provider: "github", owner: "clfhhc", name: "test-graphrefly" },
 	});
 	assert.equal(sha256Jcs(second.topology), sha256Jcs(first.topology));
+	assert.ok(second.executionCache.blueprints.every((entry) => entry.execution === "cache-hit"));
+	assert.ok(second.executionCache.parentDeltas.every((entry) => entry.execution === "cache-hit"));
 	assert.deepEqual(fingerprint(fixture.root), before);
+
+	const commonDirectory = git(fixture.root, [
+		"rev-parse",
+		"--path-format=absolute",
+		"--git-common-dir",
+	]);
+	const blueprintCacheDirectory = resolve(commonDirectory, "grfs/dag-execution/blueprints");
+	const [cacheEntry] = (await readdir(blueprintCacheDirectory)).sort();
+	await writeFile(resolve(blueprintCacheDirectory, cacheEntry), "{}\n");
+	await assert.rejects(
+		createDagGraphEvidence({
+			repository: fixture.root,
+			base: fixture.base,
+			head: "left",
+			repositoryIdentity: { provider: "github", owner: "clfhhc", name: "test-graphrefly" },
+		}),
+		(error) => error instanceof DagEvidenceError && error.code === "BLUEPRINT_EVIDENCE_INVALID",
+	);
 });
 
 test("fails closed when one selected object cannot produce verified Blueprint evidence", async (t) => {
@@ -297,6 +323,61 @@ test("fails closed when one selected object cannot produce verified Blueprint ev
 			repositoryIdentity: { provider: "github", owner: "clfhhc", name: "test-graphrefly" },
 		}),
 		(error) => error instanceof DagEvidenceError && error.code === "BLUEPRINT_EVIDENCE_INVALID",
+	);
+});
+
+test("skips exact policy-check executions and rejects tampered local cache", async (t) => {
+	const fixture = await repository();
+	t.after(() => rm(fixture.root, { recursive: true, force: true }));
+	const externalCheck = resolve(fixture.root, "external-check.mjs");
+	await writeFile(externalCheck, "process.exit(0);\n");
+	const policy = {
+		checks: [
+			{
+				id: "contract",
+				argv: [process.execPath, externalCheck],
+				timeoutMs: 10000,
+				network: false,
+				shell: false,
+			},
+		],
+	};
+	const first = await runRepositoryPolicyChecksWithCacheReport(fixture.root, "HEAD", policy, [
+		"contract",
+	]);
+	assert.deepEqual(first.executions, [{ checkId: "contract", execution: "executed" }]);
+	const second = await runRepositoryPolicyChecksWithCacheReport(fixture.root, "HEAD", policy, [
+		"contract",
+	]);
+	assert.deepEqual(second.executions, [{ checkId: "contract", execution: "cache-hit" }]);
+
+	await writeFile(externalCheck, "process.exit(1);\n");
+	const environmentChanged = await runRepositoryPolicyChecksWithCacheReport(
+		fixture.root,
+		"HEAD",
+		policy,
+		["contract"],
+	);
+	assert.deepEqual(environmentChanged.executions, [{ checkId: "contract", execution: "executed" }]);
+	assert.equal(environmentChanged.results[0].exitCode, 1);
+	await writeFile(externalCheck, "process.exit(0);\n");
+	await commitFile(fixture.root, "evidence.md", "new head\n", "move check head");
+	const changed = await runRepositoryPolicyChecksWithCacheReport(fixture.root, "HEAD", policy, [
+		"contract",
+	]);
+	assert.deepEqual(changed.executions, [{ checkId: "contract", execution: "executed" }]);
+
+	const commonDirectory = git(fixture.root, [
+		"rev-parse",
+		"--path-format=absolute",
+		"--git-common-dir",
+	]);
+	const checkCacheDirectory = resolve(commonDirectory, "grfs/dag-execution/policy-checks");
+	const entries = (await readdir(checkCacheDirectory)).sort();
+	await Promise.all(entries.map((entry) => writeFile(resolve(checkCacheDirectory, entry), "{}\n")));
+	await assert.rejects(
+		runRepositoryPolicyChecksWithCacheReport(fixture.root, "HEAD", policy, ["contract"]),
+		(error) => error instanceof SemanticRepositoryError && error.code === "EXECUTION_CACHE_INVALID",
 	);
 });
 
@@ -524,6 +605,10 @@ test("composes a real accepted plan and branched DAG into one selective semantic
 	assert.deepEqual(result.gateResult.minimalAffectedCut, ["LEFT"]);
 	assert.deepEqual(result.gateResult.units[0].reasonCodes, ["CLAIM_INVALID"]);
 	assert.equal(result.gateResult.joins[0].verdict, "valid");
+	const checkCache = await runRepositoryPolicyChecksWithCacheReport(fixture.root, "left", policy, [
+		"contract",
+	]);
+	assert.deepEqual(checkCache.executions, [{ checkId: "contract", execution: "cache-hit" }]);
 	const repeated = await createDagSemanticGate({
 		repository: fixture.root,
 		base: fixture.base,

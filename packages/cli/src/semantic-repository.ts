@@ -21,6 +21,11 @@ import {
 
 import { type CodexRunner, SdkCodexRunner } from "./codex-plan-provider.js";
 import {
+	DagExecutionCacheError,
+	readDagExecutionCache,
+	writeDagExecutionCache,
+} from "./dag-execution-cache.js";
+import {
 	createRepositoryBlueprintSnapshot,
 	createRepositoryReview,
 	validateRepositoryReview,
@@ -937,12 +942,94 @@ export function evaluateSemanticPredicate(
 	return evaluatePredicate(blueprint, predicate);
 }
 
+async function fileIdentity(path: string): Promise<JsonObject | undefined> {
+	try {
+		const canonical = await realpath(path);
+		return {
+			path: canonical,
+			digest: createHash("sha256")
+				.update(await readFile(canonical))
+				.digest("hex"),
+		};
+	} catch {
+		return undefined;
+	}
+}
+
+async function policyCheckExecutionIdentity(
+	repository: string,
+	check: JsonObject,
+): Promise<JsonObject> {
+	const argv = strings(check.argv);
+	const executable = argv[0] as string;
+	let executableIdentity: JsonObject | undefined;
+	if (executable.includes("/")) {
+		executableIdentity = await fileIdentity(
+			executable.startsWith("/") ? executable : resolve(repository, executable),
+		);
+	} else {
+		for (const directory of (process.env.PATH ?? "").split(":")) {
+			const candidate = resolve(directory, executable);
+			const identity = await fileIdentity(candidate);
+			if (identity !== undefined) {
+				executableIdentity = identity;
+				break;
+			}
+		}
+	}
+	const absoluteArguments: JsonObject[] = [];
+	for (const argument of argv.slice(1)) {
+		if (!argument.startsWith("/")) continue;
+		const identity = await fileIdentity(argument);
+		if (identity !== undefined) absoluteArguments.push(identity);
+	}
+	let nodeModules: JsonObject | null = null;
+	try {
+		const root = await realpath(resolve(repository, "node_modules"));
+		const metadata = await Promise.all(
+			[".modules.yaml", ".package-lock.json"].map(async (name) => {
+				try {
+					return {
+						name,
+						digest: createHash("sha256")
+							.update(await readFile(resolve(root, name)))
+							.digest("hex"),
+					};
+				} catch {
+					return undefined;
+				}
+			}),
+		);
+		nodeModules = { root, metadata: metadata.filter((entry) => entry !== undefined) };
+	} catch {
+		// A dependency-free check can execute without an installed package tree.
+	}
+	return {
+		executable: executableIdentity ?? null,
+		absoluteArguments,
+		nodeModules,
+	};
+}
+
 export async function runRepositoryPolicyChecks(
 	repository: string,
 	head: string,
 	policy: JsonObject,
 	requiredIds: readonly string[],
 ): Promise<JsonObject[]> {
+	return (await runRepositoryPolicyChecksWithCacheReport(repository, head, policy, requiredIds))
+		.results;
+}
+
+export async function runRepositoryPolicyChecksWithCacheReport(
+	repository: string,
+	head: string,
+	policy: JsonObject,
+	requiredIds: readonly string[],
+): Promise<{
+	results: JsonObject[];
+	executions: Array<{ checkId: string; execution: "executed" | "cache-hit" }>;
+}> {
 	const stableOutput = (value: string | null | undefined, worktree: string) =>
 		(value ?? "")
 			.replaceAll("\r\n", "\n")
@@ -959,6 +1046,97 @@ export async function runRepositoryPolicyChecks(
 			check,
 		]),
 	);
+	const resolvedHead = gitText(repository, ["rev-parse", `${head}^{commit}`]);
+	const sandbox =
+		process.platform === "darwin"
+			? "sandbox-exec-v1"
+			: process.platform === "linux"
+				? await access("/usr/bin/bwrap")
+						.then(() => "bwrap-v1")
+						.catch(() => "unavailable")
+				: "unavailable";
+	const resultsById = new Map<string, JsonObject>();
+	const executions: Array<{ checkId: string; execution: "executed" | "cache-hit" }> = [];
+	const misses: Array<{ checkId: string; check: JsonObject; cacheInput: JsonObject }> = [];
+	try {
+		for (const checkId of requiredIds) {
+			const check = declared.get(checkId);
+			if (check === undefined) continue;
+			const cacheInput: JsonObject = {
+				revision: 1,
+				head: resolvedHead,
+				tree: gitText(repository, ["show", "-s", "--format=%T", resolvedHead]),
+				parents: gitText(repository, ["show", "-s", "--format=%P", resolvedHead])
+					.split(" ")
+					.filter(Boolean),
+				policyDigest: sha256Jcs(policy),
+				check,
+				executionEnvironment: await policyCheckExecutionIdentity(repository, check),
+				runner: {
+					revision: 1,
+					sandbox,
+					nodeVersion: process.version,
+					platform: process.platform,
+					arch: process.arch,
+					path: process.env.PATH ?? "",
+				},
+			};
+			const cached = await readDagExecutionCache(repository, "policy-checks", cacheInput);
+			if (cached.hit) {
+				if (
+					typeof cached.value !== "object" ||
+					cached.value === null ||
+					Array.isArray(cached.value)
+				) {
+					throw new DagExecutionCacheError("Cached policy check result must be an object");
+				}
+				const result = cached.value as JsonObject;
+				const expectedCommandDigest = hash({
+					argv: strings(check.argv),
+					network: false,
+					shell: false,
+				});
+				if (
+					Object.keys(result).sort().join("\0") !==
+						["checkId", "commandDigest", "exitCode", "schema", "stderrDigest", "stdoutDigest"]
+							.sort()
+							.join("\0") ||
+					result.schema !== "graphrefly.stack.semantic-check-result.v1" ||
+					result.checkId !== checkId ||
+					sha256Jcs(result.commandDigest) !== sha256Jcs(expectedCommandDigest) ||
+					!Number.isInteger(result.exitCode) ||
+					![result.stdoutDigest, result.stderrDigest].every(
+						(value) =>
+							typeof value === "object" &&
+							value !== null &&
+							(value as JsonObject).algorithm === "sha256" &&
+							typeof (value as JsonObject).value === "string" &&
+							/^[0-9a-f]{64}$/u.test((value as JsonObject).value as string),
+					)
+				) {
+					throw new DagExecutionCacheError("Cached policy check result is invalid");
+				}
+				resultsById.set(checkId, result);
+				executions.push({ checkId, execution: "cache-hit" });
+			} else {
+				misses.push({ checkId, check, cacheInput });
+			}
+		}
+	} catch (error) {
+		if (error instanceof DagExecutionCacheError) {
+			throw new SemanticRepositoryError("EXECUTION_CACHE_INVALID", error.message);
+		}
+		throw error;
+	}
+	if (misses.length === 0) {
+		return {
+			results: requiredIds.flatMap((checkId) => {
+				const result = resultsById.get(checkId);
+				return result === undefined ? [] : [result];
+			}),
+			executions,
+		};
+	}
 	const root = await mkdtemp(resolve(dirname(repository), ".graphrefly-stack-check-"));
 	const worktree = resolve(root, "checkout");
 	const scratch = resolve(root, "tmp");
@@ -973,10 +1151,7 @@ export async function runRepositoryPolicyChecks(
 		} catch {
 			// Dependency-free checks remain valid; package checks fail closed if install state is absent.
 		}
-		const results: JsonObject[] = [];
-		for (const checkId of requiredIds) {
-			const check = declared.get(checkId);
-			if (check === undefined) continue;
+		for (const { checkId, check, cacheInput } of misses) {
 			const argv = strings(check.argv);
 			const command: string[] | undefined =
 				process.platform === "darwin"
@@ -1010,14 +1185,17 @@ export async function runRepositoryPolicyChecks(
 								.catch(() => undefined)
 						: undefined;
 			if (command === undefined) {
-				results.push({
+				const result = {
 					schema: "graphrefly.stack.semantic-check-result.v1",
 					checkId,
 					commandDigest: hash({ argv, network: false, shell: false }),
 					exitCode: 255,
 					stdoutDigest: hash(""),
 					stderrDigest: hash("network sandbox unavailable"),
-				});
+				};
+				resultsById.set(checkId, result);
+				await writeDagExecutionCache(repository, "policy-checks", cacheInput, result);
+				executions.push({ checkId, execution: "executed" });
 				continue;
 			}
 			const result = spawnSync(command[0] as string, command.slice(1), {
@@ -1036,16 +1214,30 @@ export async function runRepositoryPolicyChecks(
 				shell: false,
 				timeout: check.timeoutMs as number,
 			});
-			results.push({
+			const checkResult = {
 				schema: "graphrefly.stack.semantic-check-result.v1",
 				checkId,
 				commandDigest: hash({ argv, network: false, shell: false }),
 				exitCode: result.status ?? 255,
 				stdoutDigest: hash(stableOutput(result.stdout, worktree)),
 				stderrDigest: hash(stableOutput(result.stderr ?? result.error?.message, worktree)),
-			});
+			};
+			resultsById.set(checkId, checkResult);
+			await writeDagExecutionCache(repository, "policy-checks", cacheInput, checkResult);
+			executions.push({ checkId, execution: "executed" });
 		}
-		return results;
+		return {
+			results: requiredIds.flatMap((checkId) => {
+				const result = resultsById.get(checkId);
+				return result === undefined ? [] : [result];
+			}),
+			executions,
+		};
+	} catch (error) {
+		if (error instanceof DagExecutionCacheError) {
+			throw new SemanticRepositoryError("EXECUTION_CACHE_INVALID", error.message);
+		}
+		throw error;
 	} finally {
 		try {
 			if (added) gitText(repository, ["worktree", "remove", "--force", worktree]);
