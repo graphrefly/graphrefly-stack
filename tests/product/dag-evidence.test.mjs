@@ -591,6 +591,60 @@ export function createGraph() {
 	assert.equal(recoveredRecords.get("LEFT").rebindFrom, originalRecords.get("LEFT").recordId);
 	assert.deepEqual(recoveredRecords.get("RIGHT"), originalRecords.get("RIGHT"));
 	assert.deepEqual(fingerprint(fixture.root), recoveredBefore);
+
+	git(fixture.root, ["switch", "-q", "-c", "rebase-upstream", accepted]);
+	await commitFile(
+		fixture.root,
+		"graph.mjs",
+		`import { graph } from "@graphrefly/ts/graph";
+import { applyLeft } from "./left.mjs";
+import { applyRight } from "./right.mjs";
+export function createGraph() {
+  const value = graph({ name: "dag-evidence" });
+  value.state(1, { name: "base" });
+  value.state(8, { name: "rebased-architecture" });
+  applyLeft(value);
+  applyRight(value);
+  return value;
+}
+`,
+		"prepare rebase architecture",
+	);
+	const rebaseUpstream = git(fixture.root, ["rev-parse", "HEAD"]);
+	git(fixture.root, ["switch", "-q", "-c", "rebase-source", leftCommit]);
+	git(fixture.root, ["rebase", "--onto", rebaseUpstream, accepted, "rebase-source"]);
+	const rebasedLeftCommit = git(fixture.root, ["rev-parse", "HEAD"]);
+	assert.notEqual(rebasedLeftCommit, leftCommit);
+	git(fixture.root, ["merge", "--no-ff", "-m", "join rebased branch", "right"]);
+	const rebasedBefore = fingerprint(fixture.root);
+	const rebased = await createDagSemanticGate({
+		repository: fixture.root,
+		base: fixture.base,
+		head: "rebase-source",
+		planId: "plan-dag",
+		repositoryIdentity: { provider: "github", owner: "clfhhc", name: "test-graphrefly" },
+		recovery: {
+			kind: "rebase",
+			priorBundleDigest: result.artifact.digest.value,
+		},
+	});
+	assert.deepEqual(rebased.cache.units, [
+		{ workUnitId: "LEFT", binding: "rebound", record: "recomputed" },
+		{ workUnitId: "RIGHT", binding: "reused", record: "reused" },
+	]);
+	const rebasedBindings = new Map(rebased.bindings.map((binding) => [binding.workUnitId, binding]));
+	assert.equal(rebasedBindings.get("LEFT").commit.value, rebasedLeftCommit);
+	assert.deepEqual(rebasedBindings.get("LEFT").rebindFrom, {
+		kind: "rebase",
+		previousBindingDigest: {
+			algorithm: "sha256",
+			value: sha256Jcs(originalBindings.get("LEFT")),
+		},
+		stablePatchId: originalBindings.get("LEFT").stablePatchId,
+	});
+	assert.deepEqual(rebasedBindings.get("RIGHT"), originalBindings.get("RIGHT"));
+	assert.deepEqual(fingerprint(fixture.root), rebasedBefore);
+
 	await writeFile(recovered.artifact.path, "{}\n");
 	await assert.rejects(
 		createDagSemanticGate({
