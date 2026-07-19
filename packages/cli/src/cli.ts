@@ -34,6 +34,11 @@ import { IntegrationRunnerError, runIntegration } from "./integration-runner.js"
 import { readPortableEvidenceBundle } from "./portable-bundle.js";
 import { initializeRepository, RepositoryInitError } from "./repository-init.js";
 import { createRepositoryReview, RepositoryReviewError } from "./repository-review.js";
+import {
+	ReviewRoutingError,
+	resolveRepositoryIdentity,
+	selectReviewRoute,
+} from "./review-routing.js";
 import { startReviewServer } from "./review-server.js";
 import {
 	bindSemanticPlan,
@@ -57,8 +62,7 @@ Usage:
   grfs hosted sync --artifact <ci-artifact.json> --endpoint <https-url> [--profile gate-summary-v1|semantic-review-v1] --json
   grfs integration --repo <path> --target <revision> --head <revision> --plan-id <id> --provider <provider> --owner <owner> --name <name> [--json]
   grfs integration ci [--repo <path>] --event <github-event.json> [--plan-id <id>] --output <artifact.json> [--json]
-  grfs review --repo <path> --base <revision> --head <revision> [--host 127.0.0.1] [--port 4173] [--json]
-  grfs review --dag --repo <path> --base <revision> --head <revision> --plan-id <id> --provider <provider> --owner <owner> --name <name> [--host 127.0.0.1] [--port 4173] [--json]
+  grfs review --repo <path> --base <revision> --head <revision> [--plan-id <id>] [--provider <provider> --owner <owner> --name <name>] [--host 127.0.0.1] [--port 4173] [--json]
   grfs fixture create [--output <path>] [--force] [--json]
   grfs plan --repo <path> --task <summary> --policy <policy.json> [--proposal <proposal.json>] [--context <manifest.json> --authorize-context] [--mode replay|live] [--accept --accept-by <label>] --json
   grfs plan --repo <path> --bind --plan-id <id> [--head <revision>] --json
@@ -761,7 +765,15 @@ export async function runCli(argv = process.argv.slice(2)): Promise<number> {
 	const repository = readOption(argv, "--repo");
 	const base = readOption(argv, "--base");
 	const head = readOption(argv, "--head");
-	const hasRepositoryReviewOption = ["--repo", "--base", "--head", "--dag"].some((option) =>
+	if (argv.includes("--dag")) {
+		return failure(
+			command,
+			json,
+			"REVIEW_MODE_DEPRECATED",
+			"--dag is no longer a review mode; grfs review selects the runner from Git topology",
+		);
+	}
+	const hasRepositoryReviewOption = ["--repo", "--base", "--head"].some((option) =>
 		argv.includes(option),
 	);
 	const bundle = readOption(argv, "--bundle");
@@ -784,38 +796,34 @@ export async function runCli(argv = process.argv.slice(2)): Promise<number> {
 		}
 		try {
 			const planId = readOption(argv, "--plan-id");
-			if (argv.includes("--dag")) {
-				const provider = readOption(argv, "--provider");
-				const owner = readOption(argv, "--owner");
-				const name = readOption(argv, "--name");
-				if (
-					planId === undefined ||
-					provider === undefined ||
-					owner === undefined ||
-					name === undefined
-				) {
-					return failure(
-						command,
-						json,
-						"DAG_REVIEW_IDENTITY_INCOMPLETE",
-						"--dag requires --plan-id, --provider, --owner, and --name",
-					);
-				}
+			const selected = await selectReviewRoute({ repository, base, head, planId });
+			if (selected.route === "semantic-dag") {
+				const repositoryIdentity = await resolveRepositoryIdentity({
+					repository: selected.repository,
+					provider: readOption(argv, "--provider"),
+					owner: readOption(argv, "--owner"),
+					name: readOption(argv, "--name"),
+				});
 				const run = await createDagReviewEvidence({
-					repository,
+					repository: selected.repository,
 					base,
 					head,
-					planId,
-					repositoryIdentity: { provider, owner, name },
+					planId: planId as string,
+					repositoryIdentity,
 				});
 				const { artifact: _artifact, ...review } = run;
 				reviewData = review;
 				dagReviewState = { repository: resolve(repository), review };
 			} else {
 				const repositoryReview =
-					planId === undefined
+					selected.route === "structural-linear"
 						? await createRepositoryReview({ repository, base, head })
-						: await createSemanticRepositoryReview({ repository, base, head, planId });
+						: await createSemanticRepositoryReview({
+								repository,
+								base,
+								head,
+								planId: planId as string,
+							});
 				reviewData = repositoryReview;
 				repositoryReviewState = { repository: resolve(repository), review: repositoryReview };
 			}
@@ -824,6 +832,9 @@ export async function runCli(argv = process.argv.slice(2)): Promise<number> {
 				return failure(command, json, error.code, error.message);
 			}
 			if (error instanceof DagReviewRunnerError) {
+				return failure(command, json, error.code, error.message);
+			}
+			if (error instanceof ReviewRoutingError) {
 				return failure(command, json, error.code, error.message);
 			}
 			throw error;

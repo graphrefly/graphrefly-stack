@@ -434,7 +434,7 @@ test("generic review permits ordinary dependency changes and rejects incompatibl
 	);
 });
 
-test("generic review rejects merge history before executing repository code", async (context) => {
+test("generic review requires a semantic plan for merge history before executing repository code", async (context) => {
 	const temporary = await mkdtemp(resolve(tmpdir(), "graphrefly-stack-history-failure-"));
 	context.after(() => rm(temporary, { recursive: true, force: true }));
 	const repository = await createRepository(temporary, "merge-history", flatGraph);
@@ -447,7 +447,7 @@ test("generic review rejects merge history before executing repository code", as
 	run(repository, "git", ["checkout", "main"]);
 	run(repository, "git", ["merge", "--no-ff", "side", "-m", "merge side"]);
 	const head = run(repository, "git", ["rev-parse", "HEAD"]);
-	assert.equal(failedReview(repository, base, head), "NON_LINEAR_HISTORY");
+	assert.equal(failedReview(repository, base, head), "DAG_REVIEW_PLAN_REQUIRED");
 });
 
 test("generic review rejects timeout, malformed Blueprint, diagnostics failure, and hash mismatch", async (context) => {

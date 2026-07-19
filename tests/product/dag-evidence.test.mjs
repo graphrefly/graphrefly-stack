@@ -27,6 +27,7 @@ import {
 } from "../../packages/contracts/dist/index.js";
 
 const workspaceNodeModules = fileURLToPath(new URL("../../node_modules", import.meta.url));
+const cli = fileURLToPath(new URL("../../packages/cli/dist/cli.js", import.meta.url));
 
 function git(repository, args, allowed = [0]) {
 	const result = spawnSync("git", args, {
@@ -611,6 +612,7 @@ test("composes a real accepted plan and branched DAG into one selective semantic
 	);
 	git(fixture.root, ["switch", "-q", "left"]);
 	git(fixture.root, ["merge", "--no-ff", "-m", "join graph branches", "right"]);
+	git(fixture.root, ["remote", "add", "origin", "git@github.com:clfhhc/test-graphrefly.git"]);
 	const before = fingerprint(fixture.root);
 	const result = await createDagSemanticGate({
 		repository: fixture.root,
@@ -678,6 +680,58 @@ test("composes a real accepted plan and branched DAG into one selective semantic
 	});
 	assert.equal(repeatedReview.artifact.digest.value, reviewArtifact.digest.value);
 	assert.equal(await readFile(reviewArtifact.path, "utf8"), reviewBytes);
+	const automaticReview = spawnSync(
+		process.execPath,
+		[
+			cli,
+			"review",
+			"--repo",
+			fixture.root,
+			"--base",
+			fixture.base,
+			"--head",
+			"left",
+			"--plan-id",
+			"plan-dag",
+			"--json",
+		],
+		{ encoding: "utf8", maxBuffer: 16 * 1024 * 1024 },
+	);
+	assert.equal(automaticReview.status, 0, automaticReview.stderr || automaticReview.stdout);
+	const automaticEnvelope = JSON.parse(automaticReview.stdout);
+	assert.equal(automaticEnvelope.data.schema, "graphrefly.stack.dag-review-evidence.v2");
+	assert.deepEqual(automaticEnvelope.data.domainBundle.topology.repository, {
+		provider: "github",
+		owner: "clfhhc",
+		name: "test-graphrefly",
+	});
+	const missingPlan = spawnSync(
+		process.execPath,
+		[cli, "review", "--repo", fixture.root, "--base", fixture.base, "--head", "left", "--json"],
+		{ encoding: "utf8" },
+	);
+	assert.equal(missingPlan.status, 1);
+	assert.equal(JSON.parse(missingPlan.stdout).error.code, "DAG_REVIEW_PLAN_REQUIRED");
+	const obsoleteMode = spawnSync(
+		process.execPath,
+		[
+			cli,
+			"review",
+			"--dag",
+			"--repo",
+			fixture.root,
+			"--base",
+			fixture.base,
+			"--head",
+			"left",
+			"--plan-id",
+			"plan-dag",
+			"--json",
+		],
+		{ encoding: "utf8" },
+	);
+	assert.equal(obsoleteMode.status, 1);
+	assert.equal(JSON.parse(obsoleteMode.stdout).error.code, "REVIEW_MODE_DEPRECATED");
 	const forgedDiff = structuredClone(review);
 	forgedDiff.comparisons[0].structuredDiff.paths.push("forged.ts");
 	assert.throws(() => assertDagReviewEvidenceIntegrity(forgedDiff));
