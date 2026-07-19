@@ -108,6 +108,10 @@ export function assertDagTopologyIntegrity(value: unknown): void {
 			if (parents.length !== 1 || typeof entry.workUnitId !== "string" || joinByOid.has(id)) {
 				throw new DagIntegrityError("implementation object has invalid WorkUnit or join semantics");
 			}
+		} else if (entry.kind === "transport") {
+			if (parents.length !== 1 || entry.workUnitId !== null || joinByOid.has(id)) {
+				throw new DagIntegrityError("transport object has invalid WorkUnit or join semantics");
+			}
 		} else if (entry.kind === "join") {
 			if (parents.length !== 2 || entry.workUnitId !== null) {
 				throw new DagIntegrityError("join object must be transport-only with two parents");

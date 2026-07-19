@@ -72,6 +72,14 @@ test("DAG v2 schema rejects authority widening and unsupported topology", () => 
 		false,
 	);
 	assert.equal(definition("TopologyObject")({ ...topology.objects[0], workUnitId: null }), false);
+	assert.equal(
+		definition("TopologyObject")({
+			...topology.objects[0],
+			kind: "transport",
+			workUnitId: null,
+		}),
+		true,
+	);
 	assert.equal(definition("JoinBinding")({ ...join, workUnitId: "MERGE" }), false);
 });
 
