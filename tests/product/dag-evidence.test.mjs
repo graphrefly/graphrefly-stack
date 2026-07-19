@@ -1,12 +1,14 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
 import { createDagGraphEvidence, DagEvidenceError } from "../../packages/cli/dist/dag-evidence.js";
+import { createDagSemanticGate } from "../../packages/cli/dist/dag-semantic-runner.js";
+import { createRepositoryBlueprintSnapshot } from "../../packages/cli/dist/repository-review.js";
 import { assertDagTopologyIntegrity, sha256Jcs } from "../../packages/contracts/dist/index.js";
 
 const workspaceNodeModules = fileURLToPath(new URL("../../node_modules", import.meta.url));
@@ -195,4 +197,138 @@ test("fails closed when one selected object cannot produce verified Blueprint ev
 		}),
 		(error) => error instanceof DagEvidenceError && error.code === "BLUEPRINT_EVIDENCE_INVALID",
 	);
+});
+
+test("composes a real accepted plan and branched DAG into one selective semantic result", async (t) => {
+	const fixture = await repository();
+	t.after(() => rm(fixture.root, { recursive: true, force: true }));
+	const baseSnapshot = await createRepositoryBlueprintSnapshot({
+		repository: fixture.root,
+		revision: fixture.base,
+	});
+	const policy = {
+		schema: "graphrefly.stack.semantic-policy.v1",
+		policyId: "dag-policy",
+		revision: "rev-1",
+		allowedSourceRoots: ["left.mjs", "right.mjs"],
+		allowedCapabilities: ["graph-change"],
+		checks: [
+			{
+				id: "contract",
+				argv: [process.execPath, "-e", "process.exit(0)"],
+				timeoutMs: 10000,
+				network: false,
+				shell: false,
+			},
+		],
+	};
+	const plan = {
+		schema: "graphrefly.stack.semantic-plan.v1",
+		planId: "plan-dag",
+		taskDigest: { algorithm: "sha256", value: sha256Jcs({ task: "branch" }) },
+		taskSummary: "Implement two independent graph branches",
+		baseCommit: { algorithm: "sha1", value: fixture.base },
+		baseBlueprintHash: baseSnapshot.blueprintHash,
+		policy: {
+			policyId: policy.policyId,
+			revision: policy.revision,
+			digest: { algorithm: "sha256", value: sha256Jcs(policy) },
+		},
+		proposalSource: "human",
+		acceptedBy: { label: "test", identityVerified: false },
+		workUnits: [
+			{
+				id: "RIGHT",
+				title: "Right branch",
+				intent: "Change only the right graph branch",
+				dependencies: [],
+				allowedSourceScopes: ["right.mjs"],
+				capabilities: ["graph-change"],
+				claims: [
+					{
+						id: "right-absence",
+						predicate: { operator: "absent", selector: { kind: "node", nodeId: "never-right" } },
+						rationale: "The forbidden right node remains absent",
+					},
+				],
+				requiredChecks: ["contract"],
+			},
+			{
+				id: "LEFT",
+				title: "Left branch",
+				intent: "Expose an invalid left semantic claim without affecting right",
+				dependencies: [],
+				allowedSourceScopes: ["left.mjs"],
+				capabilities: ["graph-change"],
+				claims: [
+					{
+						id: "left-required",
+						predicate: { operator: "present", selector: { kind: "node", nodeId: "never-left" } },
+						rationale: "Deliberately prove a blocked branch",
+					},
+				],
+				requiredChecks: ["contract"],
+			},
+		],
+	};
+	await mkdir(resolve(fixture.root, ".graphrefly-stack/plans"), { recursive: true });
+	await Promise.all([
+		writeFile(
+			resolve(fixture.root, ".graphrefly-stack/policy.json"),
+			`${JSON.stringify(policy, null, 2)}\n`,
+		),
+		writeFile(
+			resolve(fixture.root, ".graphrefly-stack/plans/plan-dag.json"),
+			`${JSON.stringify(plan, null, 2)}\n`,
+		),
+	]);
+	git(fixture.root, ["add", ".graphrefly-stack"]);
+	git(fixture.root, ["commit", "-m", "accept DAG plan"]);
+	const accepted = git(fixture.root, ["rev-parse", "HEAD"]);
+	git(fixture.root, ["switch", "-q", "-c", "left"]);
+	await commitFile(
+		fixture.root,
+		"left.mjs",
+		'export function applyLeft(value) { value.state(2, { name: "left" }); }\n',
+		"left graph",
+		"LEFT",
+	);
+	git(fixture.root, ["switch", "-q", "-c", "right", accepted]);
+	await commitFile(
+		fixture.root,
+		"right.mjs",
+		'export function applyRight(value) { value.state(3, { name: "right" }); }\n',
+		"right graph",
+		"RIGHT",
+	);
+	git(fixture.root, ["switch", "-q", "left"]);
+	git(fixture.root, ["merge", "--no-ff", "-m", "join graph branches", "right"]);
+	const before = fingerprint(fixture.root);
+	const result = await createDagSemanticGate({
+		repository: fixture.root,
+		base: fixture.base,
+		head: "left",
+		planId: "plan-dag",
+		repositoryIdentity: { provider: "github", owner: "clfhhc", name: "test-graphrefly" },
+	});
+	assert.equal(result.gateResult.verdict, "blocked");
+	assert.deepEqual(
+		result.gateResult.units.map((unit) => [unit.workUnitId, unit.verdict]),
+		[
+			["LEFT", "invalid"],
+			["RIGHT", "valid"],
+		],
+	);
+	assert.deepEqual(result.gateResult.minimalAffectedCut, ["LEFT"]);
+	assert.deepEqual(result.gateResult.units[0].reasonCodes, ["CLAIM_INVALID"]);
+	assert.equal(result.gateResult.joins[0].verdict, "valid");
+	const repeated = await createDagSemanticGate({
+		repository: fixture.root,
+		base: fixture.base,
+		head: "left",
+		planId: "plan-dag",
+		repositoryIdentity: { provider: "github", owner: "clfhhc", name: "test-graphrefly" },
+	});
+	assert.equal(sha256Jcs(repeated), sha256Jcs(result));
+	assert.deepEqual(fingerprint(fixture.root), before);
 });

@@ -937,7 +937,7 @@ export function evaluateSemanticPredicate(
 	return evaluatePredicate(blueprint, predicate);
 }
 
-async function runPolicyChecks(
+export async function runRepositoryPolicyChecks(
 	repository: string,
 	head: string,
 	policy: JsonObject,
@@ -1164,7 +1164,9 @@ export async function createSemanticGate(options: {
 			(check) => check.id as string,
 		),
 	);
-	const checks = policyMatches ? await runPolicyChecks(repository, head, policy, requiredIds) : [];
+	const checks = policyMatches
+		? await runRepositoryPolicyChecks(repository, head, policy, requiredIds)
+		: [];
 	for (const check of checks) assertValid(definition("CheckResult"), check, "CHECK_RESULT_INVALID");
 	const checkById = new Map(checks.map((check) => [check.checkId as string, check]));
 	const records: JsonObject[] = [];

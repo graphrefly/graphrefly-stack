@@ -1,0 +1,540 @@
+import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
+import { readFile } from "node:fs/promises";
+import {
+	createStrictAjv,
+	DAG_SEMANTIC_ARTIFACTS_SCHEMA,
+	sha256Jcs,
+} from "@graphrefly-stack/contracts";
+import { computeDagGateV2 } from "@graphrefly-stack/core";
+
+import { createDagGraphEvidence } from "./dag-evidence.js";
+import { runtimeAssetPath } from "./runtime-paths.js";
+import { evaluateSemanticPredicate, runRepositoryPolicyChecks } from "./semantic-repository.js";
+import { gitText, SystemGitAdapter } from "./system-git.js";
+
+type JsonObject = Record<string, unknown>;
+type Hash = { algorithm: "sha256"; value: string };
+
+export class DagSemanticRunnerError extends Error {
+	constructor(
+		readonly code:
+			| "ACCEPTED_ARTIFACT_INVALID"
+			| "PLAN_BASE_MISMATCH"
+			| "POLICY_MISMATCH"
+			| "WORK_UNIT_SET_MISMATCH"
+			| "DEPENDENCY_MISSING"
+			| "DEPENDENCY_CYCLE"
+			| "BINDING_INVALID"
+			| "CONTRACT_INVALID",
+		message: string,
+	) {
+		super(message);
+		this.name = "DagSemanticRunnerError";
+	}
+}
+
+function hash(value: unknown): Hash {
+	return { algorithm: "sha256", value: sha256Jcs(value) };
+}
+
+function object(value: unknown, label: string): JsonObject {
+	if (typeof value !== "object" || value === null || Array.isArray(value)) {
+		throw new DagSemanticRunnerError("ACCEPTED_ARTIFACT_INVALID", `${label} must be an object`);
+	}
+	return value as JsonObject;
+}
+
+function objects(value: unknown, label: string): JsonObject[] {
+	if (!Array.isArray(value)) {
+		throw new DagSemanticRunnerError("ACCEPTED_ARTIFACT_INVALID", `${label} must be an array`);
+	}
+	return value.map((entry) => object(entry, label));
+}
+
+function strings(value: unknown): string[] {
+	return Array.isArray(value) && value.every((entry) => typeof entry === "string") ? value : [];
+}
+
+function gitJson(repository: string, revision: string, path: string): JsonObject {
+	try {
+		return object(JSON.parse(gitText(repository, ["show", `${revision}:${path}`])), path);
+	} catch {
+		throw new DagSemanticRunnerError(
+			"ACCEPTED_ARTIFACT_INVALID",
+			`Invalid accepted artifact ${revision}:${path}`,
+		);
+	}
+}
+
+function gitHasPath(repository: string, revision: string, path: string): boolean {
+	return (
+		spawnSync("git", ["-C", repository, "cat-file", "-e", `${revision}:${path}`], {
+			encoding: "utf8",
+			shell: false,
+		}).status === 0
+	);
+}
+
+function gitIsAncestor(repository: string, ancestor: string, descendant: string): boolean {
+	return (
+		spawnSync("git", ["-C", repository, "merge-base", "--is-ancestor", ancestor, descendant], {
+			encoding: "utf8",
+			shell: false,
+		}).status === 0
+	);
+}
+
+function canonicalWorkUnitOrder(units: readonly JsonObject[]): string[] {
+	const byId = new Map<string, JsonObject>();
+	for (const unit of units) {
+		const id = unit.id;
+		if (typeof id !== "string" || byId.has(id)) {
+			throw new DagSemanticRunnerError("WORK_UNIT_SET_MISMATCH", "WorkUnit IDs are not unique");
+		}
+		byId.set(id, unit);
+	}
+	for (const [id, unit] of byId) {
+		for (const dependency of strings(unit.dependencies)) {
+			if (!byId.has(dependency)) {
+				throw new DagSemanticRunnerError(
+					"DEPENDENCY_MISSING",
+					`${id} depends on missing WorkUnit ${dependency}`,
+				);
+			}
+		}
+	}
+	const result: string[] = [];
+	const remaining = new Set(byId.keys());
+	while (remaining.size > 0) {
+		const next = [...remaining]
+			.filter((id) =>
+				strings(byId.get(id)?.dependencies).every((dependency) => result.includes(dependency)),
+			)
+			.sort()[0];
+		if (next === undefined) {
+			throw new DagSemanticRunnerError("DEPENDENCY_CYCLE", "Semantic dependency graph is cyclic");
+		}
+		result.push(next);
+		remaining.delete(next);
+	}
+	return result;
+}
+
+function withinScope(path: string, scopes: readonly string[]): boolean {
+	return scopes.some((scope) => path === scope || path.startsWith(`${scope}/`));
+}
+
+async function validators() {
+	const [v1, topology, semantic] = await Promise.all([
+		readFile(runtimeAssetPath("contracts/semantic/v1/artifacts.schema.json"), "utf8"),
+		readFile(runtimeAssetPath("contracts/dag/v2/artifacts.schema.json"), "utf8"),
+		readFile(runtimeAssetPath("contracts/dag/v2/semantic.schema.json"), "utf8"),
+	]);
+	const ajv = createStrictAjv();
+	ajv.addSchema(JSON.parse(v1));
+	ajv.addSchema(JSON.parse(topology));
+	ajv.addSchema(JSON.parse(semantic));
+	return (name: string) => {
+		const validate = ajv.getSchema(`${DAG_SEMANTIC_ARTIFACTS_SCHEMA}#/definitions/${name}`);
+		if (validate === undefined) {
+			throw new DagSemanticRunnerError("CONTRACT_INVALID", `Missing DAG semantic schema ${name}`);
+		}
+		return validate;
+	};
+}
+
+function assertValid(
+	validate: ReturnType<Awaited<ReturnType<typeof validators>>>,
+	value: unknown,
+	label: string,
+): void {
+	if (!validate(value)) {
+		throw new DagSemanticRunnerError(
+			"CONTRACT_INVALID",
+			`${label}: ${JSON.stringify(validate.errors)}`,
+		);
+	}
+}
+
+export type DagSemanticGateBundle = {
+	topology: JsonObject;
+	dependencyGraph: JsonObject;
+	bindings: JsonObject[];
+	records: JsonObject[];
+	unitEvaluations: JsonObject[];
+	joinEvaluations: JsonObject[];
+	gateInput: JsonObject;
+	gateResult: JsonObject;
+};
+
+export async function createDagSemanticGate(options: {
+	repository: string;
+	base: string;
+	head: string;
+	planId: string;
+	repositoryIdentity: { provider: string; owner: string; name: string };
+}): Promise<DagSemanticGateBundle> {
+	const graphEvidence = await createDagGraphEvidence(options);
+	const topology = graphEvidence.topology;
+	const git = new SystemGitAdapter();
+	const resolvedHead = object(topology.head, "topology head").value as string;
+	const planPath = `.graphrefly-stack/plans/${options.planId}.json`;
+	const policyPath = ".graphrefly-stack/policy.json";
+	const plan = gitJson(options.repository, resolvedHead, planPath);
+	const policy = gitJson(options.repository, resolvedHead, policyPath);
+	const semanticV1 = JSON.parse(
+		await readFile(runtimeAssetPath("contracts/semantic/v1/artifacts.schema.json"), "utf8"),
+	);
+	const v1Ajv = createStrictAjv();
+	v1Ajv.addSchema(semanticV1);
+	for (const [name, value] of [
+		["AcceptedChangePlan", plan],
+		["RepositoryPolicy", policy],
+	] as const) {
+		const validate = v1Ajv.getSchema(
+			`urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/${name}`,
+		);
+		if (validate === undefined || !validate(value)) {
+			throw new DagSemanticRunnerError(
+				"ACCEPTED_ARTIFACT_INVALID",
+				`${name}: ${JSON.stringify(validate?.errors)}`,
+			);
+		}
+	}
+	if (plan.planId !== options.planId) {
+		throw new DagSemanticRunnerError("ACCEPTED_ARTIFACT_INVALID", "Accepted plan ID changed");
+	}
+	const topologyBase = object(topology.base, "topology base").value as string;
+	const topologyObjects = objects(topology.objects, "topology objects");
+	const introductionCandidates = gitHasPath(options.repository, topologyBase, planPath)
+		? [topologyBase]
+		: topologyObjects
+				.filter(
+					(entry) =>
+						gitHasPath(
+							options.repository,
+							object(entry.oid, "object OID").value as string,
+							planPath,
+						) &&
+						objects(entry.parents, "object parents").every(
+							(parent) => !gitHasPath(options.repository, parent.value as string, planPath),
+						),
+				)
+				.map((entry) => object(entry.oid, "acceptance OID").value as string);
+	if (introductionCandidates.length !== 1) {
+		throw new DagSemanticRunnerError(
+			"ACCEPTED_ARTIFACT_INVALID",
+			"Accepted plan must have one exact introduction point",
+		);
+	}
+	const acceptanceCommit = introductionCandidates[0] as string;
+	const acceptanceEntry = topologyObjects.find(
+		(entry) => object(entry.oid, "object OID").value === acceptanceCommit,
+	);
+	if (acceptanceEntry !== undefined && acceptanceEntry.kind !== "transport") {
+		throw new DagSemanticRunnerError(
+			"ACCEPTED_ARTIFACT_INVALID",
+			"Accepted plan must enter through a transport-only commit",
+		);
+	}
+	if (acceptanceEntry !== undefined) {
+		const acceptanceOid = acceptanceEntry.oid as { algorithm: "sha1" | "sha256"; value: string };
+		const changedPaths = await git.changedPaths(options.repository, acceptanceOid);
+		if (
+			changedPaths.length !== 2 ||
+			!changedPaths.every((path) => path === planPath || path === policyPath)
+		) {
+			throw new DagSemanticRunnerError(
+				"ACCEPTED_ARTIFACT_INVALID",
+				"Plan acceptance commit mixes non-plan changes",
+			);
+		}
+	}
+	for (const revision of [
+		topologyBase,
+		...topologyObjects.map((entry) => object(entry.oid, "OID").value as string),
+	]) {
+		const hasPlan = gitHasPath(options.repository, revision, planPath);
+		const hasPolicy = gitHasPath(options.repository, revision, policyPath);
+		if (hasPlan !== hasPolicy) {
+			throw new DagSemanticRunnerError(
+				"ACCEPTED_ARTIFACT_INVALID",
+				`Plan and policy lifecycle diverged at ${revision}`,
+			);
+		}
+		if (
+			hasPlan &&
+			(sha256Jcs(gitJson(options.repository, revision, planPath)) !== sha256Jcs(plan) ||
+				sha256Jcs(gitJson(options.repository, revision, policyPath)) !== sha256Jcs(policy))
+		) {
+			throw new DagSemanticRunnerError(
+				"ACCEPTED_ARTIFACT_INVALID",
+				`Accepted plan or policy changed at ${revision}`,
+			);
+		}
+	}
+	for (const entry of topologyObjects.filter((candidate) => candidate.kind === "implementation")) {
+		const revision = object(entry.oid, "implementation OID").value as string;
+		if (
+			!gitIsAncestor(options.repository, acceptanceCommit, revision) ||
+			!gitHasPath(options.repository, revision, planPath)
+		) {
+			throw new DagSemanticRunnerError(
+				"ACCEPTED_ARTIFACT_INVALID",
+				`Implementation ${revision} does not descend from the accepted plan`,
+			);
+		}
+	}
+	if (
+		(object(plan.baseCommit, "plan base").value as string) !==
+			(object(topology.base, "topology base").value as string) ||
+		!Object.is(
+			object(plan.baseBlueprintHash, "plan base Blueprint").value,
+			object(topology.baseBlueprintHash, "topology base Blueprint").value,
+		)
+	) {
+		throw new DagSemanticRunnerError(
+			"PLAN_BASE_MISMATCH",
+			"Accepted plan base does not match the DAG evidence base",
+		);
+	}
+	const policyDigest = hash(policy);
+	const planPolicy = object(plan.policy, "plan policy");
+	if (
+		planPolicy.policyId !== policy.policyId ||
+		planPolicy.revision !== policy.revision ||
+		object(planPolicy.digest, "plan policy digest").value !== policyDigest.value
+	) {
+		throw new DagSemanticRunnerError("POLICY_MISMATCH", "Accepted policy changed");
+	}
+	const policyCheckIds = objects(policy.checks, "policy checks").map((check) => check.id as string);
+	if (new Set(policyCheckIds).size !== policyCheckIds.length) {
+		throw new DagSemanticRunnerError(
+			"ACCEPTED_ARTIFACT_INVALID",
+			"Policy check IDs are duplicated",
+		);
+	}
+
+	const units = objects(plan.workUnits, "plan WorkUnits");
+	const allowedRoots = strings(policy.allowedSourceRoots);
+	const allowedCapabilities = new Set(strings(policy.allowedCapabilities));
+	const declaredChecks = new Set(policyCheckIds);
+	for (const unit of units) {
+		const workUnitId = unit.id as string;
+		if (
+			strings(unit.allowedSourceScopes).some((scope) => !withinScope(scope, allowedRoots)) ||
+			strings(unit.capabilities).some((capability) => !allowedCapabilities.has(capability)) ||
+			strings(unit.requiredChecks).some((checkId) => !declaredChecks.has(checkId))
+		) {
+			throw new DagSemanticRunnerError(
+				"ACCEPTED_ARTIFACT_INVALID",
+				`${workUnitId} exceeds the accepted repository policy`,
+			);
+		}
+		const claimIds = objects(unit.claims, `${workUnitId} claims`).map(
+			(claim) => claim.id as string,
+		);
+		if (new Set(claimIds).size !== claimIds.length) {
+			throw new DagSemanticRunnerError(
+				"ACCEPTED_ARTIFACT_INVALID",
+				`${workUnitId} repeats a claim ID`,
+			);
+		}
+	}
+	const order = canonicalWorkUnitOrder(units);
+	const unitById = new Map(units.map((unit) => [unit.id as string, unit] as const));
+	const implementationById = new Map(
+		objects(topology.objects, "topology objects")
+			.filter((entry) => entry.kind === "implementation")
+			.map((entry) => [entry.workUnitId as string, entry] as const),
+	);
+	if (implementationById.size !== order.length || order.some((id) => !implementationById.has(id))) {
+		throw new DagSemanticRunnerError(
+			"WORK_UNIT_SET_MISMATCH",
+			"Accepted plan and reachable implementation WorkUnits differ",
+		);
+	}
+	const blueprintByRevision = new Map(
+		graphEvidence.blueprints.map((entry) => [entry.revision.value, entry] as const),
+	);
+	const dependencyGraph: JsonObject = {
+		schema: "graphrefly.stack.semantic-dependency-graph.v2",
+		planId: options.planId,
+		topologyDigest: hash(topology),
+		workUnits: order.map((workUnitId) => ({
+			workUnitId,
+			dependencies: [...strings(unitById.get(workUnitId)?.dependencies)].sort(),
+		})),
+	};
+	const bindings: JsonObject[] = [];
+	for (const workUnitId of order) {
+		const entry = implementationById.get(workUnitId) as JsonObject;
+		const commit = entry.oid as { algorithm: "sha1" | "sha256"; value: string };
+		const diff = await git.canonicalDiff(options.repository, commit);
+		const changedPaths = [...(await git.changedPaths(options.repository, commit))];
+		const binding = {
+			schema: "graphrefly.stack.work-unit-binding.v2",
+			planId: options.planId,
+			workUnitId,
+			commit,
+			parentCommit: objects(entry.parents, "implementation parents")[0],
+			trailer: { name: "GraphReFly-Work-Unit", value: workUnitId, occurrences: 1 },
+			stablePatchId: await git.stablePatchId(options.repository, commit),
+			diffDigest: {
+				algorithm: "sha256",
+				value: createHash("sha256").update(diff).digest("hex"),
+			},
+			changedPaths,
+			blueprintHash: entry.blueprintHash,
+			rebindFrom: null,
+		};
+		bindings.push(binding);
+	}
+	const bindingById = new Map(bindings.map((binding) => [binding.workUnitId as string, binding]));
+	const requiredCheckIds = [
+		...new Set(units.flatMap((unit) => strings(unit.requiredChecks))),
+	].sort();
+	const checkResults = await runRepositoryPolicyChecks(
+		options.repository,
+		resolvedHead,
+		policy,
+		requiredCheckIds,
+	);
+	const checkById = new Map(checkResults.map((check) => [check.checkId as string, check] as const));
+	const records: JsonObject[] = [];
+	const evaluations: JsonObject[] = [];
+	const recordById = new Map<string, JsonObject>();
+	for (const workUnitId of order) {
+		const unit = unitById.get(workUnitId) as JsonObject;
+		const binding = bindingById.get(workUnitId) as JsonObject;
+		const blueprint = blueprintByRevision.get(
+			object(binding.commit, "binding commit").value as string,
+		);
+		if (blueprint === undefined) {
+			throw new DagSemanticRunnerError("BINDING_INVALID", `${workUnitId} Blueprint is missing`);
+		}
+		const sourceScopes = strings(unit.allowedSourceScopes);
+		const changedPaths = strings(binding.changedPaths);
+		const sourceScope = {
+			valid: changedPaths.every((path) => withinScope(path, sourceScopes)),
+			witnessDigest: hash({ allowedSourceScopes: sourceScopes, changedPaths }),
+		};
+		const orderedClaims = objects(unit.claims, `${workUnitId} claims`).sort((left, right) =>
+			(left.id as string) < (right.id as string)
+				? -1
+				: (left.id as string) > (right.id as string)
+					? 1
+					: 0,
+		);
+		const claims = orderedClaims.map((claim) => {
+			const result = evaluateSemanticPredicate(
+				blueprint.blueprint,
+				object(claim.predicate, "claim predicate"),
+			);
+			return {
+				claimId: claim.id,
+				valid: result.ok,
+				witnessDigest: result.witnessDigest ?? hash({ claimId: claim.id, reason: result.reason }),
+			};
+		});
+		const checks = [...strings(unit.requiredChecks)].sort().map((checkId) => {
+			const result = checkById.get(checkId);
+			return {
+				checkId,
+				status: result === undefined ? "missing" : result.exitCode === 0 ? "passed" : "failed",
+				digest: hash(result ?? { checkId, status: "missing" }),
+			};
+		});
+		const checkDigests = checks.map((check) => ({
+			workUnitId,
+			checkId: check.checkId,
+			digest: check.digest,
+		}));
+		const claimWitnesses = orderedClaims.map((claim, index) => ({
+			claimId: claim.id,
+			predicateDigest: hash(claim.predicate),
+			status: claims[index]?.valid === true ? "satisfied" : "unsatisfied",
+		}));
+		const recordBody: JsonObject = {
+			schema: "graphrefly.stack.semantic-record.v2",
+			planId: options.planId,
+			workUnitId,
+			bindingDigest: hash(binding),
+			directDependencyRecordIds: strings(unit.dependencies)
+				.map((dependency) => recordById.get(dependency)?.recordId as string)
+				.sort(),
+			policyDigest,
+			blueprintHash: blueprint.blueprintHash,
+			sourceScopeDigest: hash(sourceScopes),
+			claimsDigest: hash(unit.claims),
+			checksDigest: hash(checkDigests),
+			claimWitnesses,
+			requiredChecks: [...strings(unit.requiredChecks)].sort(),
+			rebindFrom: null,
+		};
+		const record = {
+			...recordBody,
+			recordId: `record-${sha256Jcs(recordBody).slice(0, 24)}`,
+		};
+		records.push(record);
+		recordById.set(workUnitId, record);
+		evaluations.push({
+			schema: "graphrefly.stack.unit-evaluation.v2",
+			workUnitId,
+			bindingDigest: hash(binding),
+			recordDigest: hash(record),
+			sourceScope,
+			blueprintHash: blueprint.blueprintHash,
+			policyDigest,
+			claims,
+			checks,
+		});
+	}
+	const joinEvaluations = objects(topology.joins, "topology joins").map((join) => ({
+		schema: "graphrefly.stack.join-evaluation.v2",
+		oid: join.oid,
+		joinDigest: hash(join),
+		valid: true,
+		witnesses: [],
+	}));
+	const definition = await validators();
+	for (const [name, values] of [
+		["SemanticDependencyGraph", [dependencyGraph]],
+		["WorkUnitBinding", bindings],
+		["SemanticChangeRecord", records],
+		["UnitEvaluationEvidence", evaluations],
+		["JoinEvaluationEvidence", joinEvaluations],
+	] as const) {
+		const validate = definition(name);
+		for (const value of values) assertValid(validate, value, name);
+	}
+	const computed = computeDagGateV2({
+		topology,
+		dependencyGraph,
+		bindings,
+		records,
+		unitEvaluations: evaluations,
+		joinEvaluations,
+		policyDigest,
+		planDigest: hash(plan),
+	});
+	assertValid(definition("DagGateInput"), computed.gateInput, "DagGateInput");
+	assertValid(definition("DagGateResult"), computed.gateResult, "DagGateResult");
+	const observedHead = await git.resolveCommit(options.repository, options.head);
+	if (observedHead.value !== resolvedHead) {
+		throw new DagSemanticRunnerError(
+			"BINDING_INVALID",
+			"DAG head moved while semantic evidence was evaluated",
+		);
+	}
+	return {
+		topology,
+		dependencyGraph,
+		bindings,
+		records,
+		unitEvaluations: evaluations,
+		joinEvaluations,
+		...computed,
+	};
+}
