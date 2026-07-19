@@ -17,6 +17,11 @@ import {
 	runLivePlan,
 	runLiveReplan,
 } from "./codex-plan-provider.js";
+import {
+	createDagReviewEvidence,
+	type DagReviewEvidenceBundle,
+	DagReviewRunnerError,
+} from "./dag-review-runner.js";
 import { exportEvidenceBundle, type LiveRunRecord } from "./exporter.js";
 import { createFlagshipFixture, readRuntimeSuite } from "./fixture.js";
 import {
@@ -53,6 +58,7 @@ Usage:
   grfs integration --repo <path> --target <revision> --head <revision> --plan-id <id> --provider <provider> --owner <owner> --name <name> [--json]
   grfs integration ci [--repo <path>] --event <github-event.json> [--plan-id <id>] --output <artifact.json> [--json]
   grfs review --repo <path> --base <revision> --head <revision> [--host 127.0.0.1] [--port 4173] [--json]
+  grfs review --dag --repo <path> --base <revision> --head <revision> --plan-id <id> --provider <provider> --owner <owner> --name <name> [--host 127.0.0.1] [--port 4173] [--json]
   grfs fixture create [--output <path>] [--force] [--json]
   grfs plan --repo <path> --task <summary> --policy <policy.json> [--proposal <proposal.json>] [--context <manifest.json> --authorize-context] [--mode replay|live] [--accept --accept-by <label>] --json
   grfs plan --repo <path> --bind --plan-id <id> [--head <revision>] --json
@@ -751,10 +757,11 @@ export async function runCli(argv = process.argv.slice(2)): Promise<number> {
 	let repositoryReviewState:
 		| { repository: string; review: Awaited<ReturnType<typeof createRepositoryReview>> }
 		| undefined;
+	let dagReviewState: { repository: string; review: DagReviewEvidenceBundle } | undefined;
 	const repository = readOption(argv, "--repo");
 	const base = readOption(argv, "--base");
 	const head = readOption(argv, "--head");
-	const hasRepositoryReviewOption = ["--repo", "--base", "--head"].some((option) =>
+	const hasRepositoryReviewOption = ["--repo", "--base", "--head", "--dag"].some((option) =>
 		argv.includes(option),
 	);
 	const bundle = readOption(argv, "--bundle");
@@ -777,14 +784,46 @@ export async function runCli(argv = process.argv.slice(2)): Promise<number> {
 		}
 		try {
 			const planId = readOption(argv, "--plan-id");
-			const repositoryReview =
-				planId === undefined
-					? await createRepositoryReview({ repository, base, head })
-					: await createSemanticRepositoryReview({ repository, base, head, planId });
-			reviewData = repositoryReview;
-			repositoryReviewState = { repository: resolve(repository), review: repositoryReview };
+			if (argv.includes("--dag")) {
+				const provider = readOption(argv, "--provider");
+				const owner = readOption(argv, "--owner");
+				const name = readOption(argv, "--name");
+				if (
+					planId === undefined ||
+					provider === undefined ||
+					owner === undefined ||
+					name === undefined
+				) {
+					return failure(
+						command,
+						json,
+						"DAG_REVIEW_IDENTITY_INCOMPLETE",
+						"--dag requires --plan-id, --provider, --owner, and --name",
+					);
+				}
+				const run = await createDagReviewEvidence({
+					repository,
+					base,
+					head,
+					planId,
+					repositoryIdentity: { provider, owner, name },
+				});
+				const { artifact: _artifact, ...review } = run;
+				reviewData = review;
+				dagReviewState = { repository: resolve(repository), review };
+			} else {
+				const repositoryReview =
+					planId === undefined
+						? await createRepositoryReview({ repository, base, head })
+						: await createSemanticRepositoryReview({ repository, base, head, planId });
+				reviewData = repositoryReview;
+				repositoryReviewState = { repository: resolve(repository), review: repositoryReview };
+			}
 		} catch (error) {
 			if (error instanceof RepositoryReviewError) {
+				return failure(command, json, error.code, error.message);
+			}
+			if (error instanceof DagReviewRunnerError) {
 				return failure(command, json, error.code, error.message);
 			}
 			throw error;
@@ -839,6 +878,7 @@ export async function runCli(argv = process.argv.slice(2)): Promise<number> {
 		reviewData,
 		evidenceBundlePath,
 		repositoryReviewState,
+		dagReviewState,
 	});
 	process.stderr.write(
 		`GraphReFly Stack review shell (${CORE_ARCHITECTURE.version}) listening at ${running.url}\n`,

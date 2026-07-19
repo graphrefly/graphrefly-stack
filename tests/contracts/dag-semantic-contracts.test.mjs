@@ -11,6 +11,9 @@ import {
 	DAG_GATE_INPUT_SCHEMA,
 	DAG_GATE_RESULT_SCHEMA,
 	DAG_REASON_ORDER,
+	DAG_REVIEW_DECISION_REQUEST_SCHEMA,
+	DAG_REVIEW_DECISION_SCHEMA,
+	DAG_REVIEW_EVIDENCE_SCHEMA,
 	DAG_REVIEW_SCHEMA,
 	DAG_SEMANTIC_ARTIFACTS_SCHEMA,
 	DAG_SEMANTIC_GOLDEN_SUITE_SCHEMA,
@@ -28,18 +31,31 @@ const root = new URL("../../", import.meta.url);
 const readJson = async (path) => JSON.parse(await readFile(new URL(path, root), "utf8"));
 const clone = structuredClone;
 
-const [v1Semantic, topologySchema, semanticSchema, goldenSchema, topologySuite, suite, digests] =
-	await Promise.all([
-		readJson("contracts/semantic/v1/artifacts.schema.json"),
-		readJson("contracts/dag/v2/artifacts.schema.json"),
-		readJson("contracts/dag/v2/semantic.schema.json"),
-		readJson("contracts/dag/v2/semantic-golden-suite.schema.json"),
-		readJson("fixtures/contracts/dag/v2/golden-suite.json"),
-		readJson("fixtures/contracts/dag/v2/semantic-golden-suite.json"),
-		readJson("fixtures/contracts/dag/v2/semantic-golden-digests.json"),
-	]);
+const [
+	repositoryConfig,
+	repositoryReview,
+	v1Semantic,
+	topologySchema,
+	semanticSchema,
+	goldenSchema,
+	topologySuite,
+	suite,
+	digests,
+] = await Promise.all([
+	readJson("contracts/repository/v1/repository-config.schema.json"),
+	readJson("contracts/repository/v1/review.schema.json"),
+	readJson("contracts/semantic/v1/artifacts.schema.json"),
+	readJson("contracts/dag/v2/artifacts.schema.json"),
+	readJson("contracts/dag/v2/semantic.schema.json"),
+	readJson("contracts/dag/v2/semantic-golden-suite.schema.json"),
+	readJson("fixtures/contracts/dag/v2/golden-suite.json"),
+	readJson("fixtures/contracts/dag/v2/semantic-golden-suite.json"),
+	readJson("fixtures/contracts/dag/v2/semantic-golden-digests.json"),
+]);
 
 const ajv = createStrictAjv();
+ajv.addSchema(repositoryConfig);
+ajv.addSchema(repositoryReview);
 ajv.addSchema(v1Semantic);
 ajv.addSchema(topologySchema);
 ajv.addSchema(semanticSchema);
@@ -91,11 +107,53 @@ test("DAG semantic v2 exports the additive identities and fixed reason order", (
 	assert.equal(DAG_STRUCTURAL_ERROR_INPUT_SCHEMA, "graphrefly.stack.dag-structural-error-input.v2");
 	assert.equal(DAG_GATE_BUNDLE_SCHEMA, "graphrefly.stack.dag-gate-bundle.v2");
 	assert.equal(DAG_REVIEW_SCHEMA, "graphrefly.stack.dag-review.v2");
+	assert.equal(DAG_REVIEW_EVIDENCE_SCHEMA, "graphrefly.stack.dag-review-evidence.v2");
+	assert.equal(DAG_REVIEW_DECISION_SCHEMA, "graphrefly.stack.dag-review-decision.v2");
+	assert.equal(
+		DAG_REVIEW_DECISION_REQUEST_SCHEMA,
+		"graphrefly.stack.dag-review-decision-request.v2",
+	);
 	assert.deepEqual(DAG_REASON_ORDER.slice(-3), [
 		"REQUIRED_CHECK_FAILED",
 		"JOIN_INVALID",
 		"ARTIFACT_HASH_MISMATCH",
 	]);
+});
+
+test("DAG review request is strict and whole-result decision targets cannot be narrowed", () => {
+	const request = {
+		schema: DAG_REVIEW_DECISION_REQUEST_SCHEMA,
+		decision: "approve",
+		reviewerLabel: "Local reviewer",
+		summary: "The complete result is ready.",
+		selectedEvidence: suite.cases[0].review.selectedEvidence,
+	};
+	assert.equal(definition("DagReviewDecisionRequest")(request), true);
+	assert.equal(definition("DagReviewDecisionRequest")({ ...request, autoMerge: true }), false);
+	const decision = {
+		schema: DAG_REVIEW_DECISION_SCHEMA,
+		id: "12345678-1234-4234-9234-123456789abc",
+		target: {
+			gateResultDigest: { algorithm: "sha256", value: "1".repeat(64) },
+			topologyDigest: { algorithm: "sha256", value: "2".repeat(64) },
+			dependencyGraphDigest: { algorithm: "sha256", value: "3".repeat(64) },
+		},
+		decision: "approve",
+		reviewerLabel: "Local reviewer",
+		summary: "The complete result is ready.",
+		recordedAt: "2026-07-18T12:00:00.000Z",
+		identityVerified: false,
+		selectedEvidence: request.selectedEvidence,
+	};
+	assert.equal(definition("DagReviewDecision")(decision), true);
+	assert.equal(
+		definition("DagReviewDecision")({
+			...decision,
+			target: { ...decision.target, workUnitId: "U1" },
+		}),
+		false,
+	);
+	assert.ok(definition("DagReviewEvidenceBundle"));
 });
 
 test("DAG structural error input is strict and keeps infrastructure failure outside the domain", () => {

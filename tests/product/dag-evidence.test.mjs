@@ -7,16 +7,19 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 
 import { createDagGraphEvidence, DagEvidenceError } from "../../packages/cli/dist/dag-evidence.js";
+import { createDagReviewEvidence } from "../../packages/cli/dist/dag-review-runner.js";
 import {
 	createDagSemanticGate,
 	DagSemanticRunnerError,
 } from "../../packages/cli/dist/dag-semantic-runner.js";
 import { createRepositoryBlueprintSnapshot } from "../../packages/cli/dist/repository-review.js";
+import { defaultReviewDist, startReviewServer } from "../../packages/cli/dist/review-server.js";
 import {
 	runRepositoryPolicyChecksWithCacheReport,
 	SemanticRepositoryError,
 } from "../../packages/cli/dist/semantic-repository.js";
 import {
+	assertDagReviewEvidenceIntegrity,
 	assertDagStructuralErrorBundleIntegrity,
 	assertDagTopologyIntegrity,
 	DagStructuralErrorIntegrityError,
@@ -477,6 +480,28 @@ test("emits verified structural GateResult errors for dependency and binding fai
 				repositoryIdentity: { provider: "github", owner: "clfhhc", name: "test-graphrefly" },
 			});
 			assert.equal(sha256Jcs(repeated), sha256Jcs(result));
+			if (entry.name === "missing binding") {
+				const review = await createDagReviewEvidence({
+					repository: fixture.root,
+					base: fixture.base,
+					head: "left",
+					planId: "plan-dag",
+					repositoryIdentity: {
+						provider: "github",
+						owner: "clfhhc",
+						name: "test-graphrefly",
+					},
+				});
+				assert.equal(review.schema, "graphrefly.stack.dag-review-evidence.v2");
+				assert.deepEqual(review.projection.selectedEvidence, {
+					kind: "structural-unit",
+					workUnitId: "RIGHT",
+				});
+				assert.equal(
+					review.projection.gitLanes.find((lane) => lane.kind === "implementation")?.verdict,
+					"not-evaluated",
+				);
+			}
 			assert.deepEqual(fingerprint(fixture.root), before);
 		});
 	}
@@ -617,6 +642,88 @@ test("composes a real accepted plan and branched DAG into one selective semantic
 		repositoryIdentity: { provider: "github", owner: "clfhhc", name: "test-graphrefly" },
 	});
 	assert.equal(sha256Jcs(repeated), sha256Jcs(result));
+	const reviewRun = await createDagReviewEvidence({
+		repository: fixture.root,
+		base: fixture.base,
+		head: "left",
+		planId: "plan-dag",
+		repositoryIdentity: { provider: "github", owner: "clfhhc", name: "test-graphrefly" },
+	});
+	const { artifact: reviewArtifact, ...review } = reviewRun;
+	assertDagReviewEvidenceIntegrity(review);
+	assert.equal(review.projection.summary.verdict, "blocked");
+	assert.equal(review.projection.selectedEvidence.kind, "work-unit");
+	assert.equal(review.projection.selectedEvidence.workUnitId, "LEFT");
+	assert.equal(
+		review.comparisons.length,
+		review.domainBundle.topology.objects.reduce(
+			(count, object) => count + object.parents.length,
+			0,
+		),
+	);
+	assert.ok(
+		review.comparisons.some(
+			(comparison) =>
+				comparison.to.value === review.domainBundle.topology.joins[0].oid.value &&
+				comparison.parentIndex === 1,
+		),
+	);
+	const reviewBytes = await readFile(reviewArtifact.path, "utf8");
+	const repeatedReview = await createDagReviewEvidence({
+		repository: fixture.root,
+		base: fixture.base,
+		head: "left",
+		planId: "plan-dag",
+		repositoryIdentity: { provider: "github", owner: "clfhhc", name: "test-graphrefly" },
+	});
+	assert.equal(repeatedReview.artifact.digest.value, reviewArtifact.digest.value);
+	assert.equal(await readFile(reviewArtifact.path, "utf8"), reviewBytes);
+	const forgedDiff = structuredClone(review);
+	forgedDiff.comparisons[0].structuredDiff.paths.push("forged.ts");
+	assert.throws(() => assertDagReviewEvidenceIntegrity(forgedDiff));
+	const forgedSelection = structuredClone(review);
+	forgedSelection.projection.selectedEvidence = {
+		...forgedSelection.projection.selectedEvidence,
+		workUnitId: "RIGHT",
+	};
+	assert.throws(() => assertDagReviewEvidenceIntegrity(forgedSelection));
+
+	const running = await startReviewServer({
+		host: "127.0.0.1",
+		port: 0,
+		distDir: defaultReviewDist,
+		reviewData: review,
+		dagReviewState: { repository: fixture.root, review },
+	});
+	const decisionResponse = await fetch(`${running.url}/api/review-decisions`, {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+			Origin: running.url,
+			"X-GraphReFly-Review": "1",
+		},
+		body: JSON.stringify({
+			schema: "graphrefly.stack.dag-review-decision-request.v2",
+			decision: "request-changes",
+			reviewerLabel: "DAG reviewer",
+			summary: "LEFT needs correction.",
+			selectedEvidence: review.projection.selectedEvidence,
+		}),
+	});
+	assert.equal(decisionResponse.status, 201, await decisionResponse.text());
+	const decisions = await (await fetch(`${running.url}/api/review-decisions`)).json();
+	assert.equal(decisions.length, 1);
+	assert.deepEqual(decisions[0].target, {
+		gateResultDigest: review.projection.gateResultDigest,
+		topologyDigest: review.projection.topologyDigest,
+		dependencyGraphDigest: review.projection.dependencyGraphDigest,
+	});
+	assert.equal(
+		(await fetch(`${running.url}/api/review-decisions/export`)).status,
+		404,
+		"DAG decisions are repository-local unless a portable policy is explicitly added",
+	);
+	await new Promise((resolve) => running.server.close(resolve));
 	assert.deepEqual(fingerprint(fixture.root), before);
 
 	const originalArtifactBytes = await readFile(result.artifact.path, "utf8");

@@ -2,6 +2,7 @@ import mermaid from "mermaid";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import fixtureSuite from "../../../fixtures/contracts/v1/golden-suite.json";
+import { DagRepositoryReview, type DagReviewData } from "./DagRepositoryReview";
 import { GenericRepositoryReview, type GenericReviewData } from "./GenericRepositoryReview";
 
 interface GraphNode {
@@ -647,7 +648,7 @@ function LegacyReview({ reviewData }: { reviewData: ReviewData }) {
 	);
 }
 
-type RuntimeReview = ReviewData | GenericReviewData;
+type RuntimeReview = ReviewData | GenericReviewData | DagReviewData;
 
 export function App() {
 	const [reviewData, setReviewData] = useState<RuntimeReview | null>(null);
@@ -677,6 +678,9 @@ export function App() {
 	}
 	if ("schema" in reviewData && reviewData.schema === "graphrefly.stack.review.v1") {
 		return <GenericRepositoryReview review={reviewData} />;
+	}
+	if ("schema" in reviewData && reviewData.schema === "graphrefly.stack.dag-review-evidence.v2") {
+		return <DagRepositoryReview review={reviewData} />;
 	}
 	return <LegacyReview reviewData={reviewData as ReviewData} />;
 }

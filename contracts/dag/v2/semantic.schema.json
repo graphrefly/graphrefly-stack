@@ -843,6 +843,98 @@
 				"gateResult": { "$ref": "#/definitions/DagGateResult" }
 			}
 		},
+		"DagReviewObjectEvidence": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["oid", "subject", "blueprint", "blueprintDigest"],
+			"properties": {
+				"oid": { "$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/GitOid" },
+				"subject": { "type": "string", "maxLength": 1024 },
+				"blueprint": {
+					"$ref": "urn:graphrefly-stack:schema:repository-review:v1#/definitions/Blueprint"
+				},
+				"blueprintDigest": {
+					"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash"
+				}
+			}
+		},
+		"DagReviewParentComparison": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"from",
+				"to",
+				"parentIndex",
+				"blueprintDelta",
+				"deltaDigest",
+				"structuredDiff",
+				"diffDigest"
+			],
+			"properties": {
+				"from": { "$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/GitOid" },
+				"to": { "$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/GitOid" },
+				"parentIndex": { "type": "integer", "minimum": 0, "maximum": 1 },
+				"blueprintDelta": {
+					"$ref": "urn:graphrefly-stack:schema:repository-review:v1#/definitions/Delta"
+				},
+				"deltaDigest": {
+					"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash"
+				},
+				"structuredDiff": {
+					"$ref": "urn:graphrefly-stack:schema:repository-review:v1#/definitions/StructuredDiff"
+				},
+				"diffDigest": {
+					"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash"
+				}
+			}
+		},
+		"DagSelectedEvidence": {
+			"oneOf": [
+				{
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["kind", "workUnitId"],
+					"properties": {
+						"kind": { "const": "structural-unit" },
+						"workUnitId": {
+							"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/WorkUnitId"
+						}
+					}
+				},
+				{
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["kind", "workUnitId", "commit", "parent"],
+					"properties": {
+						"kind": { "const": "work-unit" },
+						"workUnitId": {
+							"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/WorkUnitId"
+						},
+						"commit": {
+							"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/GitOid"
+						},
+						"parent": {
+							"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/GitOid"
+						}
+					}
+				},
+				{
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["kind", "join", "parent", "parentIndex"],
+					"properties": {
+						"kind": { "const": "join" },
+						"join": {
+							"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/GitOid"
+						},
+						"parent": {
+							"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/GitOid"
+						},
+						"parentIndex": { "type": "integer", "minimum": 0, "maximum": 1 }
+					}
+				}
+			]
+		},
 		"DagReviewProjection": {
 			"type": "object",
 			"additionalProperties": false,
@@ -893,7 +985,9 @@
 							"oid": { "$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/GitOid" },
 							"layer": { "type": "integer", "minimum": 1, "maximum": 64 },
 							"kind": { "enum": ["implementation", "transport", "join"] },
-							"verdict": { "enum": ["valid", "invalid", "not-applicable"] }
+							"verdict": {
+								"enum": ["valid", "invalid", "not-evaluated", "not-applicable"]
+							}
 						}
 					},
 					"maxItems": 64
@@ -931,42 +1025,118 @@
 					},
 					"maxItems": 256
 				},
-				"selectedEvidence": {
+				"selectedEvidence": { "$ref": "#/definitions/DagSelectedEvidence" }
+			}
+		},
+		"DagReviewEvidenceBundle": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"schema",
+				"domainBundleDigest",
+				"planDigest",
+				"policyDigest",
+				"domainBundle",
+				"plan",
+				"policy",
+				"objects",
+				"comparisons",
+				"projection"
+			],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.dag-review-evidence.v2" },
+				"domainBundleDigest": {
+					"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash"
+				},
+				"planDigest": {
+					"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash"
+				},
+				"policyDigest": {
+					"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash"
+				},
+				"domainBundle": {
 					"oneOf": [
-						{
-							"type": "object",
-							"additionalProperties": false,
-							"required": ["kind", "workUnitId", "commit", "parent"],
-							"properties": {
-								"kind": { "const": "work-unit" },
-								"workUnitId": {
-									"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/WorkUnitId"
-								},
-								"commit": {
-									"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/GitOid"
-								},
-								"parent": {
-									"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/GitOid"
-								}
-							}
-						},
-						{
-							"type": "object",
-							"additionalProperties": false,
-							"required": ["kind", "join", "parent", "parentIndex"],
-							"properties": {
-								"kind": { "const": "join" },
-								"join": {
-									"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/GitOid"
-								},
-								"parent": {
-									"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/GitOid"
-								},
-								"parentIndex": { "type": "integer", "minimum": 0, "maximum": 1 }
-							}
-						}
+						{ "$ref": "#/definitions/DagGateBundle" },
+						{ "$ref": "#/definitions/DagStructuralErrorBundle" }
 					]
-				}
+				},
+				"plan": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/AcceptedChangePlan"
+				},
+				"policy": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/RepositoryPolicy"
+				},
+				"objects": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/DagReviewObjectEvidence" },
+					"minItems": 2,
+					"maxItems": 65
+				},
+				"comparisons": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/DagReviewParentComparison" },
+					"minItems": 1,
+					"maxItems": 128
+				},
+				"projection": { "$ref": "#/definitions/DagReviewProjection" }
+			}
+		},
+		"DagReviewDecisionRequest": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["schema", "decision", "reviewerLabel", "summary"],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.dag-review-decision-request.v2" },
+				"decision": { "enum": ["approve", "request-changes"] },
+				"reviewerLabel": { "type": "string", "minLength": 1, "maxLength": 120 },
+				"summary": { "type": "string", "maxLength": 10000 },
+				"selectedEvidence": { "$ref": "#/definitions/DagSelectedEvidence" }
+			}
+		},
+		"DagReviewDecision": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"schema",
+				"id",
+				"target",
+				"decision",
+				"reviewerLabel",
+				"summary",
+				"recordedAt",
+				"identityVerified"
+			],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.dag-review-decision.v2" },
+				"id": {
+					"type": "string",
+					"pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+				},
+				"target": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["gateResultDigest", "topologyDigest", "dependencyGraphDigest"],
+					"properties": {
+						"gateResultDigest": {
+							"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash"
+						},
+						"topologyDigest": {
+							"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash"
+						},
+						"dependencyGraphDigest": {
+							"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash"
+						}
+					}
+				},
+				"decision": { "enum": ["approve", "request-changes"] },
+				"reviewerLabel": { "type": "string", "minLength": 1, "maxLength": 120 },
+				"summary": { "type": "string", "maxLength": 10000 },
+				"recordedAt": {
+					"type": "string",
+					"pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{3}Z$"
+				},
+				"identityVerified": { "const": false },
+				"selectedEvidence": { "$ref": "#/definitions/DagSelectedEvidence" }
 			}
 		}
 	}

@@ -659,6 +659,39 @@ export function assertDagReviewIntegrity(value: {
 		throw new DagSemanticIntegrityError("DAG review lanes or edges do not match domain evidence");
 	}
 	const selection = object(review.selectedEvidence, "selected evidence");
+	const firstCut = Array.isArray(result.minimalAffectedCut)
+		? (result.minimalAffectedCut[0] as string | undefined)
+		: undefined;
+	const cutObject =
+		firstCut === undefined
+			? undefined
+			: objects.find((entry) => entry.kind === "implementation" && entry.workUnitId === firstCut);
+	const lastJoin = [...objects].reverse().find((entry) => entry.kind === "join");
+	const lastUnit = [...objects].reverse().find((entry) => entry.kind === "implementation");
+	const defaultObject = cutObject ?? (firstCut === undefined ? (lastJoin ?? lastUnit) : undefined);
+	if (defaultObject === undefined && firstCut === undefined) {
+		throw new DagSemanticIntegrityError("DAG review has no selectable evidence");
+	}
+	const expectedSelection =
+		defaultObject === undefined
+			? { kind: "structural-unit", workUnitId: firstCut }
+			: defaultObject.kind === "join"
+				? {
+						kind: "join",
+						join: defaultObject.oid,
+						parent: (defaultObject.parents as unknown[])[0],
+						parentIndex: 0,
+					}
+				: {
+						kind: "work-unit",
+						workUnitId: defaultObject.workUnitId,
+						commit: defaultObject.oid,
+						parent: (defaultObject.parents as unknown[])[0],
+					};
+	if (!equal(selection, expectedSelection)) {
+		throw new DagSemanticIntegrityError("DAG review default selection is not canonical");
+	}
+	if (selection.kind === "structural-unit") return;
 	if (selection.kind === "work-unit") {
 		const selected = objects.find(
 			(entry) => entry.kind === "implementation" && entry.workUnitId === selection.workUnitId,

@@ -5,6 +5,12 @@ import type { AddressInfo } from "node:net";
 import { extname, resolve, sep } from "node:path";
 import type { RepositoryReview } from "@graphrefly-stack/contracts";
 
+import type { DagReviewEvidenceBundle } from "./dag-review-runner.js";
+import {
+	DagReviewStateError,
+	readDagReviewDecisions,
+	writeDagReviewDecision,
+} from "./dag-review-state.js";
 import {
 	createRepositoryReviewBundle,
 	RepositoryReviewStateError,
@@ -32,6 +38,10 @@ export interface ReviewServerOptions {
 	repositoryReviewState?: {
 		repository: string;
 		review: RepositoryReview;
+	};
+	dagReviewState?: {
+		repository: string;
+		review: DagReviewEvidenceBundle;
 	};
 }
 
@@ -108,8 +118,9 @@ export async function startReviewServer(
 		const pathname = new URL(request.url ?? "/", "http://localhost").pathname;
 
 		if (pathname === "/api/review-decisions" && request.method === "POST") {
-			const state = options.repositoryReviewState;
-			if (state === undefined) {
+			const repositoryState = options.repositoryReviewState;
+			const dagState = options.dagReviewState;
+			if (repositoryState === undefined && dagState === undefined) {
 				response.writeHead(404).end("Local review state unavailable");
 				return;
 			}
@@ -128,10 +139,17 @@ export async function startReviewServer(
 			}
 			try {
 				const input = await readJsonBody(request);
-				const record = await writeRepositoryReviewDecision(state.repository, state.review, input);
+				const record =
+					dagState === undefined
+						? await writeRepositoryReviewDecision(
+								repositoryState?.repository as string,
+								repositoryState?.review as RepositoryReview,
+								input,
+							)
+						: await writeDagReviewDecision(dagState.repository, dagState.review, input);
 				sendJson(response, 201, record);
 			} catch (error) {
-				if (error instanceof RepositoryReviewStateError) {
+				if (error instanceof RepositoryReviewStateError || error instanceof DagReviewStateError) {
 					sendJson(response, error.code === "REVIEW_TARGET_STALE" ? 409 : 400, {
 						code: error.code,
 						message: error.message,
@@ -162,13 +180,20 @@ export async function startReviewServer(
 			return;
 		}
 		if (pathname === "/api/review-decisions") {
-			const state = options.repositoryReviewState;
-			if (state === undefined) {
+			const repositoryState = options.repositoryReviewState;
+			const dagState = options.dagReviewState;
+			if (repositoryState === undefined && dagState === undefined) {
 				response.writeHead(404).end("Local review state unavailable");
 				return;
 			}
 			try {
-				const records = await readRepositoryReviewDecisions(state.repository, state.review);
+				const records =
+					dagState === undefined
+						? await readRepositoryReviewDecisions(
+								repositoryState?.repository as string,
+								repositoryState?.review as RepositoryReview,
+							)
+						: await readDagReviewDecisions(dagState.repository, dagState.review);
 				response.setHeader("Content-Type", "application/json; charset=utf-8");
 				response.writeHead(200);
 				if (request.method === "HEAD") response.end();
@@ -180,7 +205,7 @@ export async function startReviewServer(
 		}
 		if (pathname === "/api/review-decisions/export") {
 			const state = options.repositoryReviewState;
-			if (state === undefined) {
+			if (state === undefined || options.dagReviewState !== undefined) {
 				response.writeHead(404).end("Portable review bundle unavailable");
 				return;
 			}

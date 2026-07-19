@@ -23,6 +23,14 @@ export function gitText(repository: string, args: readonly string[]): string {
 	return git(repository, args).toString("utf8").trim();
 }
 
+export function gitDiffBetween(
+	repository: string,
+	fromRevision: string,
+	toRevision: string,
+): Uint8Array {
+	return git(repository, ["diff", "--no-ext-diff", "--binary", fromRevision, toRevision]);
+}
+
 export class SystemGitAdapter implements GitAdapter {
 	async resolveCommit(repository: string, revision: string): Promise<GitOid> {
 		const value = gitText(repository, ["rev-parse", "--verify", `${revision}^{commit}`]);

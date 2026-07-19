@@ -21,6 +21,10 @@ export const DAG_GATE_BUNDLE_SCHEMA = "graphrefly.stack.dag-gate-bundle.v2" as c
 export const DAG_STRUCTURAL_ERROR_BUNDLE_SCHEMA =
 	"graphrefly.stack.dag-structural-error-bundle.v2" as const;
 export const DAG_REVIEW_SCHEMA = "graphrefly.stack.dag-review.v2" as const;
+export const DAG_REVIEW_EVIDENCE_SCHEMA = "graphrefly.stack.dag-review-evidence.v2" as const;
+export const DAG_REVIEW_DECISION_SCHEMA = "graphrefly.stack.dag-review-decision.v2" as const;
+export const DAG_REVIEW_DECISION_REQUEST_SCHEMA =
+	"graphrefly.stack.dag-review-decision-request.v2" as const;
 
 export const DAG_REASON_ORDER = [
 	"SCHEMA_INVALID",
