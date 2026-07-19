@@ -1,0 +1,252 @@
+{
+	"schema": "graphrefly.stack.dag-semantic-golden-suite.v2",
+	"cases": [
+		{
+			"caseId": "linear-valid",
+			"topologyCaseId": "linear-subset",
+			"dependencyGraph": {
+				"schema": "graphrefly.stack.semantic-dependency-graph.v2",
+				"planId": "plan-dag",
+				"topologyDigest": {
+					"algorithm": "sha256",
+					"value": "acfdadedc97156bc3e02ead49f9ff7e906baac22ef13c9af88278769897e3049"
+				},
+				"workUnits": [{ "workUnitId": "U1", "dependencies": [] }]
+			},
+			"bindings": [
+				{
+					"schema": "graphrefly.stack.work-unit-binding.v2",
+					"planId": "plan-dag",
+					"workUnitId": "U1",
+					"commit": { "algorithm": "sha1", "value": "2222222222222222222222222222222222222222" },
+					"parentCommit": {
+						"algorithm": "sha1",
+						"value": "1111111111111111111111111111111111111111"
+					},
+					"trailer": { "name": "GraphReFly-Work-Unit", "value": "U1", "occurrences": 1 },
+					"stablePatchId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+					"diffDigest": {
+						"algorithm": "sha256",
+						"value": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+					},
+					"changedPaths": ["src/u1.ts"],
+					"blueprintHash": {
+						"algorithm": "sha256",
+						"value": "2222222222222222222222222222222222222222222222222222222222222222"
+					},
+					"rebindFrom": null
+				}
+			],
+			"records": [
+				{
+					"schema": "graphrefly.stack.semantic-record.v2",
+					"recordId": "record-u1",
+					"planId": "plan-dag",
+					"workUnitId": "U1",
+					"bindingDigest": {
+						"algorithm": "sha256",
+						"value": "07d1440dae0d5305caf52c6cc5a5e62bef0ce2ff2d8cf2b22338d59e65864a98"
+					},
+					"directDependencyRecordIds": [],
+					"policyDigest": {
+						"algorithm": "sha256",
+						"value": "9999999999999999999999999999999999999999999999999999999999999999"
+					},
+					"blueprintHash": {
+						"algorithm": "sha256",
+						"value": "2222222222222222222222222222222222222222222222222222222222222222"
+					},
+					"sourceScopeDigest": {
+						"algorithm": "sha256",
+						"value": "6666666666666666666666666666666666666666666666666666666666666666"
+					},
+					"claimsDigest": {
+						"algorithm": "sha256",
+						"value": "7777777777777777777777777777777777777777777777777777777777777777"
+					},
+					"checksDigest": {
+						"algorithm": "sha256",
+						"value": "118889915cdb1d4d6d1b76c94c18811de5ace9c9e048bb67e386e212e0216c96"
+					},
+					"claimWitnesses": [
+						{
+							"claimId": "claim-u1",
+							"predicateDigest": {
+								"algorithm": "sha256",
+								"value": "8888888888888888888888888888888888888888888888888888888888888888"
+							},
+							"status": "satisfied"
+						}
+					],
+					"requiredChecks": ["contract"],
+					"rebindFrom": null
+				}
+			],
+			"unitEvaluations": [
+				{
+					"schema": "graphrefly.stack.unit-evaluation.v2",
+					"workUnitId": "U1",
+					"bindingDigest": {
+						"algorithm": "sha256",
+						"value": "07d1440dae0d5305caf52c6cc5a5e62bef0ce2ff2d8cf2b22338d59e65864a98"
+					},
+					"recordDigest": {
+						"algorithm": "sha256",
+						"value": "4263682f1f637e7f54231071f9416d0c4cc386c91b7246c95c51e9d24f951f96"
+					},
+					"sourceScope": {
+						"valid": true,
+						"witnessDigest": {
+							"algorithm": "sha256",
+							"value": "6666666666666666666666666666666666666666666666666666666666666666"
+						}
+					},
+					"blueprintHash": {
+						"algorithm": "sha256",
+						"value": "2222222222222222222222222222222222222222222222222222222222222222"
+					},
+					"policyDigest": {
+						"algorithm": "sha256",
+						"value": "9999999999999999999999999999999999999999999999999999999999999999"
+					},
+					"claims": [
+						{
+							"claimId": "claim-u1",
+							"valid": true,
+							"witnessDigest": {
+								"algorithm": "sha256",
+								"value": "8888888888888888888888888888888888888888888888888888888888888888"
+							}
+						}
+					],
+					"checks": [
+						{
+							"checkId": "contract",
+							"status": "passed",
+							"digest": {
+								"algorithm": "sha256",
+								"value": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+							}
+						}
+					]
+				}
+			],
+			"joinEvaluations": [],
+			"gateInput": {
+				"schema": "graphrefly.stack.dag-gate-input.v2",
+				"topologyDigest": {
+					"algorithm": "sha256",
+					"value": "acfdadedc97156bc3e02ead49f9ff7e906baac22ef13c9af88278769897e3049"
+				},
+				"dependencyGraphDigest": {
+					"algorithm": "sha256",
+					"value": "867594ef2043956d6e2367b517313e7fd21f9e749451a69dcf201e2b70447d7e"
+				},
+				"policyDigest": {
+					"algorithm": "sha256",
+					"value": "9999999999999999999999999999999999999999999999999999999999999999"
+				},
+				"planDigest": {
+					"algorithm": "sha256",
+					"value": "5555555555555555555555555555555555555555555555555555555555555555"
+				},
+				"bindingDigests": [
+					{
+						"workUnitId": "U1",
+						"digest": {
+							"algorithm": "sha256",
+							"value": "07d1440dae0d5305caf52c6cc5a5e62bef0ce2ff2d8cf2b22338d59e65864a98"
+						}
+					}
+				],
+				"recordDigests": [
+					{
+						"workUnitId": "U1",
+						"digest": {
+							"algorithm": "sha256",
+							"value": "4263682f1f637e7f54231071f9416d0c4cc386c91b7246c95c51e9d24f951f96"
+						}
+					}
+				],
+				"joinDigests": [],
+				"checkDigests": [
+					{
+						"workUnitId": "U1",
+						"checkId": "contract",
+						"digest": {
+							"algorithm": "sha256",
+							"value": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+						}
+					}
+				],
+				"unitEvaluationDigests": [
+					{
+						"workUnitId": "U1",
+						"digest": {
+							"algorithm": "sha256",
+							"value": "24f3e0aaed1aecf4eedeb5074c95ad55dfdebedc3e51081886c417e1cdcb733c"
+						}
+					}
+				],
+				"joinEvaluationDigests": []
+			},
+			"gateResult": {
+				"schema": "graphrefly.stack.dag-gate-result.v2",
+				"inputDigest": {
+					"algorithm": "sha256",
+					"value": "e61e129f8641adde1d26b5be5a4c1f531e2046b72ceaef9daf72c959cf758692"
+				},
+				"verdict": "pass",
+				"minimalAffectedCut": [],
+				"units": [
+					{
+						"workUnitId": "U1",
+						"verdict": "valid",
+						"reasonCodes": [],
+						"witnesses": [],
+						"recordId": "record-u1"
+					}
+				],
+				"joins": []
+			},
+			"review": {
+				"schema": "graphrefly.stack.dag-review.v2",
+				"gateResultDigest": {
+					"algorithm": "sha256",
+					"value": "d520c64d73fae4c6346b0810b04b1e9c53619fb4341479e0a36c3e61e3c2c1c2"
+				},
+				"topologyDigest": {
+					"algorithm": "sha256",
+					"value": "acfdadedc97156bc3e02ead49f9ff7e906baac22ef13c9af88278769897e3049"
+				},
+				"dependencyGraphDigest": {
+					"algorithm": "sha256",
+					"value": "867594ef2043956d6e2367b517313e7fd21f9e749451a69dcf201e2b70447d7e"
+				},
+				"summary": { "verdict": "pass", "minimalAffectedCut": [] },
+				"gitLanes": [
+					{
+						"oid": { "algorithm": "sha1", "value": "2222222222222222222222222222222222222222" },
+						"layer": 1,
+						"kind": "implementation",
+						"verdict": "valid"
+					}
+				],
+				"gitEdges": [
+					{
+						"from": { "algorithm": "sha1", "value": "1111111111111111111111111111111111111111" },
+						"to": { "algorithm": "sha1", "value": "2222222222222222222222222222222222222222" },
+						"parentIndex": 0
+					}
+				],
+				"semanticEdges": [],
+				"selectedEvidence": {
+					"kind": "work-unit",
+					"workUnitId": "U1",
+					"commit": { "algorithm": "sha1", "value": "2222222222222222222222222222222222222222" },
+					"parent": { "algorithm": "sha1", "value": "1111111111111111111111111111111111111111" }
+				}
+			}
+		}
+	]
+}

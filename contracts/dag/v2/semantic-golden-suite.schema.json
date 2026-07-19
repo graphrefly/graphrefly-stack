@@ -1,0 +1,78 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "urn:graphrefly-stack:schema:dag-semantic-golden-suite:v2",
+	"title": "GraphReFly Stack DAG semantic golden suite v2",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["schema", "cases"],
+	"properties": {
+		"schema": { "const": "graphrefly.stack.dag-semantic-golden-suite.v2" },
+		"cases": {
+			"type": "array",
+			"minItems": 1,
+			"items": {
+				"type": "object",
+				"additionalProperties": false,
+				"required": [
+					"caseId",
+					"topologyCaseId",
+					"dependencyGraph",
+					"bindings",
+					"records",
+					"unitEvaluations",
+					"joinEvaluations",
+					"gateInput",
+					"gateResult",
+					"review"
+				],
+				"properties": {
+					"caseId": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,63}$" },
+					"topologyCaseId": { "enum": ["linear-subset", "binary-clean-join"] },
+					"dependencyGraph": {
+						"$ref": "urn:graphrefly-stack:schema:dag-semantic-artifacts:v2#/definitions/SemanticDependencyGraph"
+					},
+					"bindings": {
+						"type": "array",
+						"items": {
+							"$ref": "urn:graphrefly-stack:schema:dag-semantic-artifacts:v2#/definitions/WorkUnitBinding"
+						},
+						"minItems": 1,
+						"maxItems": 64
+					},
+					"records": {
+						"type": "array",
+						"items": {
+							"$ref": "urn:graphrefly-stack:schema:dag-semantic-artifacts:v2#/definitions/SemanticChangeRecord"
+						},
+						"minItems": 1,
+						"maxItems": 64
+					},
+					"unitEvaluations": {
+						"type": "array",
+						"items": {
+							"$ref": "urn:graphrefly-stack:schema:dag-semantic-artifacts:v2#/definitions/UnitEvaluationEvidence"
+						},
+						"minItems": 1,
+						"maxItems": 64
+					},
+					"joinEvaluations": {
+						"type": "array",
+						"items": {
+							"$ref": "urn:graphrefly-stack:schema:dag-semantic-artifacts:v2#/definitions/JoinEvaluationEvidence"
+						},
+						"maxItems": 63
+					},
+					"gateInput": {
+						"$ref": "urn:graphrefly-stack:schema:dag-semantic-artifacts:v2#/definitions/DagGateInput"
+					},
+					"gateResult": {
+						"$ref": "urn:graphrefly-stack:schema:dag-semantic-artifacts:v2#/definitions/DagGateResult"
+					},
+					"review": {
+						"$ref": "urn:graphrefly-stack:schema:dag-semantic-artifacts:v2#/definitions/DagReviewProjection"
+					}
+				}
+			}
+		}
+	}
+}

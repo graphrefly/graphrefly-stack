@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { canonicalTopologyBytes, GRAPH_BLUEPRINT_VERSION } from "@graphrefly/ts/graph";
 import type { ExecutionMode } from "@graphrefly-stack/contracts";
 
+export * from "./dag-gate.js";
 export * from "./gate.js";
 export * from "./integration-effects.js";
 
