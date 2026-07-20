@@ -61,6 +61,245 @@ function commitWorkUnit(repository, subject, workUnitId) {
 	return run(repository, "git", ["rev-parse", "HEAD"]);
 }
 
+function commitQualifiedWorkUnit(repository, subject, planId, workUnitId) {
+	run(repository, "git", ["add", "-A"]);
+	run(repository, "git", [
+		"commit",
+		"-m",
+		subject,
+		"-m",
+		`GraphReFly-Plan: ${planId}\nGraphReFly-Work-Unit: ${workUnitId}`,
+	]);
+	return run(repository, "git", ["rev-parse", "HEAD"]);
+}
+
+async function proveInstalledMergeGroup(temporary, tarball) {
+	const repository = resolve(temporary, "merge-group-consumer-repository");
+	const inputs = resolve(temporary, "merge-group-inputs");
+	await Promise.all([mkdir(repository), mkdir(inputs)]);
+	await Promise.all([
+		put(repository, ".gitignore", "node_modules\n"),
+		put(
+			repository,
+			"package.json",
+			`${JSON.stringify(
+				{
+					name: "installed-merge-group-proof",
+					private: true,
+					type: "module",
+					dependencies: { "@graphrefly/ts": "0.3.x" },
+					devDependencies: { "@graphrefly/stack": `file:${tarball}` },
+				},
+				null,
+				2,
+			)}\n`,
+		),
+		put(
+			repository,
+			"graph.mjs",
+			`import { graph } from "@graphrefly/ts/graph";
+import { applyLeft } from "./left.mjs";
+import { applyRight } from "./right.mjs";
+export function createGraph() {
+  const value = graph({ name: "installed-merge-group-proof" });
+  value.state(1, { name: "base" });
+  applyLeft(value);
+  applyRight(value);
+  return value;
+}
+`,
+		),
+		put(repository, "left.mjs", "export function applyLeft() {}\n"),
+		put(repository, "right.mjs", "export function applyRight() {}\n"),
+	]);
+	run(repository, "pnpm", ["install", "--ignore-scripts"]);
+	run(repository, "git", ["init", "-b", "main"]);
+	const initialized = JSON.parse(
+		run(repository, "pnpm", [
+			"exec",
+			"grfs",
+			"init",
+			"--graph-module",
+			"graph.mjs",
+			"--graph-export",
+			"createGraph",
+			"--json",
+		]),
+	);
+	assert.equal(initialized.ok, true);
+	commit(repository, "initialize installed merge-group repository");
+	const policy = {
+		schema: "graphrefly.stack.semantic-policy.v1",
+		policyId: "installed-merge-policy",
+		revision: "rev-1",
+		allowedSourceRoots: ["left.mjs", "right.mjs"],
+		allowedCapabilities: ["graph-change"],
+		checks: [
+			{
+				id: "contract",
+				argv: ["node", "-e", "process.exit(0)"],
+				timeoutMs: 10000,
+				network: false,
+				shell: false,
+			},
+		],
+	};
+	const policyPath = resolve(inputs, "policy.json");
+	await Promise.all([
+		put(inputs, "policy.json", `${JSON.stringify(policy, null, 2)}\n`),
+		put(repository, ".graphrefly-stack/policy.json", `${JSON.stringify(policy, null, 2)}\n`),
+	]);
+	const base = commit(repository, "install repository policy before Plans");
+	const proposal = (planId, path) => ({
+		schema: "graphrefly.stack.semantic-plan-proposal.v1",
+		planId,
+		proposalSource: "human",
+		workUnits: [
+			{
+				id: "API",
+				title: `${planId} API`,
+				intent: `Implement ${planId}`,
+				dependencies: [],
+				allowedSourceScopes: [path],
+				capabilities: ["graph-change"],
+				claims: [
+					{
+						id: `${planId}-safe`,
+						predicate: {
+							operator: "absent",
+							selector: { kind: "node", nodeId: `forbidden-${planId}` },
+						},
+						rationale: "The forbidden node remains absent.",
+					},
+				],
+				requiredChecks: ["contract"],
+			},
+		],
+	});
+	for (const [planId, path, branch, source] of [
+		[
+			"plan-a",
+			"left.mjs",
+			"plan-a",
+			'export function applyLeft(value) { value.state(2, { name: "left" }); }\n',
+		],
+		[
+			"plan-b",
+			"right.mjs",
+			"plan-b",
+			'export function applyRight(value) { value.state(3, { name: "right" }); }\n',
+		],
+	]) {
+		run(repository, "git", ["switch", "-q", "-c", branch, base]);
+		const proposalPath = resolve(inputs, `${planId}.json`);
+		await put(inputs, `${planId}.json`, `${JSON.stringify(proposal(planId, path), null, 2)}\n`);
+		const accepted = JSON.parse(
+			run(repository, "pnpm", [
+				"exec",
+				"grfs",
+				"plan",
+				"--repo",
+				".",
+				"--task",
+				`Accept ${planId}`,
+				"--policy",
+				policyPath,
+				"--proposal",
+				proposalPath,
+				"--accept",
+				"--accept-by",
+				"package-test",
+				"--json",
+			]),
+		);
+		assert.equal(accepted.ok, true);
+		commit(repository, `accept ${planId}`);
+		await put(repository, path, source);
+		commitQualifiedWorkUnit(repository, `implement ${planId}`, planId, "API");
+	}
+	run(repository, "git", ["switch", "-q", "plan-a"]);
+	run(repository, "git", ["merge", "--no-ff", "-m", "synthetic installed merge group", "plan-b"]);
+	const head = run(repository, "git", ["rev-parse", "HEAD"]);
+	const eventPath = resolve(inputs, "event.json");
+	const headRef = "refs/heads/gh-readonly-queue/main/installed";
+	await put(
+		inputs,
+		"event.json",
+		`${JSON.stringify({
+			action: "checks_requested",
+			repository: {
+				id: 7654321,
+				name: "installed-merge-group-proof",
+				owner: { id: 1234567, login: "graphrefly" },
+			},
+			merge_group: {
+				base_sha: base,
+				head_sha: head,
+				base_ref: "refs/heads/main",
+				head_ref: headRef,
+			},
+		})}\n`,
+	);
+	const environment = {
+		...gitEnvironment,
+		GITHUB_EVENT_NAME: "merge_group",
+		GITHUB_SHA: head,
+		GITHUB_REF: headRef,
+		GITHUB_WORKFLOW_REF:
+			"graphrefly/installed-merge-group-proof/.github/workflows/graphrefly-stack.yml@refs/heads/main",
+		GITHUB_WORKFLOW_SHA: base,
+		GITHUB_RUN_ID: "3456789",
+		GITHUB_RUN_ATTEMPT: "1",
+		GITHUB_ACTOR_ID: "4567890",
+	};
+	const before = {
+		head,
+		status: run(repository, "git", ["status", "--porcelain=v1", "--untracked-files=all"]),
+		refs: run(repository, "git", ["for-each-ref", "--format=%(refname) %(objectname)"]),
+	};
+	const firstPath = resolve(inputs, "installed-aggregate.json");
+	const first = invoke(
+		repository,
+		"pnpm",
+		["exec", "grfs", "ci", "run", "--event", eventPath, "--output", firstPath, "--json"],
+		{ env: environment },
+	);
+	assert.equal(first.status, 0, first.stderr || first.stdout);
+	const secondPath = resolve(inputs, "installed-aggregate-repeated.json");
+	const second = invoke(
+		repository,
+		"pnpm",
+		["exec", "grfs", "ci", "run", "--event", eventPath, "--output", secondPath, "--json"],
+		{ env: environment },
+	);
+	assert.equal(second.status, 0, second.stderr || second.stdout);
+	assert.equal(await readFile(firstPath, "utf8"), await readFile(secondPath, "utf8"));
+	const bundle = JSON.parse(await readFile(firstPath, "utf8"));
+	assert.equal(bundle.schema, "graphrefly.stack.merge-group-bundle.v1");
+	assert.deepEqual(
+		bundle.result.plans.map((entry) => [entry.planId, entry.gateResult.verdict]),
+		[
+			["plan-a", "pass"],
+			["plan-b", "pass"],
+		],
+	);
+	assert.deepEqual(
+		bundle.qualifiedCommits.map((entry) => [entry.planId, entry.workUnitId]),
+		[
+			["plan-a", "API"],
+			["plan-b", "API"],
+		],
+	);
+	assert.deepEqual(
+		{
+			head: run(repository, "git", ["rev-parse", "HEAD"]),
+			status: run(repository, "git", ["status", "--porcelain=v1", "--untracked-files=all"]),
+			refs: run(repository, "git", ["for-each-ref", "--format=%(refname) %(objectname)"]),
+		},
+		before,
+	);
+}
+
 async function runInstalledSemanticLifecycle(
 	repository,
 	inputRoot,
@@ -560,12 +799,22 @@ async function proveInstalledCiPass(repository, inputRoot, lifecycle, repository
 		`${JSON.stringify(ciPackageJson, null, 2)}\n`,
 		"utf8",
 	);
+	const installedCli = await realpath(
+		resolve(repository, "node_modules/@graphrefly/stack/dist/grfs.js"),
+	);
 	const prefix = `${lifecycle.planId}-ci`;
 	const workflowRepository = resolve(inputRoot, `${prefix}-workflow-repository`);
 	await mkdir(workflowRepository);
 	run(workflowRepository, "git", ["init", "-q"]);
 	const initialized = JSON.parse(
-		run(repository, "pnpm", ["exec", "grfs", "ci", "init", "--repo", workflowRepository, "--json"]),
+		run(repository, process.execPath, [
+			installedCli,
+			"ci",
+			"init",
+			"--repo",
+			workflowRepository,
+			"--json",
+		]),
 	);
 	assert.equal(initialized.data.workflow, ".github/workflows/graphrefly-stack.yml");
 	const workflow = await readFile(resolve(workflowRepository, initialized.data.workflow), "utf8");
@@ -586,9 +835,8 @@ async function proveInstalledCiPass(repository, inputRoot, lifecycle, repository
 		"utf8",
 	);
 	const local = JSON.parse(
-		run(repository, "pnpm", [
-			"exec",
-			"grfs",
+		run(repository, process.execPath, [
+			installedCli,
 			"gate",
 			"--repo",
 			".",
@@ -602,8 +850,8 @@ async function proveInstalledCiPass(repository, inputRoot, lifecycle, repository
 	const outputPath = resolve(inputRoot, `${prefix}-artifact.json`);
 	const ci = invoke(
 		repository,
-		"pnpm",
-		["exec", "grfs", "ci", "run", "--event", eventPath, "--output", outputPath, "--json"],
+		process.execPath,
+		[installedCli, "ci", "run", "--event", eventPath, "--output", outputPath, "--json"],
 		{
 			env: {
 				...gitEnvironment,
@@ -1034,9 +1282,8 @@ export function createApplicationGraph() {
 		GITHUB_STEP_SUMMARY: githubSummary,
 	};
 	const localParity = JSON.parse(
-		run(repository, "pnpm", [
-			"exec",
-			"grfs",
+		run(repository, process.execPath, [
+			packedCli,
 			"gate",
 			"--repo",
 			".",
@@ -1050,10 +1297,9 @@ export function createApplicationGraph() {
 	const ciArtifactPath = resolve(semanticInputs, "ci-artifact.json");
 	const ciRun = invoke(
 		repository,
-		"pnpm",
+		process.execPath,
 		[
-			"exec",
-			"grfs",
+			packedCli,
 			"ci",
 			"run",
 			"--event",
@@ -1106,18 +1352,8 @@ export function createApplicationGraph() {
 	const discoveredArtifactPath = resolve(semanticInputs, "ci-artifact-discovered.json");
 	const discoveredRun = invoke(
 		repository,
-		"pnpm",
-		[
-			"exec",
-			"grfs",
-			"ci",
-			"run",
-			"--event",
-			eventPath,
-			"--output",
-			discoveredArtifactPath,
-			"--json",
-		],
+		process.execPath,
+		[packedCli, "ci", "run", "--event", eventPath, "--output", discoveredArtifactPath, "--json"],
 		{ env: { ...ciEnvironment, GITHUB_RUN_ATTEMPT: "2" } },
 	);
 	assert.equal(discoveredRun.status, 0, discoveredRun.stderr || discoveredRun.stdout);
@@ -1133,10 +1369,9 @@ export function createApplicationGraph() {
 	const forkArtifactPath = resolve(semanticInputs, "ci-artifact-fork.json");
 	const forkRun = invoke(
 		repository,
-		"pnpm",
+		process.execPath,
 		[
-			"exec",
-			"grfs",
+			packedCli,
 			"ci",
 			"run",
 			"--event",
@@ -1159,9 +1394,8 @@ export function createApplicationGraph() {
 
 	run(repository, "git", ["switch", "packed-unrelated-rebase"]);
 	const unrelatedLocal = JSON.parse(
-		run(repository, "pnpm", [
-			"exec",
-			"grfs",
+		run(repository, process.execPath, [
+			packedCli,
 			"gate",
 			"--repo",
 			".",
@@ -1178,10 +1412,9 @@ export function createApplicationGraph() {
 	const unrelatedArtifactPath = resolve(semanticInputs, "ci-artifact-unrelated.json");
 	const unrelatedCi = invoke(
 		repository,
-		"pnpm",
+		process.execPath,
 		[
-			"exec",
-			"grfs",
+			packedCli,
 			"ci",
 			"run",
 			"--event",
@@ -1211,9 +1444,8 @@ export function createApplicationGraph() {
 	);
 
 	run(repository, "git", ["switch", "--detach", flatLifecycle.architectureHead]);
-	const architectureLocalRun = invoke(repository, "pnpm", [
-		"exec",
-		"grfs",
+	const architectureLocalRun = invoke(repository, process.execPath, [
+		packedCli,
 		"gate",
 		"--repo",
 		".",
@@ -1231,10 +1463,9 @@ export function createApplicationGraph() {
 	const architectureArtifactPath = resolve(semanticInputs, "ci-artifact-architecture.json");
 	const architectureCi = invoke(
 		repository,
-		"pnpm",
+		process.execPath,
 		[
-			"exec",
-			"grfs",
+			packedCli,
 			"ci",
 			"run",
 			"--event",
@@ -1334,4 +1565,5 @@ export function createApplicationGraph() {
 	);
 	await assert.rejects(readFile(mutationTarget, "utf8"));
 	await proveInstalledCiPass(mountedRepository, semanticInputs, mountedLifecycle, 234567, 84);
+	await proveInstalledMergeGroup(temporary, tarball);
 });
