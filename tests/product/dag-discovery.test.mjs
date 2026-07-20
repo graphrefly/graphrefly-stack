@@ -5,7 +5,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
-import { DagDiscoveryError, discoverGitDag } from "../../packages/cli/dist/dag-discovery.js";
+import {
+	DagDiscoveryError,
+	discoverGitDag,
+	discoverPlanQualifiedGitDag,
+} from "../../packages/cli/dist/dag-discovery.js";
 
 function git(repository, args, allowed = [0]) {
 	const result = spawnSync("git", ["-C", repository, ...args], {
@@ -18,13 +22,15 @@ function git(repository, args, allowed = [0]) {
 	return (result.stdout ?? "").trim();
 }
 
-async function commitFile(repository, path, content, subject, workUnitIds = []) {
+async function commitFile(repository, path, content, subject, workUnitIds = [], planIds = []) {
 	await writeFile(join(repository, path), content);
 	git(repository, ["add", path]);
 	const args = ["commit", "-m", subject];
-	if (workUnitIds.length > 0) {
-		args.push("-m", workUnitIds.map((id) => `GraphReFly-Work-Unit: ${id}`).join("\n"));
-	}
+	const trailers = [
+		...planIds.map((id) => `GraphReFly-Plan: ${id}`),
+		...workUnitIds.map((id) => `GraphReFly-Work-Unit: ${id}`),
+	];
+	if (trailers.length > 0) args.push("-m", trailers.join("\n"));
 	git(repository, args);
 	return git(repository, ["rev-parse", "HEAD"]);
 }
@@ -79,6 +85,57 @@ test("discovers a real bounded branch and clean transport-only join without muta
 	assert.equal(
 		git(fixture.root, ["status", "--porcelain=v1", "--untracked-files=all"]),
 		beforeStatus,
+	);
+});
+
+test("discovers native Plan-qualified identities without global WorkUnit collisions", async (t) => {
+	const fixture = await repository();
+	t.after(() => rm(fixture.root, { recursive: true, force: true }));
+	await commitFile(fixture.root, "one.txt", "one\n", "first API", ["API"], ["plan-one"]);
+	await commitFile(fixture.root, "two.txt", "two\n", "second API", ["API"], ["plan-two"]);
+	const qualified = await discoverPlanQualifiedGitDag({
+		repository: fixture.root,
+		base: fixture.base,
+		head: "HEAD",
+	});
+	assert.deepEqual(
+		qualified.qualifiedCommits.map((entry) => [entry.planId, entry.workUnitId]),
+		[
+			["plan-one", "API"],
+			["plan-two", "API"],
+		],
+	);
+	await assert.rejects(
+		discoverGitDag({ repository: fixture.root, base: fixture.base, head: "HEAD" }),
+		(error) => error instanceof DagDiscoveryError && error.code === "WORK_UNIT_BINDING_AMBIGUOUS",
+	);
+
+	await commitFile(fixture.root, "bad.txt", "bad\n", "unowned Plan trailer", [], ["plan-one"]);
+	await assert.rejects(
+		discoverPlanQualifiedGitDag({ repository: fixture.root, base: fixture.base, head: "HEAD" }),
+		(error) => error instanceof DagDiscoveryError && error.code === "PLAN_OWNERSHIP_INVALID",
+	);
+
+	git(fixture.root, ["reset", "--hard", "HEAD^"]);
+	await commitFile(fixture.root, "missing.txt", "missing\n", "missing Plan trailer", ["OTHER"]);
+	await assert.rejects(
+		discoverPlanQualifiedGitDag({ repository: fixture.root, base: fixture.base, head: "HEAD" }),
+		(error) => error instanceof DagDiscoveryError && error.code === "PLAN_OWNERSHIP_INVALID",
+	);
+
+	git(fixture.root, ["reset", "--hard", "HEAD^"]);
+	await commitFile(
+		fixture.root,
+		"duplicate.txt",
+		"duplicate\n",
+		"duplicate pair",
+		["API"],
+		["plan-one"],
+	);
+	await assert.rejects(
+		discoverPlanQualifiedGitDag({ repository: fixture.root, base: fixture.base, head: "HEAD" }),
+		(error) =>
+			error instanceof DagDiscoveryError && error.code === "PLAN_WORK_UNIT_BINDING_AMBIGUOUS",
 	);
 });
 

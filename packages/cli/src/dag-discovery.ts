@@ -1,8 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { realpath } from "node:fs/promises";
 import { resolve } from "node:path";
-
-import { DAG_LIMITS } from "@graphrefly-stack/contracts";
+import { assertPlanQualifiedCommitIntegrity, DAG_LIMITS } from "@graphrefly-stack/contracts";
 
 type GitOid = { algorithm: "sha1" | "sha256"; value: string };
 
@@ -35,6 +34,24 @@ export type DiscoveredGitDag = {
 	joins: DiscoveredJoin[];
 };
 
+export type DiscoveredPlanQualifiedGitDag = DiscoveredGitDag & {
+	qualifiedCommits: Array<{
+		schema: "graphrefly.stack.plan-qualified-commit.v1";
+		planId: string;
+		workUnitId: string;
+		commit: GitOid;
+		ownership: {
+			kind: "native";
+			planTrailer: { name: "GraphReFly-Plan"; value: string; occurrences: 1 };
+			workUnitTrailer: {
+				name: "GraphReFly-Work-Unit";
+				value: string;
+				occurrences: 1;
+			};
+		};
+	}>;
+};
+
 export class DagDiscoveryError extends Error {
 	constructor(
 		readonly code:
@@ -48,6 +65,10 @@ export class DagDiscoveryError extends Error {
 			| "WORK_UNIT_TRAILER_INVALID"
 			| "WORK_UNIT_TRAILER_DUPLICATE"
 			| "WORK_UNIT_BINDING_AMBIGUOUS"
+			| "PLAN_TRAILER_INVALID"
+			| "PLAN_TRAILER_DUPLICATE"
+			| "PLAN_OWNERSHIP_INVALID"
+			| "PLAN_WORK_UNIT_BINDING_AMBIGUOUS"
 			| "MERGE_WORK_UNIT_TRAILER"
 			| "ANCESTRY_AMBIGUOUS"
 			| "JOIN_NOT_CLEAN"
@@ -92,15 +113,23 @@ function oid(value: string): GitOid {
 	return { algorithm: value.length === 40 ? "sha1" : "sha256", value };
 }
 
-function workUnitTrailers(repository: string, revision: string): string[] {
+function trailerValues(repository: string, revision: string, name: string): string[] {
 	const message = text(repository, ["show", "-s", "--format=%B", revision]);
 	const parsed = git(repository, ["interpret-trailers", "--parse"], [0], message);
 	return parsed.stdout.split("\n").flatMap((line) => {
 		const separator = line.indexOf(":");
-		return separator !== -1 && line.slice(0, separator) === "GraphReFly-Work-Unit"
+		return separator !== -1 && line.slice(0, separator) === name
 			? [line.slice(separator + 1).trim()]
 			: [];
 	});
+}
+
+function workUnitTrailers(repository: string, revision: string): string[] {
+	return trailerValues(repository, revision, "GraphReFly-Work-Unit");
+}
+
+function planTrailers(repository: string, revision: string): string[] {
+	return trailerValues(repository, revision, "GraphReFly-Plan");
 }
 
 async function discoverGitDagInternal(options: {
@@ -317,4 +346,71 @@ export function discoverGitDagForSemanticGate(options: {
 	head: string;
 }): Promise<DiscoveredGitDag> {
 	return discoverGitDagInternal({ ...options, allowAmbiguousWorkUnits: true });
+}
+
+export async function discoverPlanQualifiedGitDag(options: {
+	repository: string;
+	base: string;
+	head: string;
+}): Promise<DiscoveredPlanQualifiedGitDag> {
+	const discovered = await discoverGitDagInternal({
+		...options,
+		allowAmbiguousWorkUnits: true,
+	});
+	const qualifiedCommits: DiscoveredPlanQualifiedGitDag["qualifiedCommits"] = [];
+	const identities = new Set<string>();
+	for (const entry of discovered.objects) {
+		const plans = planTrailers(discovered.repository, entry.oid.value);
+		if (plans.length > 1) {
+			throw new DagDiscoveryError("PLAN_TRAILER_DUPLICATE", entry.oid.value);
+		}
+		if (plans[0] !== undefined && !/^[A-Za-z][A-Za-z0-9._-]{0,63}$/u.test(plans[0])) {
+			throw new DagDiscoveryError("PLAN_TRAILER_INVALID", entry.oid.value);
+		}
+		if (entry.kind !== "implementation") {
+			if (plans.length !== 0) {
+				throw new DagDiscoveryError(
+					"PLAN_OWNERSHIP_INVALID",
+					`${entry.oid.value} is not an implementation commit`,
+				);
+			}
+			continue;
+		}
+		if (plans.length !== 1 || entry.workUnitId === null) {
+			throw new DagDiscoveryError(
+				"PLAN_OWNERSHIP_INVALID",
+				`${entry.oid.value} requires one Plan and one WorkUnit trailer`,
+			);
+		}
+		const planId = plans[0] as string;
+		const identity = `${planId}\u0000${entry.workUnitId}`;
+		if (identities.has(identity)) {
+			throw new DagDiscoveryError("PLAN_WORK_UNIT_BINDING_AMBIGUOUS", identity);
+		}
+		identities.add(identity);
+		const qualified = {
+			schema: "graphrefly.stack.plan-qualified-commit.v1" as const,
+			planId,
+			workUnitId: entry.workUnitId,
+			commit: entry.oid,
+			ownership: {
+				kind: "native" as const,
+				planTrailer: { name: "GraphReFly-Plan" as const, value: planId, occurrences: 1 as const },
+				workUnitTrailer: {
+					name: "GraphReFly-Work-Unit" as const,
+					value: entry.workUnitId,
+					occurrences: 1 as const,
+				},
+			},
+		};
+		assertPlanQualifiedCommitIntegrity(qualified);
+		qualifiedCommits.push(qualified);
+	}
+	qualifiedCommits.sort(
+		(left, right) =>
+			left.planId.localeCompare(right.planId) ||
+			left.workUnitId.localeCompare(right.workUnitId) ||
+			left.commit.value.localeCompare(right.commit.value),
+	);
+	return { ...discovered, qualifiedCommits };
 }

@@ -531,6 +531,13 @@ test("composes a real accepted plan and branched DAG into one selective semantic
 			},
 		],
 	};
+	await mkdir(resolve(fixture.root, ".graphrefly-stack"), { recursive: true });
+	await writeFile(
+		resolve(fixture.root, ".graphrefly-stack/policy.json"),
+		`${JSON.stringify(policy, null, 2)}\n`,
+	);
+	git(fixture.root, ["add", ".graphrefly-stack/policy.json"]);
+	git(fixture.root, ["commit", "-m", "install repository policy"]);
 	const plan = {
 		schema: "graphrefly.stack.semantic-plan.v1",
 		planId: "plan-dag",
@@ -581,17 +588,11 @@ test("composes a real accepted plan and branched DAG into one selective semantic
 		],
 	};
 	await mkdir(resolve(fixture.root, ".graphrefly-stack/plans"), { recursive: true });
-	await Promise.all([
-		writeFile(
-			resolve(fixture.root, ".graphrefly-stack/policy.json"),
-			`${JSON.stringify(policy, null, 2)}\n`,
-		),
-		writeFile(
-			resolve(fixture.root, ".graphrefly-stack/plans/plan-dag.json"),
-			`${JSON.stringify(plan, null, 2)}\n`,
-		),
-	]);
-	git(fixture.root, ["add", ".graphrefly-stack"]);
+	await writeFile(
+		resolve(fixture.root, ".graphrefly-stack/plans/plan-dag.json"),
+		`${JSON.stringify(plan, null, 2)}\n`,
+	);
+	git(fixture.root, ["add", ".graphrefly-stack/plans/plan-dag.json"]);
 	git(fixture.root, ["commit", "-m", "accept DAG plan"]);
 	const accepted = git(fixture.root, ["rev-parse", "HEAD"]);
 	git(fixture.root, ["switch", "-q", "-c", "left"]);

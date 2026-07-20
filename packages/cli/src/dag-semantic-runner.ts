@@ -438,9 +438,12 @@ export async function createDagSemanticGate(options: {
 	if (acceptanceEntry !== undefined) {
 		const acceptanceOid = acceptanceEntry.oid as { algorithm: "sha1" | "sha256"; value: string };
 		const changedPaths = await git.changedPaths(options.repository, acceptanceOid);
+		const acceptedPaths = [...changedPaths].sort();
 		if (
-			changedPaths.length !== 2 ||
-			!changedPaths.every((path) => path === planPath || path === policyPath)
+			acceptedPaths.length < 1 ||
+			acceptedPaths.length > 2 ||
+			acceptedPaths[0] !== planPath ||
+			acceptedPaths.some((path) => path !== planPath && path !== policyPath)
 		) {
 			throw new DagSemanticRunnerError(
 				"ACCEPTED_ARTIFACT_INVALID",
@@ -453,16 +456,10 @@ export async function createDagSemanticGate(options: {
 		...topologyObjects.map((entry) => object(entry.oid, "OID").value as string),
 	]) {
 		const hasPlan = gitHasPath(options.repository, revision, planPath);
-		const hasPolicy = gitHasPath(options.repository, revision, policyPath);
-		if (hasPlan !== hasPolicy) {
-			throw new DagSemanticRunnerError(
-				"ACCEPTED_ARTIFACT_INVALID",
-				`Plan and policy lifecycle diverged at ${revision}`,
-			);
-		}
 		if (
 			hasPlan &&
-			(sha256Jcs(gitJson(options.repository, revision, planPath)) !== sha256Jcs(plan) ||
+			(!gitHasPath(options.repository, revision, policyPath) ||
+				sha256Jcs(gitJson(options.repository, revision, planPath)) !== sha256Jcs(plan) ||
 				sha256Jcs(gitJson(options.repository, revision, policyPath)) !== sha256Jcs(policy))
 		) {
 			throw new DagSemanticRunnerError(
