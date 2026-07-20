@@ -20,7 +20,7 @@ import {
 	diagnoseDagDependenciesV2,
 } from "@graphrefly-stack/core";
 
-import { createDagGraphEvidenceForSemanticGate } from "./dag-evidence.js";
+import { createDagGraphEvidenceForSemanticGate, type DagGraphEvidence } from "./dag-evidence.js";
 import { repositoryStateDirectory } from "./repository-review-state.js";
 import { runtimeAssetPath } from "./runtime-paths.js";
 import { evaluateSemanticPredicate, runRepositoryPolicyChecks } from "./semantic-repository.js";
@@ -371,8 +371,10 @@ export async function createDagSemanticGate(options: {
 	planId: string;
 	repositoryIdentity: { provider: string; owner: string; name: string };
 	recovery?: DagRecovery;
+	graphEvidence?: DagGraphEvidence;
 }): Promise<DagSemanticGateRun | DagStructuralErrorRun> {
-	const graphEvidence = await createDagGraphEvidenceForSemanticGate(options);
+	const graphEvidence =
+		options.graphEvidence ?? (await createDagGraphEvidenceForSemanticGate(options));
 	const topology = graphEvidence.topology;
 	const git = new SystemGitAdapter();
 	const resolvedHead = object(topology.head, "topology head").value as string;

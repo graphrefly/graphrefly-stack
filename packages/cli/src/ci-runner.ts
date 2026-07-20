@@ -5,6 +5,7 @@ import { createRequire } from "node:module";
 import { arch, platform } from "node:os";
 import { basename, dirname, resolve, sep } from "node:path";
 import {
+	assertMergeGroupBundleIntegrityV1,
 	CI_ARTIFACTS_SCHEMA,
 	CI_BUNDLE_SCHEMA,
 	CI_INVOCATION_SCHEMA,
@@ -14,11 +15,17 @@ import {
 	CI_WORKFLOW_PATH,
 	canonicalize,
 	createStrictAjv,
+	MERGE_GROUP_ARTIFACTS_SCHEMA,
+	MERGE_GROUP_BUNDLE_SCHEMA,
 	SEMANTIC_ARTIFACTS_SCHEMA,
 	SEMANTIC_REASON_ORDER,
 	sha256Jcs,
 } from "@graphrefly-stack/contracts";
-
+import { computeMergeGroupResultV1, projectMultiPlanTopologyV1 } from "@graphrefly-stack/core";
+import { discoverPlanQualifiedGitDag } from "./dag-discovery.js";
+import { createDagGraphEvidenceForSemanticGate } from "./dag-evidence.js";
+import { createDagSemanticGate } from "./dag-semantic-runner.js";
+import { assembleGroupIntegration, createGroupJoinEvidence } from "./group-integration-runner.js";
 import { runtimeAssetPath } from "./runtime-paths.js";
 import {
 	bindSemanticPlan,
@@ -56,6 +63,15 @@ function gitOid(value: string) {
 		throw new CiRunnerError("CI_EVENT_INVALID", "GitHub event contains an invalid Git OID");
 	}
 	return { algorithm: value.length === 40 ? ("sha1" as const) : ("sha256" as const), value };
+}
+
+function validHeadRef(value: string): boolean {
+	return (
+		value.startsWith("refs/heads/") &&
+		value.length > "refs/heads/".length &&
+		value.length <= 1024 &&
+		![...value].some((character) => (character.codePointAt(0) ?? 0) < 32)
+	);
 }
 
 function object(value: unknown, label: string): JsonObject {
@@ -157,13 +173,15 @@ function workflowSource(): string {
 
 on:
   pull_request:
+  merge_group:
+    types: [checks_requested]
 
 permissions:
   contents: read
 
 concurrency:
-  group: graphrefly-stack-\${{ github.repository_id }}-pr-\${{ github.event.pull_request.number }}
-  cancel-in-progress: true
+  group: graphrefly-stack-\${{ github.repository_id }}-\${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.event.merge_group.head_ref }}
+  cancel-in-progress: \${{ github.event_name == 'pull_request' }}
 
 jobs:
   semantic-gate:
@@ -172,10 +190,10 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Check out immutable pull-request head
+      - name: Check out immutable event head
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
-          ref: \${{ github.event.pull_request.head.sha }}
+          ref: \${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
           fetch-depth: 0
           persist-credentials: false
       - name: Set up Node.js
@@ -204,7 +222,7 @@ jobs:
         id: graphrefly_stack
         run: pnpm exec grfs ci run --event "$GITHUB_EVENT_PATH" --output "$RUNNER_TEMP/graphrefly-stack-ci.json" --json
       - name: Run GraphReFly Stack semantic integration
-        if: \${{ !cancelled() }}
+        if: \${{ !cancelled() && github.event_name == 'pull_request' }}
         id: graphrefly_stack_integration
         run: pnpm exec grfs integration ci --event "$GITHUB_EVENT_PATH" --output "$RUNNER_TEMP/graphrefly-stack-integration.json" --json
       - name: Upload redacted GraphReFly Stack evidence
@@ -484,6 +502,264 @@ function verifyGitRange(repository: string, base: string, head: string): void {
 	}
 }
 
+function jsonAt(repository: string, revision: string, path: string): JsonObject {
+	try {
+		return object(JSON.parse(gitText(repository, ["show", `${revision}:${path}`])), path);
+	} catch {
+		throw new CiRunnerError("CI_PLAN_CANDIDATE_INVALID", `${revision}:${path}`);
+	}
+}
+
+function exactGateBundle(run: JsonObject): JsonObject {
+	if (run.schema === "graphrefly.stack.dag-gate-bundle.v2") {
+		return {
+			schema: run.schema,
+			topology: run.topology,
+			dependencyGraph: run.dependencyGraph,
+			bindings: run.bindings,
+			records: run.records,
+			unitEvaluations: run.unitEvaluations,
+			joinEvaluations: run.joinEvaluations,
+			gateInput: run.gateInput,
+			gateResult: run.gateResult,
+		};
+	}
+	if (run.schema === "graphrefly.stack.dag-structural-error-bundle.v2") {
+		return {
+			schema: run.schema,
+			topology: run.topology,
+			dependencyGraph: run.dependencyGraph,
+			plan: run.plan,
+			policy: run.policy,
+			bindings: run.bindings,
+			errorInput: run.errorInput,
+			gateResult: run.gateResult,
+		};
+	}
+	throw new CiRunnerError("CI_MERGE_GROUP_GATE_INVALID", "DAG gate bundle is unsupported");
+}
+
+async function mergeGroupBundleValidator() {
+	const schemas = await Promise.all(
+		[
+			"contracts/semantic/v1/artifacts.schema.json",
+			"contracts/ci/v1/artifacts.schema.json",
+			"contracts/dag/v2/artifacts.schema.json",
+			"contracts/dag/v2/semantic.schema.json",
+			"contracts/integration/v1/artifacts.schema.json",
+			"contracts/dag/v2/merge-group.schema.json",
+		].map(async (path) => JSON.parse(await readFile(runtimeAssetPath(path), "utf8"))),
+	);
+	const ajv = createStrictAjv();
+	for (const schema of schemas) ajv.addSchema(schema);
+	return ajv.getSchema(`${MERGE_GROUP_ARTIFACTS_SCHEMA}#/definitions/MergeGroupBundle`);
+}
+
+async function runMergeGroupCi(options: {
+	repository: string;
+	event: JsonObject;
+	output: string;
+	environment: NodeJS.ProcessEnv;
+	githubOutput?: string;
+	githubStepSummary?: string;
+}) {
+	const mergeGroup = object(options.event.merge_group, "merge_group");
+	if (options.event.action !== "checks_requested") {
+		throw new CiRunnerError(
+			"CI_EVENT_UNSUPPORTED",
+			"Only merge_group checks_requested is supported",
+		);
+	}
+	const eventRepository = object(options.event.repository, "repository");
+	const owner = object(eventRepository.owner, "repository.owner");
+	const base = gitOid(String(mergeGroup.base_sha ?? ""));
+	const head = gitOid(String(mergeGroup.head_sha ?? ""));
+	const baseRef = String(mergeGroup.base_ref ?? "");
+	const headRef = String(mergeGroup.head_ref ?? "");
+	if (!validHeadRef(baseRef) || !validHeadRef(headRef)) {
+		throw new CiRunnerError("CI_EVENT_INVALID", "merge_group refs are invalid");
+	}
+	if (
+		requiredEnvironment(options.environment, "GITHUB_SHA") !== head.value ||
+		requiredEnvironment(options.environment, "GITHUB_REF") !== headRef
+	) {
+		throw new CiRunnerError("CI_HEAD_MISMATCH", "Checked-out merge-group identity drifted");
+	}
+	verifyGitRange(options.repository, base.value, head.value);
+	await assertNetworkSandbox();
+	const repositoryIdentity = {
+		provider: "github",
+		owner: String(owner.login ?? ""),
+		name: String(eventRepository.name ?? ""),
+	};
+	if (repositoryIdentity.owner.length === 0 || repositoryIdentity.name.length === 0) {
+		throw new CiRunnerError("CI_EVENT_INVALID", "repository identity is incomplete");
+	}
+	const [qualifiedDiscovery, sharedEvidence] = await Promise.all([
+		discoverPlanQualifiedGitDag({
+			repository: options.repository,
+			base: base.value,
+			head: head.value,
+		}),
+		createDagGraphEvidenceForSemanticGate({
+			repository: options.repository,
+			base: base.value,
+			head: head.value,
+			repositoryIdentity,
+		}),
+	]);
+	if (!Array.isArray(sharedEvidence.topology.joins) || sharedEvidence.topology.joins.length === 0) {
+		throw new CiRunnerError(
+			"CI_MERGE_GROUP_TOPOLOGY_UNSUPPORTED",
+			"merge_group requires an observed clean binary merge topology",
+		);
+	}
+	const qualifiedCommits = qualifiedDiscovery.qualifiedCommits;
+	const planIds = [...new Set(qualifiedCommits.map((entry) => entry.planId))].sort();
+	if (planIds.length < 1 || planIds.length > 8) {
+		throw new CiRunnerError("CI_PLAN_AMBIGUOUS", "merge group must contain one to eight Plans");
+	}
+	const policy = jsonAt(options.repository, head.value, ".graphrefly-stack/policy.json");
+	const plans = [];
+	for (const planId of planIds) {
+		const plan = jsonAt(options.repository, head.value, `.graphrefly-stack/plans/${planId}.json`);
+		const projectedTopology = projectMultiPlanTopologyV1({
+			topology: sharedEvidence.topology,
+			qualifiedCommits,
+			planId,
+		});
+		const run = await createDagSemanticGate({
+			repository: options.repository,
+			base: base.value,
+			head: head.value,
+			planId,
+			repositoryIdentity,
+			graphEvidence: { ...sharedEvidence, topology: projectedTopology },
+		});
+		plans.push({ planId, plan, policy, gateBundle: exactGateBundle(run as JsonObject) });
+	}
+	const headBlueprint = sharedEvidence.blueprints.find(
+		(entry) => entry.revision.value === head.value,
+	);
+	if (headBlueprint === undefined) {
+		throw new CiRunnerError("CI_MERGE_GROUP_GATE_INVALID", "head Blueprint evidence is missing");
+	}
+	const joinEvidence = await createGroupJoinEvidence({
+		repository: options.repository,
+		topology: sharedEvidence.topology,
+		blueprints: sharedEvidence.blueprints,
+	});
+	const group = await assembleGroupIntegration({
+		topology: sharedEvidence.topology,
+		repositoryPolicy: policy,
+		qualifiedCommits,
+		plans: plans.map((entry) => ({
+			plan: entry.plan,
+			policy: entry.policy,
+			gateResult: object(entry.gateBundle.gateResult, `${entry.planId} GateResult`),
+		})),
+		headBlueprint,
+		joinEvidence,
+	});
+	const repository = {
+		identity: repositoryIdentity,
+		id: decimalId(eventRepository.id, "repository.id"),
+		ownerId: decimalId(owner.id, "repository.owner.id"),
+	};
+	const event = {
+		name: "merge_group",
+		action: "checks_requested",
+		baseRef,
+		headRef,
+		base,
+		head,
+	};
+	const invocation = {
+		schema: "graphrefly.stack.merge-group-invocation.v1",
+		adapter: { provider: "github-actions", version: "v1" },
+		repository,
+		event,
+		workflow: {
+			ref: requiredEnvironment(options.environment, "GITHUB_WORKFLOW_REF"),
+			sha: gitOid(requiredEnvironment(options.environment, "GITHUB_WORKFLOW_SHA")),
+		},
+		run: {
+			id: decimalId(requiredEnvironment(options.environment, "GITHUB_RUN_ID"), "GITHUB_RUN_ID"),
+			attempt: positiveInteger(
+				requiredEnvironment(options.environment, "GITHUB_RUN_ATTEMPT"),
+				"GITHUB_RUN_ATTEMPT",
+			),
+			actorId: decimalId(
+				requiredEnvironment(options.environment, "GITHUB_ACTOR_ID"),
+				"GITHUB_ACTOR_ID",
+			),
+			jobName: CI_JOB_NAME,
+		},
+		checkout: { ref: headRef, sha: head },
+		concurrency: {
+			identityDigest: hash({ repositoryId: repository.id, event: "merge_group", headRef, head }),
+			cancelInProgress: false,
+		},
+		topologyDigest: hash(sharedEvidence.topology),
+		plans: plans.map((entry) => ({
+			planId: entry.planId,
+			planDigest: hash(entry.plan),
+			policyDigest: hash(entry.policy),
+		})),
+		identity: { assurance: "platform-asserted" },
+	};
+	const sources = {
+		invocation,
+		topology: sharedEvidence.topology,
+		qualifiedCommits,
+		conversions: [],
+		plans,
+		groupIntegrationInput: group.input,
+		groupIntegrationResult: group.result,
+	};
+	const result = computeMergeGroupResultV1(sources);
+	const bundle = { schema: MERGE_GROUP_BUNDLE_SCHEMA, ...sources, result };
+	const validate = await mergeGroupBundleValidator();
+	assertValid(validate, bundle, "CI_MERGE_GROUP_BUNDLE_INVALID");
+	assertMergeGroupBundleIntegrityV1(bundle);
+	const serialized = canonicalize(bundle);
+	try {
+		await writeFile(options.output, serialized, { encoding: "utf8", flag: "wx", mode: 0o600 });
+	} catch (error) {
+		if ((error as NodeJS.ErrnoException).code === "EEXIST") {
+			throw new CiRunnerError("CI_OUTPUT_EXISTS", options.output);
+		}
+		throw error;
+	}
+	if ((await readFile(options.output, "utf8")) !== serialized) {
+		throw new CiRunnerError("CI_ARTIFACT_INTEGRITY_INVALID", "Persisted aggregate bytes drifted");
+	}
+	const bundleDigest = hash(bundle);
+	const artifactName = `graphrefly-stack-merge-group-${bundleDigest.value}`;
+	if (options.githubOutput !== undefined) {
+		await appendFile(
+			options.githubOutput,
+			`artifact-name=${artifactName}\nartifact-path=${options.output}\n`,
+			"utf8",
+		);
+	}
+	if (options.githubStepSummary !== undefined) {
+		await appendFile(
+			options.githubStepSummary,
+			`## GraphReFly Stack merge-group gate\n\n- Verdict: ${String(result.outcome)}\n- Plans: ${planIds.join(", ")}\n`,
+			"utf8",
+		);
+	}
+	return {
+		repository: options.repository,
+		output: options.output,
+		artifactName,
+		invocationDigest: result.invocationDigest,
+		gateResult: result,
+		outcome: result.outcome as "pass" | "blocked" | "error",
+	};
+}
+
 export async function runCi(options: {
 	repository: string;
 	eventPath: string;
@@ -492,8 +768,12 @@ export async function runCi(options: {
 	environment?: NodeJS.ProcessEnv;
 }) {
 	const environment = options.environment ?? process.env;
-	if (requiredEnvironment(environment, "GITHUB_EVENT_NAME") !== "pull_request") {
-		throw new CiRunnerError("CI_EVENT_UNSUPPORTED", "Only pull_request is supported in v1");
+	const eventName = requiredEnvironment(environment, "GITHUB_EVENT_NAME");
+	if (eventName !== "pull_request" && eventName !== "merge_group") {
+		throw new CiRunnerError(
+			"CI_EVENT_UNSUPPORTED",
+			"Only pull_request and merge_group are supported",
+		);
 	}
 	const repository = await repositoryRoot(options.repository);
 	if (/[\r\n]/u.test(options.output)) {
@@ -517,6 +797,22 @@ export async function runCi(options: {
 		runnerOutputPath(repository, environment, "GITHUB_STEP_SUMMARY"),
 	]);
 	const event = await readEvent(options.eventPath);
+	if (eventName === "merge_group") {
+		if (options.planId !== undefined) {
+			throw new CiRunnerError(
+				"CI_PLAN_SELECTION_UNSUPPORTED",
+				"merge_group always evaluates every qualified Plan",
+			);
+		}
+		return runMergeGroupCi({
+			repository,
+			event,
+			output,
+			environment,
+			githubOutput,
+			githubStepSummary,
+		});
+	}
 	const eventRepository = object(event.repository, "repository");
 	const owner = object(eventRepository.owner, "repository.owner");
 	const pullRequest = object(event.pull_request, "pull_request");

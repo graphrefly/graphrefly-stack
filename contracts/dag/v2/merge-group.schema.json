@@ -610,6 +610,32 @@
 				}
 			}
 		},
+		"MergeGroupPlanBundle": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["planId", "plan", "policy", "gateBundle"],
+			"properties": {
+				"planId": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/Identifier"
+				},
+				"plan": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/AcceptedChangePlan"
+				},
+				"policy": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/RepositoryPolicy"
+				},
+				"gateBundle": {
+					"oneOf": [
+						{
+							"$ref": "urn:graphrefly-stack:schema:dag-semantic-artifacts:v2#/definitions/DagGateBundle"
+						},
+						{
+							"$ref": "urn:graphrefly-stack:schema:dag-semantic-artifacts:v2#/definitions/DagStructuralErrorBundle"
+						}
+					]
+				}
+			}
+		},
 		"MergeGroupResult": {
 			"type": "object",
 			"additionalProperties": false,
@@ -659,6 +685,58 @@
 					"maxItems": 8,
 					"uniqueItems": true
 				}
+			}
+		},
+		"MergeGroupBundle": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"schema",
+				"invocation",
+				"topology",
+				"qualifiedCommits",
+				"conversions",
+				"plans",
+				"groupIntegrationInput",
+				"groupIntegrationResult",
+				"result"
+			],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.merge-group-bundle.v1" },
+				"invocation": { "$ref": "#/definitions/MergeGroupInvocation" },
+				"topology": {
+					"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/GitTopologySlice"
+				},
+				"qualifiedCommits": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/PlanQualifiedCommit" },
+					"minItems": 1,
+					"maxItems": 64
+				},
+				"conversions": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"additionalProperties": false,
+						"required": ["planId", "bundle"],
+						"properties": {
+							"planId": {
+								"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/Identifier"
+							},
+							"bundle": { "$ref": "#/definitions/LinearV1ConversionBundle" }
+						}
+					},
+					"maxItems": 8
+				},
+				"plans": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/MergeGroupPlanBundle" },
+					"minItems": 1,
+					"maxItems": 8
+				},
+				"groupIntegrationInput": { "$ref": "#/definitions/GroupIntegrationInput" },
+				"groupIntegrationResult": { "$ref": "#/definitions/GroupIntegrationResult" },
+				"result": { "$ref": "#/definitions/MergeGroupResult" }
 			}
 		}
 	}

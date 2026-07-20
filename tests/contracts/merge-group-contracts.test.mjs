@@ -13,6 +13,7 @@ import {
 	LINEAR_V1_CONVERSION_SCHEMA,
 	LinearV1ConversionError,
 	MERGE_GROUP_ARTIFACTS_SCHEMA,
+	MERGE_GROUP_BUNDLE_SCHEMA,
 	MERGE_GROUP_GOLDEN_SUITE_SCHEMA,
 	MERGE_GROUP_INVOCATION_SCHEMA,
 	MERGE_GROUP_RESULT_SCHEMA,
@@ -160,8 +161,10 @@ test("multi-Plan foundation schemas expose strict additive identities", () => {
 	);
 	assert.equal(MERGE_GROUP_INVOCATION_SCHEMA, "graphrefly.stack.merge-group-invocation.v1");
 	assert.equal(MERGE_GROUP_RESULT_SCHEMA, "graphrefly.stack.merge-group-result.v1");
+	assert.equal(MERGE_GROUP_BUNDLE_SCHEMA, "graphrefly.stack.merge-group-bundle.v1");
 	assert.ok(definition("MergeGroupInvocation"));
 	assert.ok(definition("MergeGroupResult"));
+	assert.ok(definition("MergeGroupBundle"));
 	assert.deepEqual(MULTI_PLAN_LIMITS, { maxPlans: 8 });
 	assert.equal(SEMANTIC_STORAGE.planTrailer, "GraphReFly-Plan");
 	assert.equal(groupIntegrationGoldenSchema.$id, GROUP_INTEGRATION_GOLDEN_SCHEMA);

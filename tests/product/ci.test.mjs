@@ -37,7 +37,7 @@ test("ci plan discovery accepts exactly one tip-covering plan", () => {
 	);
 });
 
-test("ci init writes one deterministic least-privilege pull-request workflow", async (context) => {
+test("ci init writes one deterministic least-privilege pull-request and merge-group workflow", async (context) => {
 	const repository = await mkdtemp(resolve(tmpdir(), "graphrefly-stack-ci-init-"));
 	context.after(() => rm(repository, { recursive: true, force: true }));
 	assert.equal(spawnSync("git", ["-C", repository, "init", "-q"]).status, 0);
@@ -51,18 +51,26 @@ test("ci init writes one deterministic least-privilege pull-request workflow", a
 	const workflow = await readFile(workflowPath, "utf8");
 	assert.match(workflow, /^name: GraphReFly Stack$/mu);
 	assert.match(workflow, /^ {2}pull_request:$/mu);
-	assert.doesNotMatch(workflow, /pull_request_target|merge_group|push:/u);
+	assert.match(workflow, /^ {2}merge_group:\n {4}types: \[checks_requested\]$/mu);
+	assert.doesNotMatch(workflow, /pull_request_target|push:/u);
 	assert.match(workflow, /^permissions:\n {2}contents: read$/mu);
+	assert.match(
+		workflow,
+		/group: graphrefly-stack-\$\{\{ github\.repository_id \}\}-\$\{\{ github\.event_name == 'pull_request' && format\('pr-\{0\}', github\.event\.pull_request\.number\) \|\| github\.event\.merge_group\.head_ref \}\}/u,
+	);
 	assert.match(workflow, /^ {4}runs-on: ubuntu-22\.04$/mu);
 	assert.doesNotMatch(workflow, /runs-on: ubuntu-24\.04/u);
 	assert.match(workflow, /persist-credentials: false/u);
-	assert.match(workflow, /ref: \$\{\{ github\.event\.pull_request\.head\.sha \}\}/u);
+	assert.match(
+		workflow,
+		/ref: \$\{\{ github\.event\.pull_request\.head\.sha \|\| github\.event\.merge_group\.head_sha \}\}/u,
+	);
 	assert.match(workflow, /node-version: 24\.18\.0/u);
-	assert.match(workflow, /cancel-in-progress: true/u);
+	assert.match(workflow, /cancel-in-progress: \$\{\{ github\.event_name == 'pull_request' \}\}/u);
 	assert.match(workflow, /pnpm install --frozen-lockfile --ignore-scripts/u);
 	assert.match(workflow, /sudo apt-get install --yes --no-install-recommends bubblewrap/u);
 	assert.match(workflow, /grfs integration ci --event/u);
-	assert.match(workflow, /if: \$\{\{ !cancelled\(\) \}\}/u);
+	assert.match(workflow, /if: \$\{\{ !cancelled\(\) && github\.event_name == 'pull_request' \}\}/u);
 	assert.match(workflow, /retention-days: 7/u);
 	assert.doesNotMatch(workflow, /uses: [^\n]+@v[0-9]+/u);
 	assert.equal(
@@ -95,7 +103,7 @@ test("ci run rejects unsupported events, repository output and malformed event b
 		{ GITHUB_EVENT_NAME: "merge_group" },
 	);
 	assert.equal(mergeGroup.status, 1);
-	assert.equal(JSON.parse(mergeGroup.stdout).error.code, "CI_EVENT_UNSUPPORTED");
+	assert.equal(JSON.parse(mergeGroup.stdout).error.code, "CI_EVENT_INVALID");
 
 	const inside = invoke(
 		repository,

@@ -1,5 +1,6 @@
 import { assertDagTopologyIntegrity } from "./dag-integrity.js";
 import { assertDagSemanticIntegrity } from "./dag-semantic-integrity.js";
+import { assertDagStructuralErrorBundleIntegrity } from "./dag-structural-error-integrity.js";
 import { assertGroupIntegrationIntegrity } from "./group-integration-integrity.js";
 import { canonicalize, sha256Jcs } from "./jcs.js";
 import {
@@ -198,24 +199,39 @@ function validateSources(sources: MergeGroupIntegritySourcesV1): void {
 			);
 		}
 		const graph = object(bundle.dependencyGraph, `${entry.planId} dependency graph`);
-		const gateInput = object(bundle.gateInput, `${entry.planId} GateInput`);
-		if (
-			graph.planId !== entry.planId ||
-			!equal(gateInput.planDigest, digest(entry.plan)) ||
-			!equal(gateInput.policyDigest, digest(entry.policy))
-		) {
-			throw new MergeGroupIntegrityError(`${entry.planId} gate does not bind its Plan and policy`);
+		if (graph.planId !== entry.planId) {
+			throw new MergeGroupIntegrityError(`${entry.planId} dependency graph identity drifted`);
 		}
-		assertDagSemanticIntegrity({
-			topology: bundle.topology,
-			dependencyGraph: bundle.dependencyGraph,
-			bindings: bundle.bindings,
-			records: bundle.records,
-			unitEvaluations: bundle.unitEvaluations,
-			joinEvaluations: bundle.joinEvaluations,
-			gateInput: bundle.gateInput,
-			gateResult: bundle.gateResult,
-		});
+		if (bundle.schema === "graphrefly.stack.dag-gate-bundle.v2") {
+			const gateInput = object(bundle.gateInput, `${entry.planId} GateInput`);
+			if (
+				!equal(gateInput.planDigest, digest(entry.plan)) ||
+				!equal(gateInput.policyDigest, digest(entry.policy))
+			) {
+				throw new MergeGroupIntegrityError(
+					`${entry.planId} gate does not bind its Plan and policy`,
+				);
+			}
+			assertDagSemanticIntegrity({
+				topology: bundle.topology,
+				dependencyGraph: bundle.dependencyGraph,
+				bindings: bundle.bindings,
+				records: bundle.records,
+				unitEvaluations: bundle.unitEvaluations,
+				joinEvaluations: bundle.joinEvaluations,
+				gateInput: bundle.gateInput,
+				gateResult: bundle.gateResult,
+			});
+		} else if (bundle.schema === "graphrefly.stack.dag-structural-error-bundle.v2") {
+			if (!equal(bundle.plan, entry.plan) || !equal(bundle.policy, entry.policy)) {
+				throw new MergeGroupIntegrityError(
+					`${entry.planId} structural error does not bind its Plan and policy`,
+				);
+			}
+			assertDagStructuralErrorBundleIntegrity(bundle);
+		} else {
+			throw new MergeGroupIntegrityError(`${entry.planId} gate bundle schema is unsupported`);
+		}
 	}
 
 	const convertedPlans = new Set<string>();
@@ -268,6 +284,33 @@ function validateSources(sources: MergeGroupIntegritySourcesV1): void {
 	) {
 		throw new MergeGroupIntegrityError("group integration input does not bind aggregate sources");
 	}
+}
+
+export function assertMergeGroupBundleIntegrityV1(value: unknown): void {
+	const bundle = object(value, "merge-group bundle");
+	if (bundle.schema !== "graphrefly.stack.merge-group-bundle.v1") {
+		throw new MergeGroupIntegrityError("merge-group bundle schema is unsupported");
+	}
+	assertMergeGroupIntegrityV1(
+		{
+			invocation: object(bundle.invocation, "merge-group invocation"),
+			topology: object(bundle.topology, "merge-group topology"),
+			qualifiedCommits: objects(bundle.qualifiedCommits, "qualified commits"),
+			conversions: objects(bundle.conversions, "conversions").map((entry) => ({
+				planId: string(entry.planId, "conversion Plan ID"),
+				bundle: object(entry.bundle, "conversion bundle"),
+			})),
+			plans: objects(bundle.plans, "merge-group Plans").map((entry) => ({
+				planId: string(entry.planId, "Plan ID"),
+				plan: object(entry.plan, "Plan"),
+				policy: object(entry.policy, "policy"),
+				gateBundle: object(entry.gateBundle, "gate bundle"),
+			})),
+			groupIntegrationInput: object(bundle.groupIntegrationInput, "group integration input"),
+			groupIntegrationResult: object(bundle.groupIntegrationResult, "group integration result"),
+		},
+		bundle.result,
+	);
 }
 
 function deriveResult(sources: MergeGroupIntegritySourcesV1): JsonObject {
