@@ -1,0 +1,11 @@
+{
+	"suite": "f86c8a46545261e21a528baacc96b5bf36eb965da68c77075e899859827a5941",
+	"cases": {
+		"plan-qualified-conversion": "b5bee9eeaca0c5e141b351393e8cb36d14c79b90a1538dcf514d7e3e7744b2a1"
+	},
+	"artifacts": {
+		"native": "020f1f184b6d2db47e91ba8dc712f1e7df182697543189c95fcd2357ac5cc7c0",
+		"converted": "6cb099496fa098882f65668e03de9320cf9b8808a26ed078d577cc49abf27f3d",
+		"conversion": "51eb15318db94f3d86a8e6e84b9d1641066bc25d4e0c57e25356747e467d5533"
+	}
+}

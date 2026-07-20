@@ -1,0 +1,216 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "urn:graphrefly-stack:schema:merge-group-artifacts:v1",
+	"title": "GraphReFly Stack multi-Plan merge-group foundation artifacts v1",
+	"definitions": {
+		"NamedDigest": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["workUnitId", "digest"],
+			"properties": {
+				"workUnitId": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/WorkUnitId"
+				},
+				"digest": { "$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash" }
+			}
+		},
+		"PlanQualifiedCommit": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["schema", "planId", "workUnitId", "commit", "ownership"],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.plan-qualified-commit.v1" },
+				"planId": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/Identifier"
+				},
+				"workUnitId": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/WorkUnitId"
+				},
+				"commit": { "$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/GitOid" },
+				"ownership": {
+					"oneOf": [
+						{
+							"type": "object",
+							"additionalProperties": false,
+							"required": ["kind", "planTrailer", "workUnitTrailer"],
+							"properties": {
+								"kind": { "const": "native" },
+								"planTrailer": {
+									"type": "object",
+									"additionalProperties": false,
+									"required": ["name", "value", "occurrences"],
+									"properties": {
+										"name": { "const": "GraphReFly-Plan" },
+										"value": {
+											"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/Identifier"
+										},
+										"occurrences": { "const": 1 }
+									}
+								},
+								"workUnitTrailer": {
+									"type": "object",
+									"additionalProperties": false,
+									"required": ["name", "value", "occurrences"],
+									"properties": {
+										"name": { "const": "GraphReFly-Work-Unit" },
+										"value": {
+											"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/WorkUnitId"
+										},
+										"occurrences": { "const": 1 }
+									}
+								}
+							}
+						},
+						{
+							"type": "object",
+							"additionalProperties": false,
+							"required": ["kind", "sourceBindingDigest", "sourceGateInputDigest"],
+							"properties": {
+								"kind": { "const": "converted-v1" },
+								"sourceBindingDigest": {
+									"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash"
+								},
+								"sourceGateInputDigest": {
+									"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash"
+								}
+							}
+						}
+					]
+				}
+			}
+		},
+		"LinearV1Conversion": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["schema", "converter", "source", "topologyDigest", "target"],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.linear-v1-conversion.v1" },
+				"converter": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["name", "version"],
+					"properties": {
+						"name": { "const": "graphrefly-stack" },
+						"version": { "const": "v1" }
+					}
+				},
+				"source": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": [
+						"gateInputDigest",
+						"gateResultDigest",
+						"planDigest",
+						"policyDigest",
+						"bindingDigests",
+						"recordDigests"
+					],
+					"properties": {
+						"gateInputDigest": {
+							"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash"
+						},
+						"gateResultDigest": {
+							"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash"
+						},
+						"planDigest": {
+							"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash"
+						},
+						"policyDigest": {
+							"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash"
+						},
+						"bindingDigests": {
+							"type": "array",
+							"items": { "$ref": "#/definitions/NamedDigest" },
+							"minItems": 1,
+							"maxItems": 64
+						},
+						"recordDigests": {
+							"type": "array",
+							"items": { "$ref": "#/definitions/NamedDigest" },
+							"minItems": 1,
+							"maxItems": 64
+						}
+					}
+				},
+				"topologyDigest": {
+					"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash"
+				},
+				"target": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["dependencyGraphDigest", "bindingDigests", "recordDigests"],
+					"properties": {
+						"dependencyGraphDigest": {
+							"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash"
+						},
+						"bindingDigests": {
+							"type": "array",
+							"items": { "$ref": "#/definitions/NamedDigest" },
+							"minItems": 1,
+							"maxItems": 64
+						},
+						"recordDigests": {
+							"type": "array",
+							"items": { "$ref": "#/definitions/NamedDigest" },
+							"minItems": 1,
+							"maxItems": 64
+						}
+					}
+				}
+			}
+		},
+		"LinearV1ConversionBundle": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"schema",
+				"sourceGateInput",
+				"sourceGateResult",
+				"topology",
+				"dependencyGraph",
+				"bindings",
+				"records",
+				"qualifiedCommits",
+				"conversion"
+			],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.linear-v1-conversion-bundle.v1" },
+				"sourceGateInput": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/GateInput"
+				},
+				"sourceGateResult": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/GateResult"
+				},
+				"topology": {
+					"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/GitTopologySlice"
+				},
+				"dependencyGraph": {
+					"$ref": "urn:graphrefly-stack:schema:dag-semantic-artifacts:v2#/definitions/SemanticDependencyGraph"
+				},
+				"bindings": {
+					"type": "array",
+					"items": {
+						"$ref": "urn:graphrefly-stack:schema:dag-semantic-artifacts:v2#/definitions/WorkUnitBinding"
+					},
+					"minItems": 1,
+					"maxItems": 64
+				},
+				"records": {
+					"type": "array",
+					"items": {
+						"$ref": "urn:graphrefly-stack:schema:dag-semantic-artifacts:v2#/definitions/SemanticChangeRecord"
+					},
+					"minItems": 1,
+					"maxItems": 64
+				},
+				"qualifiedCommits": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/PlanQualifiedCommit" },
+					"minItems": 1,
+					"maxItems": 64
+				},
+				"conversion": { "$ref": "#/definitions/LinearV1Conversion" }
+			}
+		}
+	}
+}

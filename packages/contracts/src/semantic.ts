@@ -33,5 +33,6 @@ export const SEMANTIC_STORAGE = {
 	policy: ".graphrefly-stack/policy.json",
 	plans: ".graphrefly-stack/plans",
 	localState: ".git/grfs",
+	planTrailer: "GraphReFly-Plan",
 	workUnitTrailer: "GraphReFly-Work-Unit",
 } as const;

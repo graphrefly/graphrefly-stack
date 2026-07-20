@@ -204,6 +204,7 @@ test("semantic adoption is additive and storage ownership remains explicit", () 
 		policy: ".graphrefly-stack/policy.json",
 		plans: ".graphrefly-stack/plans",
 		localState: ".git/grfs",
+		planTrailer: "GraphReFly-Plan",
 		workUnitTrailer: "GraphReFly-Work-Unit",
 	});
 

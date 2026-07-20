@@ -1,0 +1,118 @@
+{
+	"schema": "graphrefly.stack.merge-group-golden-suite.v1",
+	"cases": [
+		{
+			"caseId": "plan-qualified-conversion",
+			"native": {
+				"schema": "graphrefly.stack.plan-qualified-commit.v1",
+				"planId": "plan-a",
+				"workUnitId": "API",
+				"commit": {
+					"algorithm": "sha1",
+					"value": "1111111111111111111111111111111111111111"
+				},
+				"ownership": {
+					"kind": "native",
+					"planTrailer": {
+						"name": "GraphReFly-Plan",
+						"value": "plan-a",
+						"occurrences": 1
+					},
+					"workUnitTrailer": {
+						"name": "GraphReFly-Work-Unit",
+						"value": "API",
+						"occurrences": 1
+					}
+				}
+			},
+			"converted": {
+				"schema": "graphrefly.stack.plan-qualified-commit.v1",
+				"planId": "plan-legacy",
+				"workUnitId": "API",
+				"commit": {
+					"algorithm": "sha1",
+					"value": "2222222222222222222222222222222222222222"
+				},
+				"ownership": {
+					"kind": "converted-v1",
+					"sourceBindingDigest": {
+						"algorithm": "sha256",
+						"value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+					},
+					"sourceGateInputDigest": {
+						"algorithm": "sha256",
+						"value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+					}
+				}
+			},
+			"conversion": {
+				"schema": "graphrefly.stack.linear-v1-conversion.v1",
+				"converter": { "name": "graphrefly-stack", "version": "v1" },
+				"source": {
+					"gateInputDigest": {
+						"algorithm": "sha256",
+						"value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+					},
+					"gateResultDigest": {
+						"algorithm": "sha256",
+						"value": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+					},
+					"planDigest": {
+						"algorithm": "sha256",
+						"value": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+					},
+					"policyDigest": {
+						"algorithm": "sha256",
+						"value": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+					},
+					"bindingDigests": [
+						{
+							"workUnitId": "API",
+							"digest": {
+								"algorithm": "sha256",
+								"value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+							}
+						}
+					],
+					"recordDigests": [
+						{
+							"workUnitId": "API",
+							"digest": {
+								"algorithm": "sha256",
+								"value": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+							}
+						}
+					]
+				},
+				"topologyDigest": {
+					"algorithm": "sha256",
+					"value": "1111111111111111111111111111111111111111111111111111111111111111"
+				},
+				"target": {
+					"dependencyGraphDigest": {
+						"algorithm": "sha256",
+						"value": "2222222222222222222222222222222222222222222222222222222222222222"
+					},
+					"bindingDigests": [
+						{
+							"workUnitId": "API",
+							"digest": {
+								"algorithm": "sha256",
+								"value": "3333333333333333333333333333333333333333333333333333333333333333"
+							}
+						}
+					],
+					"recordDigests": [
+						{
+							"workUnitId": "API",
+							"digest": {
+								"algorithm": "sha256",
+								"value": "4444444444444444444444444444444444444444444444444444444444444444"
+							}
+						}
+					]
+				}
+			}
+		}
+	]
+}
