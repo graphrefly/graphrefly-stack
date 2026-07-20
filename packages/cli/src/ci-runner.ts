@@ -21,11 +21,19 @@ import {
 	SEMANTIC_REASON_ORDER,
 	sha256Jcs,
 } from "@graphrefly-stack/contracts";
-import { computeMergeGroupResultV1, projectMultiPlanTopologyV1 } from "@graphrefly-stack/core";
-import { discoverPlanQualifiedGitDag } from "./dag-discovery.js";
-import { createDagGraphEvidenceForSemanticGate } from "./dag-evidence.js";
-import { createDagSemanticGate } from "./dag-semantic-runner.js";
-import { assembleGroupIntegration, createGroupJoinEvidence } from "./group-integration-runner.js";
+import {
+	computeMergeGroupResultV1,
+	MultiPlanProjectionError,
+	projectMultiPlanTopologyV1,
+} from "@graphrefly-stack/core";
+import { DagDiscoveryError, discoverPlanQualifiedGitDag } from "./dag-discovery.js";
+import { createDagGraphEvidenceForSemanticGate, DagEvidenceError } from "./dag-evidence.js";
+import { createDagSemanticGate, DagSemanticRunnerError } from "./dag-semantic-runner.js";
+import {
+	assembleGroupIntegration,
+	createGroupJoinEvidence,
+	GroupIntegrationRunnerError,
+} from "./group-integration-runner.js";
 import { runtimeAssetPath } from "./runtime-paths.js";
 import {
 	bindSemanticPlan,
@@ -804,14 +812,30 @@ export async function runCi(options: {
 				"merge_group always evaluates every qualified Plan",
 			);
 		}
-		return runMergeGroupCi({
-			repository,
-			event,
-			output,
-			environment,
-			githubOutput,
-			githubStepSummary,
-		});
+		try {
+			return await runMergeGroupCi({
+				repository,
+				event,
+				output,
+				environment,
+				githubOutput,
+				githubStepSummary,
+			});
+		} catch (error) {
+			if (error instanceof CiRunnerError) throw error;
+			if (
+				error instanceof DagDiscoveryError ||
+				error instanceof DagEvidenceError ||
+				error instanceof DagSemanticRunnerError ||
+				error instanceof GroupIntegrationRunnerError
+			) {
+				throw new CiRunnerError(error.code, error.message);
+			}
+			if (error instanceof MultiPlanProjectionError) {
+				throw new CiRunnerError("MULTI_PLAN_PROJECTION_INVALID", error.message);
+			}
+			throw error;
+		}
 	}
 	const eventRepository = object(event.repository, "repository");
 	const owner = object(eventRepository.owner, "repository.owner");

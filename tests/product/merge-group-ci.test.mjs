@@ -14,6 +14,7 @@ import {
 } from "../../packages/contracts/dist/index.js";
 
 const workspaceNodeModules = fileURLToPath(new URL("../../node_modules", import.meta.url));
+const cli = fileURLToPath(new URL("../../packages/cli/dist/cli.js", import.meta.url));
 
 function git(repository, args) {
 	const result = spawnSync("git", args, {
@@ -51,7 +52,7 @@ async function commitImplementation(repository, path, source, planId, workUnitId
 	]);
 }
 
-async function repository() {
+async function repository(options = {}) {
 	const root = await mkdtemp(resolve(tmpdir(), "graphrefly-merge-group-ci-"));
 	git(root, ["init", "-q", "-b", "main"]);
 	await Promise.all([
@@ -85,29 +86,30 @@ process.stdout.write(JSON.stringify(value));
 		writeFile(
 			resolve(root, "graph.mjs"),
 			`import { graph } from "@graphrefly/ts/graph";
-import { applyLeft } from "./left.mjs";
-import { applyRight } from "./right.mjs";
+import { applyLeft, leftOwner } from "./left.mjs";
+import { applyRight, rightOwner } from "./right.mjs";
 export function createGraph() {
   const value = graph({ name: "merge-group-ci" });
-  value.state(1, { name: "base" });
+  value.state(1, { name: "base", meta: { owner: rightOwner ?? leftOwner ?? "base" } });
   applyLeft(value);
   applyRight(value);
   return value;
 }
 `,
 		),
-		writeFile(resolve(root, "left.mjs"), "export function applyLeft() {}\n"),
-		writeFile(resolve(root, "right.mjs"), "export function applyRight() {}\n"),
+		writeFile(
+			resolve(root, "left.mjs"),
+			"export const leftOwner = undefined;\nexport function applyLeft() {}\n",
+		),
+		writeFile(
+			resolve(root, "right.mjs"),
+			"export const rightOwner = undefined;\nexport function applyRight() {}\n",
+		),
 		writeFile(resolve(root, ".gitignore"), "node_modules\n"),
 	]);
 	await symlink(workspaceNodeModules, resolve(root, "node_modules"), "dir");
 	git(root, ["add", "-A"]);
 	git(root, ["commit", "-m", "base graph"]);
-	const base = git(root, ["rev-parse", "HEAD"]);
-	const baseBlueprint = await createRepositoryBlueprintSnapshot({
-		repository: root,
-		revision: base,
-	});
 	const policy = {
 		schema: "graphrefly.stack.semantic-policy.v1",
 		policyId: "merge-policy",
@@ -124,30 +126,42 @@ export function createGraph() {
 			},
 		],
 	};
-	const unit = (id, path) => ({
+	await mkdir(resolve(root, ".graphrefly-stack"), { recursive: true });
+	await writeFile(
+		resolve(root, ".graphrefly-stack/policy.json"),
+		`${JSON.stringify(policy, null, 2)}\n`,
+	);
+	git(root, ["add", ".graphrefly-stack/policy.json"]);
+	git(root, ["commit", "-m", "install repository policy"]);
+	const base = git(root, ["rev-parse", "HEAD"]);
+	const baseBlueprint = await createRepositoryBlueprintSnapshot({
+		repository: root,
+		revision: base,
+	});
+	const unit = (path, side, id, dependencies) => ({
 		id,
-		title: `${id} branch`,
-		intent: `Change ${id}`,
-		dependencies: [],
+		title: `${side} API`,
+		intent: `Change ${side} API`,
+		dependencies,
 		allowedSourceScopes: [path],
 		capabilities: ["graph-change"],
 		claims: [
 			{
-				id: `${id.toLowerCase()}-safe`,
+				id: `${side}-safe`,
 				predicate: {
 					operator: "absent",
-					selector: { kind: "node", nodeId: `forbidden-${id.toLowerCase()}` },
+					selector: { kind: "node", nodeId: `forbidden-${side}` },
 				},
 				rationale: "Forbidden node remains absent",
 			},
 		],
 		requiredChecks: ["contract"],
 	});
-	const plan = {
+	const plan = (planId, path, side, id, dependencies) => ({
 		schema: "graphrefly.stack.semantic-plan.v1",
-		planId: "plan-group",
-		taskDigest: { algorithm: "sha256", value: sha256Jcs({ task: "merge group" }) },
-		taskSummary: "Validate a clean merge group",
+		planId,
+		taskDigest: { algorithm: "sha256", value: sha256Jcs({ task: planId }) },
+		taskSummary: `Validate ${planId} in a clean merge group`,
 		baseCommit: { algorithm: "sha1", value: base },
 		baseBlueprintHash: baseBlueprint.blueprintHash,
 		policy: {
@@ -157,40 +171,52 @@ export function createGraph() {
 		},
 		proposalSource: "human",
 		acceptedBy: { label: "test", identityVerified: false },
-		workUnits: [unit("LEFT", "left.mjs"), unit("RIGHT", "right.mjs")],
-	};
+		workUnits: [unit(path, side, id, dependencies)],
+	});
+	git(root, ["switch", "-q", "-c", "plan-a"]);
 	await mkdir(resolve(root, ".graphrefly-stack/plans"), { recursive: true });
-	await Promise.all([
-		writeFile(
-			resolve(root, ".graphrefly-stack/policy.json"),
-			`${JSON.stringify(policy, null, 2)}\n`,
-		),
-		writeFile(
-			resolve(root, ".graphrefly-stack/plans/plan-group.json"),
-			`${JSON.stringify(plan, null, 2)}\n`,
-		),
-	]);
-	git(root, ["add", ".graphrefly-stack"]);
-	git(root, ["commit", "-m", "accept plan"]);
-	const accepted = git(root, ["rev-parse", "HEAD"]);
-	git(root, ["switch", "-q", "-c", "left"]);
+	await writeFile(
+		resolve(root, ".graphrefly-stack/plans/plan-a.json"),
+		`${JSON.stringify(
+			plan("plan-a", "left.mjs", "left", "API", options.crossPlanDependency === true ? ["DB"] : []),
+			null,
+			2,
+		)}\n`,
+	);
+	git(root, ["add", ".graphrefly-stack/plans/plan-a.json"]);
+	git(root, ["commit", "-m", "accept plan a"]);
 	await commitImplementation(
 		root,
 		"left.mjs",
-		'export function applyLeft(value) { value.state(2, { name: "left" }); }\n',
-		"plan-group",
-		"LEFT",
+		options.conflictingJoin === true
+			? 'export const leftOwner = "left";\nexport function applyLeft() {}\n'
+			: 'export const leftOwner = undefined;\nexport function applyLeft(value) { value.state(2, { name: "left" }); }\n',
+		"plan-a",
+		"API",
 	);
-	git(root, ["switch", "-q", "-c", "right", accepted]);
+	git(root, ["switch", "-q", "-c", "plan-b", base]);
+	await mkdir(resolve(root, ".graphrefly-stack/plans"), { recursive: true });
+	await writeFile(
+		resolve(root, ".graphrefly-stack/plans/plan-b.json"),
+		`${JSON.stringify(
+			plan("plan-b", "right.mjs", "right", options.crossPlanDependency === true ? "DB" : "API", []),
+			null,
+			2,
+		)}\n`,
+	);
+	git(root, ["add", ".graphrefly-stack/plans/plan-b.json"]);
+	git(root, ["commit", "-m", "accept plan b"]);
 	await commitImplementation(
 		root,
 		"right.mjs",
-		'export function applyRight(value) { value.state(3, { name: "right" }); }\n',
-		"plan-group",
-		"RIGHT",
+		options.conflictingJoin === true
+			? 'export const rightOwner = "right";\nexport function applyRight() {}\n'
+			: 'export const rightOwner = undefined;\nexport function applyRight(value) { value.state(3, { name: "right" }); }\n',
+		"plan-b",
+		options.crossPlanDependency === true ? "DB" : "API",
 	);
-	git(root, ["switch", "-q", "left"]);
-	git(root, ["merge", "--no-ff", "-m", "synthetic merge group", "right"]);
+	git(root, ["switch", "-q", "plan-a"]);
+	git(root, ["merge", "--no-ff", "-m", "synthetic merge group", "plan-b"]);
 	return { root, base, head: git(root, ["rev-parse", "HEAD"]) };
 }
 
@@ -235,8 +261,20 @@ test("merge_group checks_requested emits one independently verified aggregate", 
 	});
 	assert.equal(result.outcome, "pass");
 	const bundle = JSON.parse(await readFile(output, "utf8"));
-	assert.equal(bundle.result.plans.length, 1);
-	assert.equal(bundle.result.plans[0].gateResult.verdict, "pass");
+	assert.deepEqual(
+		bundle.result.plans.map((entry) => [entry.planId, entry.gateResult.verdict]),
+		[
+			["plan-a", "pass"],
+			["plan-b", "pass"],
+		],
+	);
+	assert.deepEqual(
+		bundle.qualifiedCommits.map((entry) => [entry.planId, entry.workUnitId]),
+		[
+			["plan-a", "API"],
+			["plan-b", "API"],
+		],
+	);
 	assertMergeGroupBundleIntegrityV1(bundle);
 	const repeatedOutput = resolve(external, "aggregate-repeated.json");
 	const repeated = await runCi({
@@ -258,9 +296,72 @@ test("merge_group checks_requested emits one independently verified aggregate", 
 	});
 	assert.equal(repeated.outcome, "pass");
 	assert.equal(await readFile(repeatedOutput, "utf8"), await readFile(output, "utf8"));
+	const cliOutput = resolve(external, "aggregate-cli.json");
+	const cliRun = spawnSync(
+		process.execPath,
+		[
+			cli,
+			"ci",
+			"run",
+			"--repo",
+			fixture.root,
+			"--event",
+			eventPath,
+			"--output",
+			cliOutput,
+			"--json",
+		],
+		{
+			encoding: "utf8",
+			env: {
+				...process.env,
+				GITHUB_EVENT_NAME: "merge_group",
+				GITHUB_SHA: fixture.head,
+				GITHUB_REF: headRef,
+				GITHUB_WORKFLOW_REF:
+					"clfhhc/test-graphrefly/.github/workflows/graphrefly-stack.yml@refs/heads/main",
+				GITHUB_WORKFLOW_SHA: fixture.base,
+				GITHUB_RUN_ID: "300",
+				GITHUB_RUN_ATTEMPT: "1",
+				GITHUB_ACTOR_ID: "400",
+			},
+		},
+	);
+	assert.equal(cliRun.status, 0, cliRun.stderr || cliRun.stdout);
+	assert.equal(await readFile(cliOutput, "utf8"), await readFile(output, "utf8"));
 	assert.deepEqual(fingerprint(fixture.root), before);
+	const tampered = structuredClone(bundle);
+	tampered.result.plans[0].gateResult.reasonCodes = ["JOIN_INVALID"];
+	assert.throws(() => assertMergeGroupBundleIntegrityV1(tampered));
+	await assert.rejects(
+		runCi({
+			repository: fixture.root,
+			eventPath,
+			planId: "plan-a",
+			output: resolve(external, "selected-plan.json"),
+			environment: { ...process.env, GITHUB_EVENT_NAME: "merge_group" },
+		}),
+		(error) => error.code === "CI_PLAN_SELECTION_UNSUPPORTED",
+	);
 
 	const stale = structuredClone(JSON.parse(await readFile(eventPath, "utf8")));
+	stale.merge_group.head_ref = "refs/heads/gh-readonly-queue/main/rebuilt";
+	await writeFile(eventPath, `${JSON.stringify(stale)}\n`);
+	await assert.rejects(
+		runCi({
+			repository: fixture.root,
+			eventPath,
+			output: resolve(external, "stale-ref.json"),
+			environment: {
+				...process.env,
+				GITHUB_EVENT_NAME: "merge_group",
+				GITHUB_SHA: fixture.head,
+				GITHUB_REF: headRef,
+			},
+		}),
+		(error) => error.code === "CI_HEAD_MISMATCH",
+	);
+	stale.merge_group.head_ref = headRef;
 	stale.merge_group.head_sha = "1".repeat(40);
 	await writeFile(eventPath, `${JSON.stringify(stale)}\n`);
 	await assert.rejects(
@@ -277,4 +378,168 @@ test("merge_group checks_requested emits one independently verified aggregate", 
 		}),
 		(error) => error.code === "CI_HEAD_MISMATCH",
 	);
+});
+
+test("merge_group preserves a real invalid join witness as a blocked aggregate", async (t) => {
+	const fixture = await repository({ conflictingJoin: true });
+	t.after(() => rm(fixture.root, { recursive: true, force: true }));
+	const external = await mkdtemp(resolve(tmpdir(), "graphrefly-merge-group-conflict-"));
+	t.after(() => rm(external, { recursive: true, force: true }));
+	const eventPath = resolve(external, "event.json");
+	const headRef = "refs/heads/gh-readonly-queue/main/pr-conflict";
+	await writeFile(
+		eventPath,
+		`${JSON.stringify({
+			action: "checks_requested",
+			repository: {
+				id: 100,
+				name: "test-graphrefly",
+				owner: { id: 200, login: "clfhhc" },
+			},
+			merge_group: {
+				base_sha: fixture.base,
+				head_sha: fixture.head,
+				base_ref: "refs/heads/main",
+				head_ref: headRef,
+			},
+		})}\n`,
+	);
+	const result = await runCi({
+		repository: fixture.root,
+		eventPath,
+		output: resolve(external, "aggregate.json"),
+		environment: {
+			...process.env,
+			GITHUB_EVENT_NAME: "merge_group",
+			GITHUB_SHA: fixture.head,
+			GITHUB_REF: headRef,
+			GITHUB_WORKFLOW_REF:
+				"clfhhc/test-graphrefly/.github/workflows/graphrefly-stack.yml@refs/heads/main",
+			GITHUB_WORKFLOW_SHA: fixture.base,
+			GITHUB_RUN_ID: "301",
+			GITHUB_RUN_ATTEMPT: "1",
+			GITHUB_ACTOR_ID: "400",
+		},
+	});
+	assert.equal(result.outcome, "blocked");
+	const bundle = JSON.parse(await readFile(resolve(external, "aggregate.json"), "utf8"));
+	assert.equal(bundle.result.groupIntegration.joins[0].valid, false);
+	assert.equal(
+		bundle.result.plans.every((entry) => entry.gateResult.verdict === "pass"),
+		true,
+	);
+	assert.equal(
+		bundle.result.plans.every(
+			(entry) =>
+				entry.gateResult.units.every((unit) => unit.reasonCodes.length === 0) &&
+				entry.gateResult.joins.every((join) => join.reasonCodes.length === 0),
+		),
+		true,
+	);
+	assert.equal(
+		bundle.result.groupIntegration.reasonCodes.includes("METADATA_INCOMPATIBLE_CHANGE"),
+		true,
+	);
+	assertMergeGroupBundleIntegrityV1(bundle);
+	const cliOutput = resolve(external, "aggregate-cli.json");
+	const cliRun = spawnSync(
+		process.execPath,
+		[
+			cli,
+			"ci",
+			"run",
+			"--repo",
+			fixture.root,
+			"--event",
+			eventPath,
+			"--output",
+			cliOutput,
+			"--json",
+		],
+		{
+			encoding: "utf8",
+			env: {
+				...process.env,
+				GITHUB_EVENT_NAME: "merge_group",
+				GITHUB_SHA: fixture.head,
+				GITHUB_REF: headRef,
+				GITHUB_WORKFLOW_REF:
+					"clfhhc/test-graphrefly/.github/workflows/graphrefly-stack.yml@refs/heads/main",
+				GITHUB_WORKFLOW_SHA: fixture.base,
+				GITHUB_RUN_ID: "301",
+				GITHUB_RUN_ATTEMPT: "1",
+				GITHUB_ACTOR_ID: "400",
+			},
+		},
+	);
+	assert.equal(cliRun.status, 2, cliRun.stderr || cliRun.stdout);
+	assert.equal(
+		await readFile(cliOutput, "utf8"),
+		await readFile(resolve(external, "aggregate.json"), "utf8"),
+	);
+});
+
+test("merge_group rejects cross-Plan dependencies with a stable CI error", async (t) => {
+	const fixture = await repository({ crossPlanDependency: true });
+	t.after(() => rm(fixture.root, { recursive: true, force: true }));
+	const external = await mkdtemp(resolve(tmpdir(), "graphrefly-merge-group-cross-plan-"));
+	t.after(() => rm(external, { recursive: true, force: true }));
+	const eventPath = resolve(external, "event.json");
+	const headRef = "refs/heads/gh-readonly-queue/main/pr-cross-plan";
+	await writeFile(
+		eventPath,
+		`${JSON.stringify({
+			action: "checks_requested",
+			repository: {
+				id: 100,
+				name: "test-graphrefly",
+				owner: { id: 200, login: "clfhhc" },
+			},
+			merge_group: {
+				base_sha: fixture.base,
+				head_sha: fixture.head,
+				base_ref: "refs/heads/main",
+				head_ref: headRef,
+			},
+		})}\n`,
+	);
+	const environment = {
+		...process.env,
+		GITHUB_EVENT_NAME: "merge_group",
+		GITHUB_SHA: fixture.head,
+		GITHUB_REF: headRef,
+		GITHUB_WORKFLOW_REF:
+			"clfhhc/test-graphrefly/.github/workflows/graphrefly-stack.yml@refs/heads/main",
+		GITHUB_WORKFLOW_SHA: fixture.base,
+		GITHUB_RUN_ID: "302",
+		GITHUB_RUN_ATTEMPT: "1",
+		GITHUB_ACTOR_ID: "400",
+	};
+	await assert.rejects(
+		runCi({
+			repository: fixture.root,
+			eventPath,
+			output: resolve(external, "aggregate.json"),
+			environment,
+		}),
+		(error) => error.code === "CROSS_PLAN_DEPENDENCY_UNSUPPORTED",
+	);
+	const cliRun = spawnSync(
+		process.execPath,
+		[
+			cli,
+			"ci",
+			"run",
+			"--repo",
+			fixture.root,
+			"--event",
+			eventPath,
+			"--output",
+			resolve(external, "aggregate-cli.json"),
+			"--json",
+		],
+		{ encoding: "utf8", env: environment },
+	);
+	assert.equal(cliRun.status, 1, cliRun.stderr || cliRun.stdout);
+	assert.equal(JSON.parse(cliRun.stdout).error.code, "CROSS_PLAN_DEPENDENCY_UNSUPPORTED");
 });
