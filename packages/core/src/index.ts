@@ -10,6 +10,7 @@ export * from "./group-integration.js";
 export * from "./integration-effects.js";
 export * from "./merge-group-result.js";
 export * from "./multi-plan-projection.js";
+export * from "./selective-recovery.js";
 
 export const CORE_ARCHITECTURE = {
 	version: "D17",

@@ -4,6 +4,8 @@ export const DAG_SEMANTIC_ARTIFACTS_SCHEMA =
 	"urn:graphrefly-stack:schema:dag-semantic-artifacts:v2" as const;
 export const DAG_SEMANTIC_GOLDEN_SUITE_SCHEMA =
 	"urn:graphrefly-stack:schema:dag-semantic-golden-suite:v2" as const;
+export const DAG_SELECTIVE_RECOVERY_ARTIFACTS_SCHEMA =
+	"urn:graphrefly-stack:schema:dag-selective-recovery:v1" as const;
 
 export const GIT_TOPOLOGY_SLICE_SCHEMA = "graphrefly.stack.git-topology-slice.v2" as const;
 export const JOIN_BINDING_SCHEMA = "graphrefly.stack.join-binding.v2" as const;
@@ -20,6 +22,8 @@ export const DAG_GATE_RESULT_SCHEMA = "graphrefly.stack.dag-gate-result.v2" as c
 export const DAG_GATE_BUNDLE_SCHEMA = "graphrefly.stack.dag-gate-bundle.v2" as const;
 export const DAG_STRUCTURAL_ERROR_BUNDLE_SCHEMA =
 	"graphrefly.stack.dag-structural-error-bundle.v2" as const;
+export const DAG_SELECTIVE_RECOVERY_BUNDLE_SCHEMA =
+	"graphrefly.stack.dag-selective-recovery-bundle.v1" as const;
 export const DAG_REVIEW_SCHEMA = "graphrefly.stack.dag-review.v2" as const;
 export const DAG_REVIEW_EVIDENCE_SCHEMA = "graphrefly.stack.dag-review-evidence.v2" as const;
 export const DAG_REVIEW_DECISION_SCHEMA = "graphrefly.stack.dag-review-decision.v2" as const;

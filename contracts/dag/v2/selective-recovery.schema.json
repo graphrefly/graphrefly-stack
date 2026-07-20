@@ -1,0 +1,107 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "urn:graphrefly-stack:schema:dag-selective-recovery:v1",
+	"title": "GraphReFly Stack selective DAG recovery artifacts v1",
+	"definitions": {
+		"RecoveryLineage": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"workUnitId",
+				"disposition",
+				"sourcePlanId",
+				"replacementPlanId",
+				"sourceBindingDigest",
+				"sourceRecordDigest",
+				"replacementBindingDigest",
+				"replacementRecordDigest"
+			],
+			"properties": {
+				"workUnitId": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/WorkUnitId"
+				},
+				"disposition": { "enum": ["preserved", "replaced"] },
+				"sourcePlanId": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/Identifier"
+				},
+				"replacementPlanId": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/Identifier"
+				},
+				"sourceBindingDigest": {
+					"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash"
+				},
+				"sourceRecordDigest": {
+					"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash"
+				},
+				"replacementBindingDigest": {
+					"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash"
+				},
+				"replacementRecordDigest": {
+					"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash"
+				}
+			}
+		},
+		"DagSelectiveRecoveryBundle": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"schema",
+				"sourceBundle",
+				"sourceBundleDigest",
+				"sourcePlan",
+				"selectiveReplan",
+				"replacementPlan",
+				"policy",
+				"sharedTopology",
+				"qualifiedCommits",
+				"effectiveTopology",
+				"replacementBundle",
+				"lineage"
+			],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.dag-selective-recovery-bundle.v1" },
+				"sourceBundle": {
+					"$ref": "urn:graphrefly-stack:schema:dag-semantic-artifacts:v2#/definitions/DagGateBundle"
+				},
+				"sourceBundleDigest": {
+					"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash"
+				},
+				"sourcePlan": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/AcceptedChangePlan"
+				},
+				"selectiveReplan": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/SelectiveReplan"
+				},
+				"replacementPlan": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/AcceptedChangePlan"
+				},
+				"policy": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/RepositoryPolicy"
+				},
+				"sharedTopology": {
+					"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/GitTopologySlice"
+				},
+				"qualifiedCommits": {
+					"type": "array",
+					"items": {
+						"$ref": "urn:graphrefly-stack:schema:merge-group-artifacts:v1#/definitions/PlanQualifiedCommit"
+					},
+					"minItems": 2,
+					"maxItems": 64
+				},
+				"effectiveTopology": {
+					"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/GitTopologySlice"
+				},
+				"replacementBundle": {
+					"$ref": "urn:graphrefly-stack:schema:dag-semantic-artifacts:v2#/definitions/DagGateBundle"
+				},
+				"lineage": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/RecoveryLineage" },
+					"minItems": 1,
+					"maxItems": 64
+				}
+			}
+		}
+	}
+}

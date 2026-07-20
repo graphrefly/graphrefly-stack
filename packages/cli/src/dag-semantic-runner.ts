@@ -189,6 +189,13 @@ type DagRecovery = {
 	priorBundleDigest: string;
 };
 
+type DagSelectiveRecoveryContext = {
+	sourcePlanId: string;
+	sourceHead: string;
+	preservedUnits: string[];
+	qualifiedCommits: JsonObject[];
+};
+
 type DagCacheReport = {
 	priorBundleDigest: string | null;
 	units: Array<{
@@ -266,19 +273,19 @@ async function assertBundle(
 	}
 }
 
-async function readPriorBundle(
+export async function readDagGateBundle(
 	repository: string,
 	planId: string,
-	recovery: DagRecovery,
+	digest: string,
 ): Promise<DagSemanticGateBundle> {
-	if (!/^[0-9a-f]{64}$/u.test(recovery.priorBundleDigest)) {
+	if (!/^[0-9a-f]{64}$/u.test(digest)) {
 		throw new DagSemanticRunnerError(
 			"RECOVERY_EVIDENCE_INVALID",
 			"Prior DAG bundle digest is invalid",
 		);
 	}
 	const directory = await repositoryStateDirectory(repository, "dag-gates", planId);
-	const path = resolve(directory, `${recovery.priorBundleDigest}.json`);
+	const path = resolve(directory, `${digest}.json`);
 	let value: unknown;
 	try {
 		value = JSON.parse(await readFile(path, "utf8"));
@@ -288,13 +295,21 @@ async function readPriorBundle(
 			"Prior DAG bundle is missing or malformed",
 		);
 	}
-	if (sha256Jcs(value) !== recovery.priorBundleDigest) {
+	if (sha256Jcs(value) !== digest) {
 		throw new DagSemanticRunnerError(
 			"RECOVERY_EVIDENCE_INVALID",
 			"Prior DAG bundle content address does not match",
 		);
 	}
 	return assertBundle(value, "RECOVERY_EVIDENCE_INVALID");
+}
+
+async function readPriorBundle(
+	repository: string,
+	planId: string,
+	recovery: DagRecovery,
+): Promise<DagSemanticGateBundle> {
+	return readDagGateBundle(repository, planId, recovery.priorBundleDigest);
 }
 
 async function persistBundle(
@@ -364,7 +379,7 @@ async function persistStructuralErrorBundle(
 	return { path, digest };
 }
 
-export async function createDagSemanticGate(options: {
+async function createDagSemanticGateInternal(options: {
 	repository: string;
 	base: string;
 	head: string;
@@ -372,25 +387,37 @@ export async function createDagSemanticGate(options: {
 	repositoryIdentity: { provider: string; owner: string; name: string };
 	recovery?: DagRecovery;
 	graphEvidence?: DagGraphEvidence;
-}): Promise<DagSemanticGateRun | DagStructuralErrorRun> {
+	selectiveRecovery?: DagSelectiveRecoveryContext;
+}): Promise<
+	DagSemanticGateRun | DagStructuralErrorRun | DagSemanticGateBundle | DagStructuralErrorBundle
+> {
 	const graphEvidence =
 		options.graphEvidence ?? (await createDagGraphEvidenceForSemanticGate(options));
 	const topology = graphEvidence.topology;
 	const git = new SystemGitAdapter();
 	const resolvedHead = object(topology.head, "topology head").value as string;
 	const planPath = `.graphrefly-stack/plans/${options.planId}.json`;
+	const replanPath = `.graphrefly-stack/plans/${options.planId}.replan.json`;
 	const policyPath = ".graphrefly-stack/policy.json";
 	const plan = gitJson(options.repository, resolvedHead, planPath);
 	const policy = gitJson(options.repository, resolvedHead, policyPath);
+	const selectiveReplan =
+		options.selectiveRecovery === undefined
+			? undefined
+			: gitJson(options.repository, resolvedHead, replanPath);
 	const semanticV1 = JSON.parse(
 		await readFile(runtimeAssetPath("contracts/semantic/v1/artifacts.schema.json"), "utf8"),
 	);
 	const v1Ajv = createStrictAjv();
 	v1Ajv.addSchema(semanticV1);
-	for (const [name, value] of [
+	const acceptedArtifacts: Array<readonly [string, JsonObject]> = [
 		["AcceptedChangePlan", plan],
 		["RepositoryPolicy", policy],
-	] as const) {
+	];
+	if (selectiveReplan !== undefined) {
+		acceptedArtifacts.push(["SelectiveReplan", selectiveReplan]);
+	}
+	for (const [name, value] of acceptedArtifacts) {
 		const validate = v1Ajv.getSchema(
 			`urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/${name}`,
 		);
@@ -441,12 +468,22 @@ export async function createDagSemanticGate(options: {
 		const acceptanceOid = acceptanceEntry.oid as { algorithm: "sha1" | "sha256"; value: string };
 		const changedPaths = await git.changedPaths(options.repository, acceptanceOid);
 		const acceptedPaths = [...changedPaths].sort();
-		if (
-			acceptedPaths.length < 1 ||
-			acceptedPaths.length > 2 ||
-			acceptedPaths[0] !== planPath ||
-			acceptedPaths.some((path) => path !== planPath && path !== policyPath)
-		) {
+		const acceptedPathSet = new Set(acceptedPaths);
+		const normalAcceptance =
+			acceptedPaths.length >= 1 &&
+			acceptedPaths.length <= 2 &&
+			acceptedPaths[0] === planPath &&
+			acceptedPaths.every((path) => path === planPath || path === policyPath);
+		const selectiveAcceptance =
+			options.selectiveRecovery !== undefined &&
+			acceptedPaths.length >= 2 &&
+			acceptedPaths.length <= 3 &&
+			acceptedPathSet.has(planPath) &&
+			acceptedPathSet.has(replanPath) &&
+			acceptedPaths.every(
+				(path) => path === planPath || path === replanPath || path === policyPath,
+			);
+		if (!normalAcceptance && !selectiveAcceptance) {
 			throw new DagSemanticRunnerError(
 				"ACCEPTED_ARTIFACT_INVALID",
 				"Plan acceptance commit mixes non-plan changes",
@@ -458,23 +495,42 @@ export async function createDagSemanticGate(options: {
 		...topologyObjects.map((entry) => object(entry.oid, "OID").value as string),
 	]) {
 		const hasPlan = gitHasPath(options.repository, revision, planPath);
+		const hasSelectiveReplan = gitHasPath(options.repository, revision, replanPath);
 		if (
 			hasPlan &&
 			(!gitHasPath(options.repository, revision, policyPath) ||
 				sha256Jcs(gitJson(options.repository, revision, planPath)) !== sha256Jcs(plan) ||
-				sha256Jcs(gitJson(options.repository, revision, policyPath)) !== sha256Jcs(policy))
+				sha256Jcs(gitJson(options.repository, revision, policyPath)) !== sha256Jcs(policy) ||
+				(selectiveReplan !== undefined &&
+					(!hasSelectiveReplan ||
+						sha256Jcs(gitJson(options.repository, revision, replanPath)) !==
+							sha256Jcs(selectiveReplan))))
 		) {
 			throw new DagSemanticRunnerError(
 				"ACCEPTED_ARTIFACT_INVALID",
 				`Accepted plan or policy changed at ${revision}`,
 			);
 		}
+		if (selectiveReplan !== undefined && hasSelectiveReplan !== hasPlan) {
+			throw new DagSemanticRunnerError(
+				"ACCEPTED_ARTIFACT_INVALID",
+				`Selective replan lifecycle changed at ${revision}`,
+			);
+		}
 	}
 	for (const entry of topologyObjects.filter((candidate) => candidate.kind === "implementation")) {
 		const revision = object(entry.oid, "implementation OID").value as string;
+		const owner = options.selectiveRecovery?.qualifiedCommits.find(
+			(qualified) => object(qualified.commit, "qualified commit").value === revision,
+		);
+		const carriedSourceImplementation =
+			options.selectiveRecovery !== undefined &&
+			owner?.planId === options.selectiveRecovery.sourcePlanId &&
+			options.selectiveRecovery.preservedUnits.includes(String(owner.workUnitId));
 		if (
-			!gitIsAncestor(options.repository, acceptanceCommit, revision) ||
-			!gitHasPath(options.repository, revision, planPath)
+			!carriedSourceImplementation &&
+			(!gitIsAncestor(options.repository, acceptanceCommit, revision) ||
+				!gitHasPath(options.repository, revision, planPath))
 		) {
 			throw new DagSemanticRunnerError(
 				"ACCEPTED_ARTIFACT_INVALID",
@@ -482,12 +538,20 @@ export async function createDagSemanticGate(options: {
 			);
 		}
 	}
+	const expectedBase = options.selectiveRecovery?.sourceHead ?? topologyBase;
+	const expectedBaseBlueprint =
+		options.selectiveRecovery === undefined
+			? object(topology.baseBlueprintHash, "topology base Blueprint")
+			: object(
+					topologyObjects.find((entry) => object(entry.oid, "topology OID").value === expectedBase)
+						?.blueprintHash,
+					"selective recovery source head Blueprint",
+				);
 	if (
-		(object(plan.baseCommit, "plan base").value as string) !==
-			(object(topology.base, "topology base").value as string) ||
+		(object(plan.baseCommit, "plan base").value as string) !== expectedBase ||
 		!Object.is(
 			object(plan.baseBlueprintHash, "plan base Blueprint").value,
-			object(topology.baseBlueprintHash, "topology base Blueprint").value,
+			expectedBaseBlueprint.value,
 		)
 	) {
 		throw new DagSemanticRunnerError(
@@ -538,6 +602,12 @@ export async function createDagSemanticGate(options: {
 			);
 		}
 	}
+	if (options.recovery !== undefined && options.selectiveRecovery !== undefined) {
+		throw new DagSemanticRunnerError(
+			"RECOVERY_EVIDENCE_INVALID",
+			"Git rebinding and selective Plan recovery cannot be combined",
+		);
+	}
 	const priorBundle =
 		options.recovery === undefined
 			? undefined
@@ -557,7 +627,7 @@ export async function createDagSemanticGate(options: {
 		workUnitIds: string[],
 		diagnostics: JsonObject[],
 		bindings: JsonObject[] = [],
-	): Promise<DagStructuralErrorRun> => {
+	): Promise<DagStructuralErrorRun | DagStructuralErrorBundle> => {
 		const availableEvidenceDigests = bindings
 			.map((entry) => ({
 				kind: "binding",
@@ -603,6 +673,7 @@ export async function createDagSemanticGate(options: {
 				"DAG head moved while structural evidence was evaluated",
 			);
 		}
+		if (options.selectiveRecovery !== undefined) return bundle;
 		const artifact = await persistStructuralErrorBundle(options.repository, options.planId, bundle);
 		return { ...bundle, artifact };
 	};
@@ -959,6 +1030,7 @@ export async function createDagSemanticGate(options: {
 		...computed,
 	};
 	await assertBundle(bundle, "CONTRACT_INVALID");
+	if (options.selectiveRecovery !== undefined) return bundle;
 	const artifact = await persistBundle(options.repository, options.planId, bundle);
 	return {
 		...bundle,
@@ -972,4 +1044,32 @@ export async function createDagSemanticGate(options: {
 			})),
 		},
 	};
+}
+
+export function createDagSemanticGate(options: {
+	repository: string;
+	base: string;
+	head: string;
+	planId: string;
+	repositoryIdentity: { provider: string; owner: string; name: string };
+	recovery?: DagRecovery;
+	graphEvidence?: DagGraphEvidence;
+}): Promise<DagSemanticGateRun | DagStructuralErrorRun> {
+	return createDagSemanticGateInternal(options) as Promise<
+		DagSemanticGateRun | DagStructuralErrorRun
+	>;
+}
+
+export function createDagSemanticGateForSelectiveRecovery(options: {
+	repository: string;
+	base: string;
+	head: string;
+	planId: string;
+	repositoryIdentity: { provider: string; owner: string; name: string };
+	graphEvidence: DagGraphEvidence;
+	selectiveRecovery: DagSelectiveRecoveryContext;
+}): Promise<DagSemanticGateBundle | DagStructuralErrorBundle> {
+	return createDagSemanticGateInternal(options) as Promise<
+		DagSemanticGateBundle | DagStructuralErrorBundle
+	>;
 }

@@ -22,6 +22,7 @@ import {
 	type DagReviewEvidenceBundle,
 	DagReviewRunnerError,
 } from "./dag-review-runner.js";
+import { createDagSemanticGate, DagSemanticRunnerError } from "./dag-semantic-runner.js";
 import { exportEvidenceBundle, type LiveRunRecord } from "./exporter.js";
 import { createFlagshipFixture, readRuntimeSuite } from "./fixture.js";
 import {
@@ -40,6 +41,10 @@ import {
 	selectReviewRoute,
 } from "./review-routing.js";
 import { startReviewServer } from "./review-server.js";
+import {
+	createDagSelectiveRecovery,
+	SelectiveRecoveryRunnerError,
+} from "./selective-recovery-runner.js";
 import {
 	bindSemanticPlan,
 	createSemanticGate,
@@ -68,6 +73,7 @@ Usage:
   grfs plan --repo <path> --bind --plan-id <id> [--head <revision>] --json
   grfs plan [--fixture <runtime-suite.json>] [--mode replay|live] --json
   grfs gate --repo <path> --plan-id <id> [--head <revision>] --json
+  grfs gate --repo <path> --base <revision> --head <revision> --plan-id <id> [--source-plan-id <id> --source-bundle-digest <sha256>] [--provider <provider> --owner <owner> --name <name>] --json
   grfs gate [--fixture <runtime-suite.json>] [--case <case-id>] --json
   grfs replan --repo <path> --plan-id <id> [--head <revision>] [--proposal <proposal.json>] [--context <manifest.json> --authorize-context] [--mode replay|live] [--accept --accept-by <label>] --json
   grfs replan [--mode replay|live] [--fallback none|replay] --json
@@ -588,6 +594,75 @@ export async function runCli(argv = process.argv.slice(2)): Promise<number> {
 				return failure(command, json, "PLAN_ID_REQUIRED", "--plan-id is required with --repo");
 			}
 			try {
+				const base = readOption(argv, "--base");
+				if (
+					base === undefined &&
+					["--source-plan-id", "--source-bundle-digest", "--provider", "--owner", "--name"].some(
+						(option) => argv.includes(option),
+					)
+				) {
+					return failure(
+						command,
+						json,
+						"DAG_GATE_BASE_REQUIRED",
+						"DAG gate and recovery options require --base and --head",
+					);
+				}
+				if (base !== undefined) {
+					const head = readOption(argv, "--head");
+					if (head === undefined) {
+						return failure(
+							command,
+							json,
+							"DAG_GATE_HEAD_REQUIRED",
+							"--head is required with --base",
+						);
+					}
+					const sourcePlanId = readOption(argv, "--source-plan-id");
+					const sourceBundleDigest = readOption(argv, "--source-bundle-digest");
+					if ((sourcePlanId === undefined) !== (sourceBundleDigest === undefined)) {
+						return failure(
+							command,
+							json,
+							"DAG_RECOVERY_SOURCE_INCOMPLETE",
+							"--source-plan-id and --source-bundle-digest must be supplied together",
+						);
+					}
+					const repositoryIdentity = await resolveRepositoryIdentity({
+						repository,
+						provider: readOption(argv, "--provider"),
+						owner: readOption(argv, "--owner"),
+						name: readOption(argv, "--name"),
+					});
+					const output =
+						sourcePlanId === undefined
+							? await createDagSemanticGate({
+									repository,
+									base,
+									head,
+									planId,
+									repositoryIdentity,
+								})
+							: await createDagSelectiveRecovery({
+									repository,
+									base,
+									head,
+									sourcePlanId,
+									replacementPlanId: planId,
+									sourceBundleDigest: sourceBundleDigest as string,
+									repositoryIdentity,
+								});
+					success(command, "deterministic", output, json);
+					const verdict =
+						sourcePlanId === undefined
+							? (output as unknown as { gateResult: { verdict: string } }).gateResult.verdict
+							: (
+									output as unknown as {
+										replacementBundle: { gateResult: { verdict: string } };
+									}
+								).replacementBundle.gateResult.verdict;
+					return verdict === "pass" ? 0 : verdict === "blocked" ? 2 : 1;
+				}
 				const output = await createSemanticGate({
 					repository,
 					planId,
@@ -601,6 +676,13 @@ export async function runCli(argv = process.argv.slice(2)): Promise<number> {
 						: 1;
 			} catch (error) {
 				if (error instanceof SemanticRepositoryError || error instanceof RepositoryReviewError) {
+					return failure(command, json, error.code, error.message);
+				}
+				if (
+					error instanceof DagSemanticRunnerError ||
+					error instanceof SelectiveRecoveryRunnerError ||
+					error instanceof ReviewRoutingError
+				) {
 					return failure(command, json, error.code, error.message);
 				}
 				throw error;
