@@ -14,6 +14,8 @@ import {
 	LinearV1ConversionError,
 	MERGE_GROUP_ARTIFACTS_SCHEMA,
 	MERGE_GROUP_GOLDEN_SUITE_SCHEMA,
+	MERGE_GROUP_INVOCATION_SCHEMA,
+	MERGE_GROUP_RESULT_SCHEMA,
 	MULTI_PLAN_LIMITS,
 	PLAN_QUALIFIED_COMMIT_SCHEMA,
 	SEMANTIC_STORAGE,
@@ -29,6 +31,7 @@ const [
 	repositoryConfig,
 	repositoryReview,
 	semantic,
+	ci,
 	topology,
 	dagSemantic,
 	integration,
@@ -44,6 +47,7 @@ const [
 	readJson("contracts/repository/v1/repository-config.schema.json"),
 	readJson("contracts/repository/v1/review.schema.json"),
 	readJson("contracts/semantic/v1/artifacts.schema.json"),
+	readJson("contracts/ci/v1/artifacts.schema.json"),
 	readJson("contracts/dag/v2/artifacts.schema.json"),
 	readJson("contracts/dag/v2/semantic.schema.json"),
 	readJson("contracts/integration/v1/artifacts.schema.json"),
@@ -62,6 +66,7 @@ for (const schema of [
 	repositoryConfig,
 	repositoryReview,
 	semantic,
+	ci,
 	topology,
 	dagSemantic,
 	integration,
@@ -153,6 +158,10 @@ test("multi-Plan foundation schemas expose strict additive identities", () => {
 		LINEAR_V1_CONVERSION_BUNDLE_SCHEMA,
 		"graphrefly.stack.linear-v1-conversion-bundle.v1",
 	);
+	assert.equal(MERGE_GROUP_INVOCATION_SCHEMA, "graphrefly.stack.merge-group-invocation.v1");
+	assert.equal(MERGE_GROUP_RESULT_SCHEMA, "graphrefly.stack.merge-group-result.v1");
+	assert.ok(definition("MergeGroupInvocation"));
+	assert.ok(definition("MergeGroupResult"));
 	assert.deepEqual(MULTI_PLAN_LIMITS, { maxPlans: 8 });
 	assert.equal(SEMANTIC_STORAGE.planTrailer, "GraphReFly-Plan");
 	assert.equal(groupIntegrationGoldenSchema.$id, GROUP_INTEGRATION_GOLDEN_SCHEMA);

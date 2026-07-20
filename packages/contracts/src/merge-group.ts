@@ -10,6 +10,8 @@ export const GROUP_INTEGRATION_INPUT_SCHEMA =
 	"graphrefly.stack.group-integration-input.v1" as const;
 export const GROUP_INTEGRATION_RESULT_SCHEMA =
 	"graphrefly.stack.group-integration-result.v1" as const;
+export const MERGE_GROUP_INVOCATION_SCHEMA = "graphrefly.stack.merge-group-invocation.v1" as const;
+export const MERGE_GROUP_RESULT_SCHEMA = "graphrefly.stack.merge-group-result.v1" as const;
 export const GROUP_INTEGRATION_GOLDEN_SCHEMA =
 	"urn:graphrefly-stack:schema:group-integration-golden:v1" as const;
 

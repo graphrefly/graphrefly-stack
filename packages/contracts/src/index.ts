@@ -14,6 +14,7 @@ export * from "./integration-integrity.js";
 export * from "./jcs.js";
 export * from "./linear-v1-conversion.js";
 export * from "./merge-group.js";
+export * from "./merge-group-integrity.js";
 export * from "./repository-review.js";
 export * from "./semantic.js";
 
