@@ -15,6 +15,8 @@ export * from "./jcs.js";
 export * from "./linear-v1-conversion.js";
 export * from "./merge-group.js";
 export * from "./merge-group-integrity.js";
+export * from "./recovery.js";
+export * from "./recovery-integrity.js";
 export * from "./repository-review.js";
 export * from "./selective-recovery-integrity.js";
 export * from "./semantic.js";
@@ -35,6 +37,7 @@ export type CliCommand =
 	| "gate"
 	| "replan"
 	| "review"
+	| "rollback"
 	| "export";
 export type ExecutionMode = "deterministic" | "replay" | "live" | "replay-fallback";
 

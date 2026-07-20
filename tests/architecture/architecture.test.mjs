@@ -21,6 +21,7 @@ test("D17 package boundaries remain the composition authority", () => {
 		"gate",
 		"replan",
 		"review",
+		"rollback",
 		"export",
 	]);
 });

@@ -27,6 +27,7 @@ const copies = [
 	["contracts/hosted", "assets/contracts/hosted"],
 	["contracts/integration", "assets/contracts/integration"],
 	["contracts/repository", "assets/contracts/repository"],
+	["contracts/recovery", "assets/contracts/recovery"],
 	["contracts/semantic", "assets/contracts/semantic"],
 	["contracts/v1/schemas", "assets/contracts/v1/schemas"],
 	["fixtures/contracts/v1/golden-suite.json", "assets/fixtures/contracts/v1/golden-suite.json"],

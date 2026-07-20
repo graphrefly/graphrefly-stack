@@ -33,6 +33,16 @@ import {
 import { IntegrationCiError, runIntegrationCi } from "./integration-ci.js";
 import { IntegrationRunnerError, runIntegration } from "./integration-runner.js";
 import { readPortableEvidenceBundle } from "./portable-bundle.js";
+import {
+	abortRecovery,
+	applyRecovery,
+	createRecoveryPlan,
+	exportRecovery,
+	RecoveryRunnerError,
+	recoveryStatus,
+	resumeRecovery,
+	verifyRecoveryExport,
+} from "./recovery-runner.js";
 import { initializeRepository, RepositoryInitError } from "./repository-init.js";
 import { createRepositoryReview, RepositoryReviewError } from "./repository-review.js";
 import {
@@ -77,6 +87,13 @@ Usage:
   grfs gate [--fixture <runtime-suite.json>] [--case <case-id>] --json
   grfs replan --repo <path> --plan-id <id> [--head <revision>] [--proposal <proposal.json>] [--context <manifest.json> --authorize-context] [--mode replay|live] [--accept --accept-by <label>] --json
   grfs replan [--mode replay|live] [--fallback none|replay] --json
+  grfs rollback plan --repo <path> --base <revision> --head <revision> --source-plan-id <id> --source-bundle-digest <sha256> --proposal <recovery-proposal.json> --accept-by <label> [--provider <provider> --owner <owner> --name <name>] --json
+  grfs rollback apply --repo <path> --recovery-plan-id <id> --plan-digest <sha256> --authorize-by <label> [--max-steps <count>] --json
+  grfs rollback resume --repo <path> --recovery-plan-id <id> --plan-digest <sha256> --authorization-digest <sha256> [--max-steps <count>] --json
+  grfs rollback abort --repo <path> --recovery-plan-id <id> --plan-digest <sha256> --authorization-digest <sha256> --json
+  grfs rollback status --repo <path> --recovery-plan-id <id> --plan-digest <sha256> --json
+  grfs rollback export --repo <path> --recovery-plan-id <id> --result-digest <sha256> --output <bundle.json> --json
+  grfs rollback verify --bundle <bundle.json> --json
   grfs review [--bundle <path>] [--fixture <runtime-suite.json>] [--host 127.0.0.1] [--port 4173]
   grfs export --repo <path> --plan-id <id> [--head <revision>] --output <bundle.json> --json
   grfs export --verify <bundle.json> --json
@@ -103,6 +120,7 @@ function commandFrom(argv: readonly string[]): CliCommand | null {
 	if (argv[0] === "integration" && argv[1] === "ci") return "integration-ci";
 	if (argv[0] === "integration") return "integration";
 	if (argv[0] === "fixture" && argv[1] === "create") return "fixture-create";
+	if (argv[0] === "rollback") return "rollback";
 	if (["plan", "gate", "replan", "review", "export"].includes(argv[0] ?? "")) {
 		return argv[0] as CliCommand;
 	}
@@ -269,6 +287,176 @@ export async function runCli(argv = process.argv.slice(2)): Promise<number> {
 	const fallback = readOption(argv, "--fallback") ?? "none";
 	if (fallback !== "none" && fallback !== "replay") {
 		return failure(command, json, "INVALID_FALLBACK", fallback, requestedMode);
+	}
+	if (command === "rollback") {
+		const action = argv[1];
+		const repository = readOption(argv, "--repo");
+		const recoveryPlanId = readOption(argv, "--recovery-plan-id");
+		const planDigest = readOption(argv, "--plan-digest");
+		const maxStepsValue = readOption(argv, "--max-steps");
+		const maxSteps = maxStepsValue === undefined ? undefined : Number(maxStepsValue);
+		try {
+			if (action === "plan") {
+				const base = readOption(argv, "--base");
+				const head = readOption(argv, "--head");
+				const sourcePlanId = readOption(argv, "--source-plan-id");
+				const sourceBundleDigest = readOption(argv, "--source-bundle-digest");
+				const proposalPath = readOption(argv, "--proposal");
+				const acceptedBy = readOption(argv, "--accept-by");
+				if (
+					repository === undefined ||
+					base === undefined ||
+					head === undefined ||
+					sourcePlanId === undefined ||
+					sourceBundleDigest === undefined ||
+					proposalPath === undefined ||
+					acceptedBy === undefined
+				) {
+					return failure(
+						command,
+						json,
+						"RECOVERY_PLAN_INPUT_REQUIRED",
+						"--repo, --base, --head, --source-plan-id, --source-bundle-digest, --proposal and --accept-by are required",
+					);
+				}
+				const repositoryIdentity = await resolveRepositoryIdentity({
+					repository,
+					provider: readOption(argv, "--provider"),
+					owner: readOption(argv, "--owner"),
+					name: readOption(argv, "--name"),
+				});
+				success(
+					command,
+					"deterministic",
+					await createRecoveryPlan({
+						repository,
+						base,
+						head,
+						sourcePlanId,
+						sourceBundleDigest,
+						proposalPath,
+						acceptedBy,
+						repositoryIdentity,
+					}),
+					json,
+				);
+				return 0;
+			}
+			if (action === "verify") {
+				const bundle = readOption(argv, "--bundle");
+				if (bundle === undefined) {
+					return failure(command, json, "RECOVERY_BUNDLE_REQUIRED", "--bundle is required");
+				}
+				success(command, "deterministic", await verifyRecoveryExport(bundle), json);
+				return 0;
+			}
+			if (repository === undefined || recoveryPlanId === undefined || planDigest === undefined) {
+				return failure(
+					command,
+					json,
+					"RECOVERY_STATE_INPUT_REQUIRED",
+					"--repo, --recovery-plan-id and --plan-digest are required",
+				);
+			}
+			if (action === "apply") {
+				const authorizedBy = readOption(argv, "--authorize-by");
+				if (authorizedBy === undefined) {
+					return failure(
+						command,
+						json,
+						"RECOVERY_AUTHORIZATION_REQUIRED",
+						"--authorize-by is required",
+					);
+				}
+				const output = await applyRecovery({
+					repository,
+					recoveryPlanId,
+					planDigest,
+					authorizedBy,
+					maxSteps,
+				});
+				success(command, "deterministic", output, json);
+				if (output.status === "partial") return 2;
+				return output.result.outcome === "recovered"
+					? 0
+					: output.result.outcome === "blocked"
+						? 2
+						: 1;
+			}
+			if (action === "status") {
+				success(
+					command,
+					"deterministic",
+					await recoveryStatus({ repository, recoveryPlanId, planDigest }),
+					json,
+				);
+				return 0;
+			}
+			if (action === "export") {
+				const resultDigest = readOption(argv, "--result-digest");
+				const output = readOption(argv, "--output");
+				if (resultDigest === undefined || output === undefined) {
+					return failure(
+						command,
+						json,
+						"RECOVERY_EXPORT_INPUT_REQUIRED",
+						"--result-digest and --output are required",
+					);
+				}
+				success(
+					command,
+					"deterministic",
+					await exportRecovery({ repository, recoveryPlanId, resultDigest, output }),
+					json,
+				);
+				return 0;
+			}
+			const authorizationDigest = readOption(argv, "--authorization-digest");
+			if (authorizationDigest === undefined) {
+				return failure(
+					command,
+					json,
+					"RECOVERY_AUTHORIZATION_DIGEST_REQUIRED",
+					"--authorization-digest is required for resume or abort",
+				);
+			}
+			if (action === "resume") {
+				const output = await resumeRecovery({
+					repository,
+					recoveryPlanId,
+					planDigest,
+					authorizationDigest,
+					maxSteps,
+				});
+				success(command, "deterministic", output, json);
+				if (output.status === "partial") return 2;
+				return output.result.outcome === "recovered"
+					? 0
+					: output.result.outcome === "blocked"
+						? 2
+						: 1;
+			}
+			if (action === "abort") {
+				success(
+					command,
+					"deterministic",
+					await abortRecovery({
+						repository,
+						recoveryPlanId,
+						planDigest,
+						authorizationDigest,
+					}),
+					json,
+				);
+				return 0;
+			}
+			return failure(command, json, "RECOVERY_ACTION_INVALID", String(action));
+		} catch (error) {
+			if (error instanceof RecoveryRunnerError || error instanceof ReviewRoutingError) {
+				return failure(command, json, error.code, error.message);
+			}
+			throw error;
+		}
 	}
 	if (command === "ci-init") {
 		try {

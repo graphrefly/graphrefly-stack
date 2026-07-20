@@ -1,0 +1,495 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "urn:graphrefly-stack:schema:recovery-artifacts:v1",
+	"title": "GraphReFly Stack evidence-backed recovery artifacts v1",
+	"definitions": {
+		"QualifiedTarget": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["planId", "workUnitId", "recordDigest"],
+			"properties": {
+				"planId": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/Identifier"
+				},
+				"workUnitId": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/WorkUnitId"
+				},
+				"recordDigest": { "$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash" }
+			}
+		},
+		"RecoveryImpactUnit": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["planId", "workUnitId", "role", "recordDigest", "dependencies", "witnessPath"],
+			"properties": {
+				"planId": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/Identifier"
+				},
+				"workUnitId": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/WorkUnitId"
+				},
+				"role": { "enum": ["target", "dependent"] },
+				"recordDigest": {
+					"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash"
+				},
+				"dependencies": {
+					"type": "array",
+					"items": {
+						"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/WorkUnitId"
+					},
+					"uniqueItems": true,
+					"maxItems": 64
+				},
+				"witnessPath": {
+					"type": "array",
+					"items": {
+						"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/WorkUnitId"
+					},
+					"minItems": 1,
+					"maxItems": 64
+				}
+			}
+		},
+		"RecoveryUnaffectedUnit": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["planId", "workUnitId", "recordDigest", "dependencies"],
+			"properties": {
+				"planId": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/Identifier"
+				},
+				"workUnitId": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/WorkUnitId"
+				},
+				"recordDigest": {
+					"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash"
+				},
+				"dependencies": {
+					"type": "array",
+					"items": {
+						"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/WorkUnitId"
+					},
+					"uniqueItems": true,
+					"maxItems": 64
+				}
+			}
+		},
+		"RecoveryImpact": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"schema",
+				"repository",
+				"expectedHead",
+				"sourceBundle",
+				"sourceBundleDigest",
+				"sourcePlan",
+				"policy",
+				"selection",
+				"targets",
+				"affected",
+				"unaffected"
+			],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.recovery-impact.v1" },
+				"repository": {
+					"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/RepositoryIdentity"
+				},
+				"expectedHead": {
+					"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/GitOid"
+				},
+				"sourceBundle": {
+					"$ref": "urn:graphrefly-stack:schema:dag-semantic-artifacts:v2#/definitions/DagGateBundle"
+				},
+				"sourceBundleDigest": {
+					"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash"
+				},
+				"sourcePlan": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/AcceptedChangePlan"
+				},
+				"policy": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/RepositoryPolicy"
+				},
+				"selection": { "enum": ["work-units", "plan"] },
+				"targets": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/QualifiedTarget" },
+					"minItems": 1,
+					"maxItems": 64
+				},
+				"affected": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/RecoveryImpactUnit" },
+					"minItems": 1,
+					"maxItems": 64
+				},
+				"unaffected": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/RecoveryUnaffectedUnit" },
+					"maxItems": 64
+				}
+			}
+		},
+		"ExternalEffect": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["effectId", "status", "evidenceDigest"],
+			"properties": {
+				"effectId": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/Identifier"
+				},
+				"status": { "enum": ["not-applicable", "resolved", "unresolved"] },
+				"evidenceDigest": {
+					"oneOf": [
+						{ "$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash" },
+						{ "type": "null" }
+					]
+				}
+			}
+		},
+		"RecoveryOperation": {
+			"oneOf": [
+				{
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["kind", "sourceCommit"],
+					"properties": {
+						"kind": { "const": "inverse" },
+						"sourceCommit": {
+							"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/GitOid"
+						}
+					}
+				},
+				{
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["kind", "patch", "patchDigest"],
+					"properties": {
+						"kind": { "const": "compensate" },
+						"patch": { "type": "string", "minLength": 1, "maxLength": 1048576 },
+						"patchDigest": {
+							"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash"
+						}
+					}
+				},
+				{
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["kind"],
+					"properties": { "kind": { "const": "retain" } }
+				}
+			]
+		},
+		"RecoveryStep": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"workUnitId",
+				"disposition",
+				"dependsOnSteps",
+				"postRecoveryWorkUnit",
+				"operation",
+				"externalEffects"
+			],
+			"properties": {
+				"workUnitId": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/WorkUnitId"
+				},
+				"disposition": { "enum": ["inverse", "compensate", "retain"] },
+				"dependsOnSteps": {
+					"type": "array",
+					"items": {
+						"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/WorkUnitId"
+					},
+					"uniqueItems": true,
+					"maxItems": 64
+				},
+				"postRecoveryWorkUnit": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/SemanticWorkUnit"
+				},
+				"operation": { "$ref": "#/definitions/RecoveryOperation" },
+				"externalEffects": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/ExternalEffect" },
+					"maxItems": 32
+				}
+			}
+		},
+		"RecoveryPlanProposal": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"schema",
+				"recoveryPlanId",
+				"postRecoveryPlanId",
+				"proposalSource",
+				"selection",
+				"targetWorkUnitIds",
+				"steps"
+			],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.recovery-plan-proposal.v1" },
+				"recoveryPlanId": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/Identifier"
+				},
+				"postRecoveryPlanId": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/Identifier"
+				},
+				"proposalSource": { "enum": ["codex", "human"] },
+				"selection": { "enum": ["work-units", "plan"] },
+				"targetWorkUnitIds": {
+					"type": "array",
+					"items": {
+						"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/WorkUnitId"
+					},
+					"minItems": 1,
+					"maxItems": 64,
+					"uniqueItems": true
+				},
+				"steps": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/RecoveryStep" },
+					"minItems": 1,
+					"maxItems": 64
+				}
+			}
+		},
+		"RecoveryPlan": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"schema",
+				"recoveryPlanId",
+				"sourcePlanId",
+				"impactDigest",
+				"proposal",
+				"proposalDigest",
+				"expectedHead",
+				"policyDigest",
+				"acceptedBy",
+				"postRecoveryPlan",
+				"steps",
+				"executionOrder"
+			],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.recovery-plan.v1" },
+				"recoveryPlanId": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/Identifier"
+				},
+				"sourcePlanId": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/Identifier"
+				},
+				"impactDigest": {
+					"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash"
+				},
+				"proposal": { "$ref": "#/definitions/RecoveryPlanProposal" },
+				"proposalDigest": {
+					"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash"
+				},
+				"expectedHead": {
+					"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/GitOid"
+				},
+				"policyDigest": {
+					"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash"
+				},
+				"acceptedBy": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["label", "identityVerified"],
+					"properties": {
+						"label": { "type": "string", "minLength": 1, "maxLength": 128 },
+						"identityVerified": { "const": false }
+					}
+				},
+				"postRecoveryPlan": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/AcceptedChangePlan"
+				},
+				"steps": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/RecoveryStep" },
+					"minItems": 1,
+					"maxItems": 64
+				},
+				"executionOrder": {
+					"type": "array",
+					"items": {
+						"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/WorkUnitId"
+					},
+					"maxItems": 64,
+					"uniqueItems": true
+				}
+			}
+		},
+		"RecoveryAuthorization": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"schema",
+				"recoveryPlanId",
+				"planDigest",
+				"impactDigest",
+				"policyDigest",
+				"expectedHead",
+				"recoveryRef",
+				"action",
+				"authorizedBy"
+			],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.recovery-authorization.v1" },
+				"recoveryPlanId": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/Identifier"
+				},
+				"planDigest": { "$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash" },
+				"impactDigest": {
+					"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash"
+				},
+				"policyDigest": {
+					"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash"
+				},
+				"expectedHead": {
+					"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/GitOid"
+				},
+				"recoveryRef": {
+					"type": "string",
+					"pattern": "^refs/heads/grfs/recovery/[A-Za-z][A-Za-z0-9._-]{0,63}$"
+				},
+				"action": { "const": "materialize-recovery-branch" },
+				"authorizedBy": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["label", "identityVerified"],
+					"properties": {
+						"label": { "type": "string", "minLength": 1, "maxLength": 128 },
+						"identityVerified": { "const": false }
+					}
+				}
+			}
+		},
+		"RecoveryAttempt": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"schema",
+				"recoveryPlanId",
+				"planDigest",
+				"authorizationDigest",
+				"sequence",
+				"previousAttemptDigest",
+				"status",
+				"workUnitId",
+				"expectedBefore",
+				"observedAfter",
+				"failure"
+			],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.recovery-attempt.v1" },
+				"recoveryPlanId": {
+					"$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/Identifier"
+				},
+				"planDigest": { "$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash" },
+				"authorizationDigest": {
+					"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash"
+				},
+				"sequence": { "type": "integer", "minimum": 0, "maximum": 1024 },
+				"previousAttemptDigest": {
+					"oneOf": [
+						{ "$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash" },
+						{ "type": "null" }
+					]
+				},
+				"status": {
+					"enum": [
+						"branch-created",
+						"plan-accepted",
+						"step-retained",
+						"step-applied",
+						"step-failed",
+						"partial",
+						"completed",
+						"aborted"
+					]
+				},
+				"workUnitId": {
+					"oneOf": [
+						{ "$ref": "urn:graphrefly-stack:schema:semantic-artifacts:v1#/definitions/WorkUnitId" },
+						{ "type": "null" }
+					]
+				},
+				"expectedBefore": {
+					"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/GitOid"
+				},
+				"observedAfter": {
+					"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/GitOid"
+				},
+				"failure": { "type": ["string", "null"], "maxLength": 2048 }
+			}
+		},
+		"RecoveryResult": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"schema",
+				"impact",
+				"plan",
+				"authorization",
+				"attempts",
+				"sharedTopology",
+				"qualifiedCommits",
+				"effectiveTopology",
+				"postRecoveryBundle",
+				"outcome",
+				"externalEffectsResolved"
+			],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.recovery-result.v1" },
+				"impact": { "$ref": "#/definitions/RecoveryImpact" },
+				"plan": { "$ref": "#/definitions/RecoveryPlan" },
+				"authorization": { "$ref": "#/definitions/RecoveryAuthorization" },
+				"attempts": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/RecoveryAttempt" },
+					"minItems": 2,
+					"maxItems": 1024
+				},
+				"sharedTopology": {
+					"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/GitTopologySlice"
+				},
+				"qualifiedCommits": {
+					"type": "array",
+					"items": {
+						"$ref": "urn:graphrefly-stack:schema:merge-group-artifacts:v1#/definitions/PlanQualifiedCommit"
+					},
+					"minItems": 1,
+					"maxItems": 64
+				},
+				"effectiveTopology": {
+					"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/GitTopologySlice"
+				},
+				"postRecoveryBundle": {
+					"oneOf": [
+						{
+							"$ref": "urn:graphrefly-stack:schema:dag-semantic-artifacts:v2#/definitions/DagGateBundle"
+						},
+						{
+							"$ref": "urn:graphrefly-stack:schema:dag-semantic-artifacts:v2#/definitions/DagStructuralErrorBundle"
+						}
+					]
+				},
+				"outcome": { "enum": ["recovered", "blocked", "error"] },
+				"externalEffectsResolved": { "type": "boolean" }
+			}
+		},
+		"RecoveryPortableBundle": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["schema", "resultDigest", "result"],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.recovery-portable-bundle.v1" },
+				"resultDigest": {
+					"$ref": "urn:graphrefly-stack:schema:dag-artifacts:v2#/definitions/Hash"
+				},
+				"result": { "$ref": "#/definitions/RecoveryResult" }
+			}
+		}
+	}
+}

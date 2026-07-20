@@ -107,6 +107,7 @@ export function createGraph() {
   applyRight(value);
   return value;
 }
+
 `,
 		),
 		put(repository, "left.mjs", "export function applyLeft() {}\n"),
@@ -297,6 +298,257 @@ export function createGraph() {
 			refs: run(repository, "git", ["for-each-ref", "--format=%(refname) %(objectname)"]),
 		},
 		before,
+	);
+}
+
+async function proveInstalledRecovery(temporary, tarball) {
+	const repository = resolve(temporary, "recovery-consumer-repository");
+	const inputs = resolve(temporary, "recovery-inputs");
+	await Promise.all([mkdir(repository), mkdir(inputs)]);
+	await Promise.all([
+		put(repository, ".gitignore", "node_modules\n"),
+		put(
+			repository,
+			"package.json",
+			`${JSON.stringify(
+				{
+					name: "installed-recovery-proof",
+					private: true,
+					type: "module",
+					dependencies: { "@graphrefly/ts": "0.3.x" },
+					devDependencies: { "@graphrefly/stack": `file:${tarball}` },
+				},
+				null,
+				2,
+			)}\n`,
+		),
+		put(
+			repository,
+			"graph.mjs",
+			`import { graph } from "@graphrefly/ts/graph";
+import { applyFeature } from "./feature.mjs";
+export function createGraph() {
+  const value = graph({ name: "installed-recovery-proof" });
+  value.state(1, { name: "base" });
+  applyFeature(value);
+  return value;
+}
+`,
+		),
+		put(repository, "feature.mjs", "export function applyFeature() {}\n"),
+	]);
+	run(repository, "pnpm", ["install", "--ignore-scripts"]);
+	run(repository, "git", ["init", "-b", "main"]);
+	const initialized = JSON.parse(
+		run(repository, "pnpm", [
+			"exec",
+			"grfs",
+			"init",
+			"--graph-module",
+			"graph.mjs",
+			"--graph-export",
+			"createGraph",
+			"--json",
+		]),
+	);
+	assert.equal(initialized.ok, true);
+	const base = commit(repository, "initialize installed recovery repository");
+	const policy = {
+		schema: "graphrefly.stack.semantic-policy.v1",
+		policyId: "installed-recovery-policy",
+		revision: "rev-1",
+		allowedSourceRoots: ["feature.mjs"],
+		allowedCapabilities: ["graph-change"],
+		checks: [
+			{
+				id: "contract",
+				argv: ["node", "-e", "process.exit(0)"],
+				timeoutMs: 10000,
+				network: false,
+				shell: false,
+			},
+		],
+	};
+	const planProposal = {
+		schema: "graphrefly.stack.semantic-plan-proposal.v1",
+		planId: "installed-source-plan",
+		proposalSource: "human",
+		workUnits: [
+			{
+				id: "FEATURE",
+				title: "Installed feature",
+				intent: "Add the installed feature node",
+				dependencies: [],
+				allowedSourceScopes: ["feature.mjs"],
+				capabilities: ["graph-change"],
+				claims: [
+					{
+						id: "feature-present",
+						predicate: {
+							operator: "present",
+							selector: { kind: "node", nodeId: "feature" },
+						},
+						rationale: "The feature node exists.",
+					},
+				],
+				requiredChecks: ["contract"],
+			},
+		],
+	};
+	await Promise.all([
+		put(inputs, "policy.json", `${JSON.stringify(policy, null, 2)}\n`),
+		put(inputs, "plan.json", `${JSON.stringify(planProposal, null, 2)}\n`),
+	]);
+	const accepted = JSON.parse(
+		run(repository, "pnpm", [
+			"exec",
+			"grfs",
+			"plan",
+			"--repo",
+			".",
+			"--task",
+			"Accept installed recovery source Plan",
+			"--policy",
+			resolve(inputs, "policy.json"),
+			"--proposal",
+			resolve(inputs, "plan.json"),
+			"--accept",
+			"--accept-by",
+			"package-test",
+			"--json",
+		]),
+	);
+	assert.equal(accepted.ok, true);
+	commit(repository, "accept installed recovery source Plan");
+	await put(
+		repository,
+		"feature.mjs",
+		'export function applyFeature(value) { value.state(2, { name: "feature" }); }\n',
+	);
+	const sourceCommit = commitQualifiedWorkUnit(
+		repository,
+		"implement installed feature",
+		planProposal.planId,
+		"FEATURE",
+	);
+	const source = JSON.parse(
+		run(repository, "pnpm", [
+			"exec",
+			"grfs",
+			"gate",
+			"--repo",
+			".",
+			"--base",
+			base,
+			"--head",
+			"HEAD",
+			"--plan-id",
+			planProposal.planId,
+			"--provider",
+			"github",
+			"--owner",
+			"graphrefly",
+			"--name",
+			"installed-recovery-proof",
+			"--json",
+		]),
+	);
+	assert.equal(source.data.gateResult.verdict, "pass");
+	const recoveryProposal = {
+		schema: "graphrefly.stack.recovery-plan-proposal.v1",
+		recoveryPlanId: "installed-recovery",
+		postRecoveryPlanId: "installed-recovery-post",
+		proposalSource: "human",
+		selection: "plan",
+		targetWorkUnitIds: ["FEATURE"],
+		steps: [
+			{
+				workUnitId: "FEATURE",
+				disposition: "inverse",
+				dependsOnSteps: [],
+				postRecoveryWorkUnit: {
+					...planProposal.workUnits[0],
+					intent: "Remove the installed feature node",
+					claims: [
+						{
+							id: "feature-absent",
+							predicate: {
+								operator: "absent",
+								selector: { kind: "node", nodeId: "feature" },
+							},
+							rationale: "The feature node has been recovered.",
+						},
+					],
+				},
+				operation: {
+					kind: "inverse",
+					sourceCommit: { algorithm: "sha1", value: sourceCommit },
+				},
+				externalEffects: [],
+			},
+		],
+	};
+	await put(inputs, "recovery.json", `${JSON.stringify(recoveryProposal, null, 2)}\n`);
+	const before = {
+		head: run(repository, "git", ["rev-parse", "HEAD"]),
+		status: run(repository, "git", ["status", "--porcelain=v1", "--untracked-files=all"]),
+	};
+	const planned = JSON.parse(
+		run(repository, "pnpm", [
+			"exec",
+			"grfs",
+			"rollback",
+			"plan",
+			"--repo",
+			".",
+			"--base",
+			base,
+			"--head",
+			"HEAD",
+			"--source-plan-id",
+			planProposal.planId,
+			"--source-bundle-digest",
+			source.data.artifact.digest.value,
+			"--proposal",
+			resolve(inputs, "recovery.json"),
+			"--accept-by",
+			"package-test",
+			"--provider",
+			"github",
+			"--owner",
+			"graphrefly",
+			"--name",
+			"installed-recovery-proof",
+			"--json",
+		]),
+	);
+	assert.equal(planned.data.impact.selection, "plan");
+	const applied = JSON.parse(
+		run(repository, "pnpm", [
+			"exec",
+			"grfs",
+			"rollback",
+			"apply",
+			"--repo",
+			".",
+			"--recovery-plan-id",
+			recoveryProposal.recoveryPlanId,
+			"--plan-digest",
+			planned.data.planArtifact.digest.value,
+			"--authorize-by",
+			"package-test",
+			"--json",
+		]),
+	);
+	assert.equal(applied.data.result.outcome, "recovered");
+	assert.equal(run(repository, "git", ["rev-parse", "HEAD"]), before.head);
+	assert.equal(
+		run(repository, "git", ["status", "--porcelain=v1", "--untracked-files=all"]),
+		before.status,
+	);
+	assert.equal(
+		run(repository, "git", ["rev-parse", "refs/heads/grfs/recovery/installed-recovery"]),
+		applied.data.head,
 	);
 }
 
@@ -1020,6 +1272,7 @@ test("the npm tarball installs and reviews an independent GraphReFly 0.3.x repos
 		"package/dist/assets/fixtures/contracts/hosted/v1/golden-digests.json",
 		"package/dist/assets/contracts/semantic/v1/artifacts.schema.json",
 		"package/dist/assets/contracts/semantic/v1/golden-suite.schema.json",
+		"package/dist/assets/contracts/recovery/v1/artifacts.schema.json",
 		"package/dist/assets/fixtures/contracts/semantic/v1/golden-suite.json",
 		"package/dist/assets/fixtures/contracts/semantic/v1/golden-digests.json",
 	]) {
@@ -1089,7 +1342,7 @@ export function createApplicationGraph() {
 	);
 	const registryLayoutCli = resolve(repository, "registry-layout-grfs.js");
 	await symlink(packedCli, registryLayoutCli);
-	assert.match(run(repository, process.execPath, [registryLayoutCli, "--help"]), /Usage:/u);
+	assert.match(run(repository, process.execPath, [registryLayoutCli, "--help"]), /rollback plan/u);
 	const hostedRepository = resolve(temporary, "hosted-consumer-repository");
 	await mkdir(hostedRepository);
 	run(hostedRepository, "git", ["init", "-q"]);
@@ -1566,4 +1819,5 @@ export function createApplicationGraph() {
 	await assert.rejects(readFile(mutationTarget, "utf8"));
 	await proveInstalledCiPass(mountedRepository, semanticInputs, mountedLifecycle, 234567, 84);
 	await proveInstalledMergeGroup(temporary, tarball);
+	await proveInstalledRecovery(temporary, tarball);
 });

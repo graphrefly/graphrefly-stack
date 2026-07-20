@@ -10,11 +10,21 @@ export * from "./group-integration.js";
 export * from "./integration-effects.js";
 export * from "./merge-group-result.js";
 export * from "./multi-plan-projection.js";
+export * from "./recovery.js";
 export * from "./selective-recovery.js";
 
 export const CORE_ARCHITECTURE = {
 	version: "D17",
-	canonicalCommands: ["init", "fixture create", "plan", "gate", "replan", "review", "export"],
+	canonicalCommands: [
+		"init",
+		"fixture create",
+		"plan",
+		"gate",
+		"replan",
+		"review",
+		"rollback",
+		"export",
+	],
 	defaultPlanMode: "replay",
 	graphreflyBlueprintVersion: GRAPH_BLUEPRINT_VERSION,
 	processModel: "single-local-cli-process",

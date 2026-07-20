@@ -196,6 +196,8 @@ type DagSelectiveRecoveryContext = {
 	qualifiedCommits: JsonObject[];
 };
 
+type DagProjectedRecoveryContext = DagSelectiveRecoveryContext;
+
 type DagCacheReport = {
 	priorBundleDigest: string | null;
 	units: Array<{
@@ -388,6 +390,7 @@ async function createDagSemanticGateInternal(options: {
 	recovery?: DagRecovery;
 	graphEvidence?: DagGraphEvidence;
 	selectiveRecovery?: DagSelectiveRecoveryContext;
+	projectedRecovery?: DagProjectedRecoveryContext;
 }): Promise<
 	DagSemanticGateRun | DagStructuralErrorRun | DagSemanticGateBundle | DagStructuralErrorBundle
 > {
@@ -401,6 +404,7 @@ async function createDagSemanticGateInternal(options: {
 	const policyPath = ".graphrefly-stack/policy.json";
 	const plan = gitJson(options.repository, resolvedHead, planPath);
 	const policy = gitJson(options.repository, resolvedHead, policyPath);
+	const projectionRecovery = options.selectiveRecovery ?? options.projectedRecovery;
 	const selectiveReplan =
 		options.selectiveRecovery === undefined
 			? undefined
@@ -520,13 +524,13 @@ async function createDagSemanticGateInternal(options: {
 	}
 	for (const entry of topologyObjects.filter((candidate) => candidate.kind === "implementation")) {
 		const revision = object(entry.oid, "implementation OID").value as string;
-		const owner = options.selectiveRecovery?.qualifiedCommits.find(
+		const owner = projectionRecovery?.qualifiedCommits.find(
 			(qualified) => object(qualified.commit, "qualified commit").value === revision,
 		);
 		const carriedSourceImplementation =
-			options.selectiveRecovery !== undefined &&
-			owner?.planId === options.selectiveRecovery.sourcePlanId &&
-			options.selectiveRecovery.preservedUnits.includes(String(owner.workUnitId));
+			projectionRecovery !== undefined &&
+			owner?.planId === projectionRecovery.sourcePlanId &&
+			projectionRecovery.preservedUnits.includes(String(owner.workUnitId));
 		if (
 			!carriedSourceImplementation &&
 			(!gitIsAncestor(options.repository, acceptanceCommit, revision) ||
@@ -538,9 +542,9 @@ async function createDagSemanticGateInternal(options: {
 			);
 		}
 	}
-	const expectedBase = options.selectiveRecovery?.sourceHead ?? topologyBase;
+	const expectedBase = projectionRecovery?.sourceHead ?? topologyBase;
 	const expectedBaseBlueprint =
-		options.selectiveRecovery === undefined
+		projectionRecovery === undefined
 			? object(topology.baseBlueprintHash, "topology base Blueprint")
 			: object(
 					topologyObjects.find((entry) => object(entry.oid, "topology OID").value === expectedBase)
@@ -602,7 +606,7 @@ async function createDagSemanticGateInternal(options: {
 			);
 		}
 	}
-	if (options.recovery !== undefined && options.selectiveRecovery !== undefined) {
+	if (options.recovery !== undefined && projectionRecovery !== undefined) {
 		throw new DagSemanticRunnerError(
 			"RECOVERY_EVIDENCE_INVALID",
 			"Git rebinding and selective Plan recovery cannot be combined",
@@ -673,7 +677,7 @@ async function createDagSemanticGateInternal(options: {
 				"DAG head moved while structural evidence was evaluated",
 			);
 		}
-		if (options.selectiveRecovery !== undefined) return bundle;
+		if (projectionRecovery !== undefined) return bundle;
 		const artifact = await persistStructuralErrorBundle(options.repository, options.planId, bundle);
 		return { ...bundle, artifact };
 	};
@@ -1030,7 +1034,7 @@ async function createDagSemanticGateInternal(options: {
 		...computed,
 	};
 	await assertBundle(bundle, "CONTRACT_INVALID");
-	if (options.selectiveRecovery !== undefined) return bundle;
+	if (projectionRecovery !== undefined) return bundle;
 	const artifact = await persistBundle(options.repository, options.planId, bundle);
 	return {
 		...bundle,
@@ -1068,6 +1072,20 @@ export function createDagSemanticGateForSelectiveRecovery(options: {
 	repositoryIdentity: { provider: string; owner: string; name: string };
 	graphEvidence: DagGraphEvidence;
 	selectiveRecovery: DagSelectiveRecoveryContext;
+}): Promise<DagSemanticGateBundle | DagStructuralErrorBundle> {
+	return createDagSemanticGateInternal(options) as Promise<
+		DagSemanticGateBundle | DagStructuralErrorBundle
+	>;
+}
+
+export function createDagSemanticGateForProjectedRecovery(options: {
+	repository: string;
+	base: string;
+	head: string;
+	planId: string;
+	repositoryIdentity: { provider: string; owner: string; name: string };
+	graphEvidence: DagGraphEvidence;
+	projectedRecovery: DagProjectedRecoveryContext;
 }): Promise<DagSemanticGateBundle | DagStructuralErrorBundle> {
 	return createDagSemanticGateInternal(options) as Promise<
 		DagSemanticGateBundle | DagStructuralErrorBundle
