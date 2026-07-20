@@ -1,0 +1,210 @@
+{
+	"schema": "graphrefly.stack.group-integration-golden.v1",
+	"input": {
+		"schema": "graphrefly.stack.group-integration-input.v1",
+		"topologyDigest": {
+			"algorithm": "sha256",
+			"value": "a787d10c70e493abe218ca5c4fdc0d0de650b151940471eec58e19b024443614"
+		},
+		"headBlueprintDigest": {
+			"algorithm": "sha256",
+			"value": "fb3b686ad0633fb1a761b47588ac2c908e97838d338d4e00f0db96e3e08b3cc9"
+		},
+		"repositoryPolicyDigest": {
+			"algorithm": "sha256",
+			"value": "f1de60eb41aa2f55d39cc00adf2bad99ad64d4023ee62df355471b2ee22a73ea"
+		},
+		"qualifiedCommitDigests": [
+			{
+				"planId": "plan-a",
+				"workUnitId": "API",
+				"digest": {
+					"algorithm": "sha256",
+					"value": "3dcad587dcd7e8367037d2f0da6fafc2878f496e27788b45c268eb2384a4412d"
+				}
+			},
+			{
+				"planId": "plan-b",
+				"workUnitId": "API",
+				"digest": {
+					"algorithm": "sha256",
+					"value": "fa275bd683c1472cd34321bb72a76e6ba2593190d58a3ed4f8af14215b2b686d"
+				}
+			}
+		],
+		"plans": [
+			{
+				"planId": "plan-a",
+				"planDigest": {
+					"algorithm": "sha256",
+					"value": "4048c510a8f9768bfb10c956943e2a4ca2b4d7e67116281ce64ac02070950527"
+				},
+				"policyDigest": {
+					"algorithm": "sha256",
+					"value": "f1de60eb41aa2f55d39cc00adf2bad99ad64d4023ee62df355471b2ee22a73ea"
+				},
+				"gateResultDigest": {
+					"algorithm": "sha256",
+					"value": "d551c08df72ea91e10ec8104da87b5ec2bcc7b286505cfa50c12e4a3b8a915a5"
+				},
+				"verdict": "pass"
+			},
+			{
+				"planId": "plan-b",
+				"planDigest": {
+					"algorithm": "sha256",
+					"value": "eda954f7bf002a71a719479dbf35ba1193a0b50b79034e348cc713713d5527df"
+				},
+				"policyDigest": {
+					"algorithm": "sha256",
+					"value": "f1de60eb41aa2f55d39cc00adf2bad99ad64d4023ee62df355471b2ee22a73ea"
+				},
+				"gateResultDigest": {
+					"algorithm": "sha256",
+					"value": "3a1da00caad1acfb09426b0d29c011201182caffda9917890e2cea2fd067a302"
+				},
+				"verdict": "pass"
+			}
+		],
+		"joins": [
+			{
+				"oid": {
+					"algorithm": "sha1",
+					"value": "3333333333333333333333333333333333333333"
+				},
+				"layer": 3,
+				"joinDigest": {
+					"algorithm": "sha256",
+					"value": "04e39ce52164484dab2c1ee55877a2465369866e84336f49396cc34f274059dd"
+				},
+				"targetDeltaDigest": {
+					"algorithm": "sha256",
+					"value": "4c1d6c5e4de0906287d497fa0c4cf525d0fedc60945a3e60ecae4b2ba46970f3"
+				},
+				"headDeltaDigest": {
+					"algorithm": "sha256",
+					"value": "8a9b5eee0bcc85d18a644178d68f34e17324b98495de2f9457751fcc85c0167f"
+				},
+				"candidateDeltaDigest": {
+					"algorithm": "sha256",
+					"value": "8a146d53d45083a365600d65e31a9a3d3745d6e1a5d50748f10810d025bd8199"
+				},
+				"overlaps": [
+					{
+						"kind": "metadata-field",
+						"ownerKind": "node",
+						"ownerId": "session",
+						"field": "owner"
+					}
+				],
+				"conflicts": [
+					{
+						"reasonCode": "METADATA_INCOMPATIBLE_CHANGE",
+						"witness": {
+							"kind": "metadata-field",
+							"ownerKind": "node",
+							"ownerId": "session",
+							"field": "owner"
+						}
+					}
+				]
+			}
+		],
+		"semanticConflicts": []
+	},
+	"result": {
+		"schema": "graphrefly.stack.group-integration-result.v1",
+		"inputDigest": {
+			"algorithm": "sha256",
+			"value": "9901cc28c9d45c3df88085618849a0f464e1ae4b9b3a0afe0ff078c056f70366"
+		},
+		"verdict": "blocked",
+		"reasonCodes": ["METADATA_INCOMPATIBLE_CHANGE"],
+		"plans": [
+			{
+				"planId": "plan-a",
+				"planDigest": {
+					"algorithm": "sha256",
+					"value": "4048c510a8f9768bfb10c956943e2a4ca2b4d7e67116281ce64ac02070950527"
+				},
+				"policyDigest": {
+					"algorithm": "sha256",
+					"value": "f1de60eb41aa2f55d39cc00adf2bad99ad64d4023ee62df355471b2ee22a73ea"
+				},
+				"gateResultDigest": {
+					"algorithm": "sha256",
+					"value": "d551c08df72ea91e10ec8104da87b5ec2bcc7b286505cfa50c12e4a3b8a915a5"
+				},
+				"verdict": "pass"
+			},
+			{
+				"planId": "plan-b",
+				"planDigest": {
+					"algorithm": "sha256",
+					"value": "eda954f7bf002a71a719479dbf35ba1193a0b50b79034e348cc713713d5527df"
+				},
+				"policyDigest": {
+					"algorithm": "sha256",
+					"value": "f1de60eb41aa2f55d39cc00adf2bad99ad64d4023ee62df355471b2ee22a73ea"
+				},
+				"gateResultDigest": {
+					"algorithm": "sha256",
+					"value": "3a1da00caad1acfb09426b0d29c011201182caffda9917890e2cea2fd067a302"
+				},
+				"verdict": "pass"
+			}
+		],
+		"joins": [
+			{
+				"oid": {
+					"algorithm": "sha1",
+					"value": "3333333333333333333333333333333333333333"
+				},
+				"joinDigest": {
+					"algorithm": "sha256",
+					"value": "04e39ce52164484dab2c1ee55877a2465369866e84336f49396cc34f274059dd"
+				},
+				"valid": false,
+				"reasonCodes": ["METADATA_INCOMPATIBLE_CHANGE"],
+				"overlaps": [
+					{
+						"kind": "metadata-field",
+						"ownerKind": "node",
+						"ownerId": "session",
+						"field": "owner"
+					}
+				],
+				"conflicts": [
+					{
+						"reasonCode": "METADATA_INCOMPATIBLE_CHANGE",
+						"witness": {
+							"kind": "metadata-field",
+							"ownerKind": "node",
+							"ownerId": "session",
+							"field": "owner"
+						}
+					}
+				]
+			}
+		],
+		"conflicts": [
+			{
+				"planId": null,
+				"workUnitId": null,
+				"join": {
+					"algorithm": "sha1",
+					"value": "3333333333333333333333333333333333333333"
+				},
+				"conflict": {
+					"reasonCode": "METADATA_INCOMPATIBLE_CHANGE",
+					"witness": {
+						"kind": "metadata-field",
+						"ownerKind": "node",
+						"ownerId": "session",
+						"field": "owner"
+					}
+				}
+			}
+		]
+	}
+}

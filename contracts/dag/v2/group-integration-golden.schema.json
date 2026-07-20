@@ -1,0 +1,17 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "urn:graphrefly-stack:schema:group-integration-golden:v1",
+	"title": "GraphReFly Stack group integration golden artifact v1",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["schema", "input", "result"],
+	"properties": {
+		"schema": { "const": "graphrefly.stack.group-integration-golden.v1" },
+		"input": {
+			"$ref": "urn:graphrefly-stack:schema:merge-group-artifacts:v1#/definitions/GroupIntegrationInput"
+		},
+		"result": {
+			"$ref": "urn:graphrefly-stack:schema:merge-group-artifacts:v1#/definitions/GroupIntegrationResult"
+		}
+	}
+}

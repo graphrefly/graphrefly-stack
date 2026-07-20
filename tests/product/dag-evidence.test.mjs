@@ -12,6 +12,10 @@ import {
 	createDagSemanticGate,
 	DagSemanticRunnerError,
 } from "../../packages/cli/dist/dag-semantic-runner.js";
+import {
+	assembleGroupIntegration,
+	createGroupJoinEvidence,
+} from "../../packages/cli/dist/group-integration-runner.js";
 import { createRepositoryBlueprintSnapshot } from "../../packages/cli/dist/repository-review.js";
 import { defaultReviewDist, startReviewServer } from "../../packages/cli/dist/review-server.js";
 import {
@@ -45,11 +49,15 @@ function git(repository, args, allowed = [0]) {
 	return result.stdout.trim();
 }
 
-async function commitFile(repository, path, content, subject, workUnitId) {
+async function commitFile(repository, path, content, subject, workUnitId, planId) {
 	await writeFile(resolve(repository, path), content);
 	git(repository, ["add", path]);
 	const args = ["commit", "-m", subject];
-	if (workUnitId !== undefined) args.push("-m", `GraphReFly-Work-Unit: ${workUnitId}`);
+	const trailers = [
+		...(planId === undefined ? [] : [`GraphReFly-Plan: ${planId}`]),
+		...(workUnitId === undefined ? [] : [`GraphReFly-Work-Unit: ${workUnitId}`]),
+	];
+	if (trailers.length > 0) args.push("-m", trailers.join("\n"));
 	git(repository, args);
 	return git(repository, ["rev-parse", "HEAD"]);
 }
@@ -602,14 +610,16 @@ test("composes a real accepted plan and branched DAG into one selective semantic
 		'export function applyLeft(value) { value.state(2, { name: "left" }); }\n',
 		"left graph",
 		"LEFT",
+		"plan-dag",
 	);
 	git(fixture.root, ["switch", "-q", "-c", "right", accepted]);
-	await commitFile(
+	const rightCommit = await commitFile(
 		fixture.root,
 		"right.mjs",
 		'export function applyRight(value) { value.state(3, { name: "right" }); }\n',
 		"right graph",
 		"RIGHT",
+		"plan-dag",
 	);
 	git(fixture.root, ["switch", "-q", "left"]);
 	git(fixture.root, ["merge", "--no-ff", "-m", "join graph branches", "right"]);
@@ -633,6 +643,43 @@ test("composes a real accepted plan and branched DAG into one selective semantic
 	assert.deepEqual(result.gateResult.minimalAffectedCut, ["LEFT"]);
 	assert.deepEqual(result.gateResult.units[0].reasonCodes, ["CLAIM_INVALID"]);
 	assert.equal(result.gateResult.joins[0].verdict, "valid");
+	const graphEvidence = await createDagGraphEvidence({
+		repository: fixture.root,
+		base: fixture.base,
+		head: "left",
+		repositoryIdentity: { provider: "github", owner: "clfhhc", name: "test-graphrefly" },
+	});
+	const joinEvidence = await createGroupJoinEvidence({
+		repository: fixture.root,
+		topology: graphEvidence.topology,
+		blueprints: graphEvidence.blueprints,
+	});
+	const qualified = (workUnitId, commit) => ({
+		schema: "graphrefly.stack.plan-qualified-commit.v1",
+		planId: "plan-dag",
+		workUnitId,
+		commit: { algorithm: "sha1", value: commit },
+		ownership: {
+			kind: "native",
+			planTrailer: { name: "GraphReFly-Plan", value: "plan-dag", occurrences: 1 },
+			workUnitTrailer: { name: "GraphReFly-Work-Unit", value: workUnitId, occurrences: 1 },
+		},
+	});
+	const headBlueprint = graphEvidence.blueprints.find(
+		(entry) => entry.revision.value === graphEvidence.topology.head.value,
+	);
+	assert.ok(headBlueprint);
+	const group = await assembleGroupIntegration({
+		topology: graphEvidence.topology,
+		repositoryPolicy: policy,
+		qualifiedCommits: [qualified("LEFT", leftCommit), qualified("RIGHT", rightCommit)],
+		plans: [{ plan, policy, gateResult: result.gateResult }],
+		headBlueprint,
+		joinEvidence,
+	});
+	assert.equal(group.result.joins[0].valid, true);
+	assert.equal(group.result.reasonCodes.includes("CLAIM_INVALIDATED"), true);
+	assert.equal(group.result.reasonCodes.includes("HEAD_GATE_NOT_PASSING"), true);
 	const checkCache = await runRepositoryPolicyChecksWithCacheReport(fixture.root, "left", policy, [
 		"contract",
 	]);

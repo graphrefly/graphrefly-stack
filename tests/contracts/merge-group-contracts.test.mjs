@@ -3,10 +3,12 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import {
+	assertGroupIntegrationIntegrity,
 	assertLinearV1ConversionIntegrity,
 	assertPlanQualifiedCommitIntegrity,
 	convertLinearV1ToV2,
 	createStrictAjv,
+	GROUP_INTEGRATION_GOLDEN_SCHEMA,
 	LINEAR_V1_CONVERSION_BUNDLE_SCHEMA,
 	LINEAR_V1_CONVERSION_SCHEMA,
 	LinearV1ConversionError,
@@ -29,10 +31,14 @@ const [
 	semantic,
 	topology,
 	dagSemantic,
+	integration,
 	mergeGroup,
 	mergeGroupGoldenSchema,
 	mergeGroupGolden,
 	mergeGroupDigests,
+	groupIntegrationGoldenSchema,
+	groupIntegrationGolden,
+	groupIntegrationDigests,
 	suite,
 ] = await Promise.all([
 	readJson("contracts/repository/v1/repository-config.schema.json"),
@@ -40,10 +46,14 @@ const [
 	readJson("contracts/semantic/v1/artifacts.schema.json"),
 	readJson("contracts/dag/v2/artifacts.schema.json"),
 	readJson("contracts/dag/v2/semantic.schema.json"),
+	readJson("contracts/integration/v1/artifacts.schema.json"),
 	readJson("contracts/dag/v2/merge-group.schema.json"),
 	readJson("contracts/dag/v2/merge-group-golden-suite.schema.json"),
 	readJson("fixtures/contracts/dag/v2/merge-group-golden-suite.json"),
 	readJson("fixtures/contracts/dag/v2/merge-group-golden-digests.json"),
+	readJson("contracts/dag/v2/group-integration-golden.schema.json"),
+	readJson("fixtures/contracts/dag/v2/group-integration-golden.json"),
+	readJson("fixtures/contracts/dag/v2/group-integration-golden-digests.json"),
 	readJson("fixtures/contracts/semantic/v1/golden-suite.json"),
 ]);
 
@@ -54,12 +64,14 @@ for (const schema of [
 	semantic,
 	topology,
 	dagSemantic,
+	integration,
 	mergeGroup,
 ]) {
 	ajv.addSchema(schema);
 }
 const definition = (name) => ajv.getSchema(`${MERGE_GROUP_ARTIFACTS_SCHEMA}#/definitions/${name}`);
 const validateMergeGroupGolden = ajv.compile(mergeGroupGoldenSchema);
+const validateGroupIntegrationGolden = ajv.compile(groupIntegrationGoldenSchema);
 
 function validSource() {
 	const policy = clone(suite.policy);
@@ -143,6 +155,38 @@ test("multi-Plan foundation schemas expose strict additive identities", () => {
 	);
 	assert.deepEqual(MULTI_PLAN_LIMITS, { maxPlans: 8 });
 	assert.equal(SEMANTIC_STORAGE.planTrailer, "GraphReFly-Plan");
+	assert.equal(groupIntegrationGoldenSchema.$id, GROUP_INTEGRATION_GOLDEN_SCHEMA);
+	assert.equal(
+		validateGroupIntegrationGolden(groupIntegrationGolden),
+		true,
+		JSON.stringify(validateGroupIntegrationGolden.errors, null, 2),
+	);
+	assert.equal(sha256Jcs(groupIntegrationGolden.input), groupIntegrationDigests.input);
+	assert.equal(sha256Jcs(groupIntegrationGolden.result), groupIntegrationDigests.result);
+	assertGroupIntegrationIntegrity(groupIntegrationGolden.input, groupIntegrationGolden.result);
+	assert.equal(
+		definition("GroupIntegrationInput")({
+			schema: "graphrefly.stack.group-integration-input.v1",
+			topologyDigest: digest({ topology: true }),
+			headBlueprintDigest: digest({ blueprint: true }),
+			repositoryPolicyDigest: digest({ policy: true }),
+			qualifiedCommitDigests: [
+				{ planId: "plan-a", workUnitId: "API", digest: digest({ commit: "a" }) },
+			],
+			plans: [
+				{
+					planId: "plan-a",
+					planDigest: digest({ plan: "a" }),
+					policyDigest: digest({ policy: true }),
+					gateResultDigest: digest({ gate: "a" }),
+					verdict: "pass",
+				},
+			],
+			joins: [],
+			semanticConflicts: [],
+		}),
+		true,
+	);
 
 	const native = {
 		schema: PLAN_QUALIFIED_COMMIT_SCHEMA,

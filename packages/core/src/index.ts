@@ -6,6 +6,7 @@ export * from "./dag-gate.js";
 export * from "./dag-review.js";
 export * from "./dag-structural-error.js";
 export * from "./gate.js";
+export * from "./group-integration.js";
 export * from "./integration-effects.js";
 
 export const CORE_ARCHITECTURE = {
