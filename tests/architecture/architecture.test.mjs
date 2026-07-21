@@ -114,6 +114,32 @@ test("the review server refuses non-loopback exposure", () => {
 	assert.equal(JSON.parse(result.stdout).error.code, "REVIEW_HOST_NOT_LOOPBACK");
 });
 
+test("the generic review bounds long desktop commit stacks without trapping narrow screens", async () => {
+	const stylesheet = await readFile(new URL("apps/review/src/styles.css", root), "utf8");
+	assert.match(
+		stylesheet,
+		/\.commit-stack\s*\{[^}]*max-height:\s*min\(680px, calc\(100vh - 220px\)\);[^}]*overflow-y:\s*auto;[^}]*overscroll-behavior:\s*contain;[^}]*scrollbar-gutter:\s*stable;/su,
+	);
+	assert.match(
+		stylesheet,
+		/@media \(max-width: 980px\)\s*\{[\s\S]*?\.commit-stack\s*\{[^}]*max-height:\s*none;[^}]*overflow-y:\s*visible;[^}]*overscroll-behavior:\s*auto;[^}]*scrollbar-gutter:\s*auto;/u,
+	);
+});
+
+test("the primary semantic review is decision-sized while proof remains secondary", async () => {
+	const source = await readFile(
+		new URL("apps/review/src/GenericRepositoryReview.tsx", root),
+		"utf8",
+	);
+	assert.match(source, /1 · Intent/);
+	assert.match(source, /2 · Reach/);
+	assert.match(source, /3 · Readiness/);
+	assert.match(source, /Technical details/);
+	assert.match(source, /Typed predicates/);
+	assert.doesNotMatch(source, /Typed claim ·/);
+	assert.doesNotMatch(source, /Accepted intent · \{review\.semantic\.plan\.planId\}/);
+});
+
 test("the local review shell is served by one loopback HTTP process", async (context) => {
 	const temporary = await mkdtemp(resolve(tmpdir(), "graphrefly-review-"));
 	const portable = resolve(temporary, "evidence-bundle.json");

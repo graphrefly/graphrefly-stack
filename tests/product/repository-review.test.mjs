@@ -784,8 +784,6 @@ export function createApplicationGraph() {
 				base,
 				"--head",
 				head,
-				"--plan-id",
-				proposal.planId,
 			]);
 			assert.equal(
 				semanticReview.status,
@@ -793,6 +791,7 @@ export function createApplicationGraph() {
 				semanticReview.stderr || JSON.stringify(semanticReview.envelope),
 			);
 			assert.equal(semanticReview.envelope.data.semanticStatus, "evaluated");
+			assert.equal(semanticReview.envelope.data.semantic.plan.planId, proposal.planId);
 			assert.equal(semanticReview.envelope.data.semantic.gateResult.verdict, "pass");
 			assert.equal(Object.hasOwn(semanticReview.envelope.data, "reviewDecision"), false);
 

@@ -1,8 +1,8 @@
 {
 	"name": "@graphrefly/stack",
-	"version": "0.1.6",
+	"version": "0.1.7",
 	"private": false,
-	"description": "Semantic stacked diffs with commit-indexed GraphBlueprint validity gates.",
+	"description": "Review AI changes by intent, architectural reach, and deterministic readiness.",
 	"license": "MIT",
 	"type": "module",
 	"repository": {

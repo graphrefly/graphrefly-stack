@@ -10,7 +10,7 @@ import {
 	sha256Jcs,
 } from "@graphrefly-stack/contracts";
 import { CORE_ARCHITECTURE, computeGate } from "@graphrefly-stack/core";
-import { CiRunnerError, initializeCiWorkflow, runCi } from "./ci-runner.js";
+import { CiRunnerError, initializeCiWorkflow, runCi, selectPlan } from "./ci-runner.js";
 import {
 	redactProviderError,
 	replayFallback,
@@ -1065,7 +1065,27 @@ export async function runCli(argv = process.argv.slice(2)): Promise<number> {
 			);
 		}
 		try {
-			const planId = readOption(argv, "--plan-id");
+			let planId = readOption(argv, "--plan-id");
+			if (planId === undefined) {
+				try {
+					planId = await selectPlan(repository, head);
+				} catch (error) {
+					if (error instanceof CiRunnerError && error.code === "CI_PLAN_NOT_FOUND") {
+						planId = undefined;
+					} else if (error instanceof CiRunnerError && error.code === "CI_PLAN_AMBIGUOUS") {
+						return failure(
+							command,
+							json,
+							"REVIEW_PLAN_AMBIGUOUS",
+							`More than one accepted Plan covers this change (${error.message}). Use --plan-id only to diagnose the ambiguity.`,
+						);
+					} else if (error instanceof CiRunnerError) {
+						return failure(command, json, "REVIEW_PLAN_INVALID", error.message);
+					} else {
+						throw error;
+					}
+				}
+			}
 			const selected = await selectReviewRoute({ repository, base, head, planId });
 			if (selected.route === "semantic-dag") {
 				const repositoryIdentity = await resolveRepositoryIdentity({
@@ -1105,6 +1125,9 @@ export async function runCli(argv = process.argv.slice(2)): Promise<number> {
 				return failure(command, json, error.code, error.message);
 			}
 			if (error instanceof ReviewRoutingError) {
+				return failure(command, json, error.code, error.message);
+			}
+			if (error instanceof SemanticRepositoryError) {
 				return failure(command, json, error.code, error.message);
 			}
 			throw error;

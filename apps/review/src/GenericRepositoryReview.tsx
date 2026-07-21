@@ -71,6 +71,8 @@ export interface GenericReviewData {
 				id: string;
 				title: string;
 				intent: string;
+				allowedSourceScopes: string[];
+				allowedCapabilities?: string[];
 				claims: Array<{ id: string; rationale: string; predicate: Record<string, unknown> }>;
 				requiredChecks: string[];
 			}>;
@@ -125,6 +127,47 @@ type RepositoryReviewDecision = {
 
 function short(value: string, size = 8): string {
 	return value.slice(0, size);
+}
+
+function pathWithinScope(path: string, scope: string): boolean {
+	const normalized = scope.replace(/^\.\//u, "").replace(/\/+$/u, "");
+	return (
+		normalized === "." ||
+		normalized === "" ||
+		path === normalized ||
+		path.startsWith(`${normalized}/`)
+	);
+}
+
+function humanizeReason(reason: string): string {
+	const known: Record<string, string> = {
+		ARCHITECTURE_STALE: "Architecture changed after this intent was accepted.",
+		BLUEPRINT_HASH_MISMATCH: "Observed architecture no longer matches the accepted evidence.",
+		CHECK_FAILED: "A required repository check failed.",
+		COMMIT_BINDING_MISMATCH: "The implementation no longer matches the reviewed change.",
+		DEPENDENCY_INVALID: "A change this work depends on is not ready.",
+		POLICY_MISMATCH: "The repository boundary changed after this intent was accepted.",
+		SOURCE_SCOPE_VIOLATION: "The implementation reached outside its accepted boundary.",
+	};
+	return known[reason] ?? `${reason.toLowerCase().replaceAll("_", " ")}.`;
+}
+
+function nextAction(reasons: readonly string[], failedChecks: readonly string[]): string {
+	if (failedChecks.length > 0) return `Fix ${failedChecks.join(", ")} and run review again.`;
+	if (reasons.includes("SOURCE_SCOPE_VIOLATION")) {
+		return "Narrow the implementation, or explicitly accept broader intent before reviewing again.";
+	}
+	if (
+		reasons.includes("ARCHITECTURE_STALE") ||
+		reasons.includes("BLUEPRINT_HASH_MISMATCH") ||
+		reasons.includes("POLICY_MISMATCH")
+	) {
+		return "Replan the affected outcome against the current architecture, then add revised commits.";
+	}
+	if (reasons.includes("DEPENDENCY_INVALID"))
+		return "Resolve the upstream change, then rerun review.";
+	if (reasons.length > 0) return "Update the implementation and rerun review for fresh evidence.";
+	return "Inspect the summarized reach, then review code where you need more detail.";
 }
 
 function splitRows(lines: DiffLine[]) {
@@ -540,6 +583,8 @@ function eventLabel(event: NonNullable<ReviewCommit["delta"]["events"]>[number])
 
 export function GenericRepositoryReview({ review }: { review: GenericReviewData }) {
 	const [selectedOid, setSelectedOid] = useState(review.commits.at(-1)?.oid ?? "");
+	const commitStack = useRef<HTMLDivElement | null>(null);
+	const selectedCommit = useRef<HTMLButtonElement | null>(null);
 	const [helpOpen, setHelpOpen] = useState(false);
 	const [reviewOpen, setReviewOpen] = useState(false);
 	const [decisions, setDecisions] = useState<RepositoryReviewDecision[]>([]);
@@ -564,6 +609,44 @@ export function GenericRepositoryReview({ review }: { review: GenericReviewData 
 	const semanticRecord = review.semantic?.records.find(
 		(record) => record.workUnitId === semanticBinding?.workUnitId,
 	);
+	const semanticUnits =
+		semanticUnit === undefined ? (review.semantic?.plan.workUnits ?? []) : [semanticUnit];
+	const semanticBindings =
+		semanticBinding === undefined ? (review.semantic?.bindings ?? []) : [semanticBinding];
+	const expectedScopes = [
+		...new Set(semanticUnits.flatMap((unit) => unit.allowedSourceScopes)),
+	].sort();
+	const observedPaths = [
+		...new Set(semanticBindings.flatMap((binding) => binding.changedPaths)),
+	].sort();
+	const unexpectedPaths = observedPaths.filter(
+		(path) => !expectedScopes.some((scope) => pathWithinScope(path, scope)),
+	);
+	const observedGraphEffects = (
+		semanticBinding === undefined
+			? review.commits
+					.filter((commit) =>
+						review.semantic?.bindings.some((binding) => binding.commit.value === commit.oid),
+					)
+					.flatMap((commit) => commit.delta.events ?? [])
+			: events
+	).map(eventLabel);
+	const reasonCodes = [
+		...new Set(
+			semanticGate?.reasonCodes ??
+				review.semantic?.gateResult.units.flatMap((unit) => unit.reasonCodes) ??
+				[],
+		),
+	];
+	const requiredChecks = [...new Set(semanticUnits.flatMap((unit) => unit.requiredChecks))];
+	const checkResults =
+		review.semantic?.checks.filter((check) => requiredChecks.includes(check.checkId)) ?? [];
+	const failedChecks = checkResults
+		.filter((check) => check.exitCode !== 0)
+		.map((check) => check.checkId);
+	const readinessVerdict = semanticGate?.verdict ?? review.semantic?.gateResult.verdict;
+	const isReady = readinessVerdict === "valid" || readinessVerdict === "pass";
+	const broadReach = expectedScopes.includes(".") || expectedScopes.length >= 4;
 
 	useEffect(() => {
 		const controller = new AbortController();
@@ -582,6 +665,18 @@ export function GenericRepositoryReview({ review }: { review: GenericReviewData 
 			});
 		return () => controller.abort();
 	}, []);
+
+	useEffect(() => {
+		const container = commitStack.current;
+		const selectedItem = selectedCommit.current;
+		if (selectedOid === "" || container === null || selectedItem === null) return;
+		const itemTop = selectedItem.offsetTop;
+		const itemBottom = itemTop + selectedItem.offsetHeight;
+		if (itemTop < container.scrollTop) container.scrollTop = itemTop;
+		if (itemBottom > container.scrollTop + container.clientHeight) {
+			container.scrollTop = itemBottom - container.clientHeight;
+		}
+	}, [selectedOid]);
 
 	return (
 		<div className="app-shell generic-review">
@@ -615,15 +710,23 @@ export function GenericRepositoryReview({ review }: { review: GenericReviewData 
 				</div>
 				{review.semantic === undefined ? (
 					<div className="gate-summary is-neutral">
-						<span>Structural only</span>
-						<code>semantic not configured</code>
+						<span>Structure available</span>
+						<code>Readiness needs an accepted intent</code>
 					</div>
 				) : (
 					<div
 						className={`gate-summary ${review.semantic.gateResult.verdict === "pass" ? "is-valid" : "is-invalid"}`}
 					>
-						<span>Gate {review.semantic.gateResult.verdict}</span>
-						<code>{review.semantic.invalidWorkUnitIds.length} units need action</code>
+						<span>
+							{review.semantic.gateResult.verdict === "pass"
+								? "Ready to review"
+								: "Needs attention"}
+						</span>
+						<code>
+							{review.semantic.invalidWorkUnitIds.length === 0
+								? "Intent and observed reach still agree"
+								: `${review.semantic.invalidWorkUnitIds.length} outcome${review.semantic.invalidWorkUnitIds.length === 1 ? "" : "s"} need revision`}
+						</code>
 					</div>
 				)}
 			</section>
@@ -634,11 +737,12 @@ export function GenericRepositoryReview({ review }: { review: GenericReviewData 
 						<span>Git stack</span>
 						<small>{review.commits.length} linear commits</small>
 					</div>
-					<div className="commit-stack">
+					<div className="commit-stack" ref={commitStack}>
 						{[...review.commits].reverse().map((commit) => {
 							const commitDecision = latestDecision(commit.oid);
 							return (
 								<button
+									ref={commit.oid === selected.oid ? selectedCommit : undefined}
 									className={`commit-card ${commit.oid === selected.oid ? "is-selected" : ""}`}
 									type="button"
 									aria-pressed={commit.oid === selected.oid}
@@ -714,58 +818,110 @@ export function GenericRepositoryReview({ review }: { review: GenericReviewData 
 				</section>
 			</main>
 
-			{review.semantic !== undefined &&
-			semanticBinding !== undefined &&
-			semanticUnit !== undefined ? (
+			{review.semantic !== undefined ? (
 				<section className="semantic-review" aria-labelledby="semantic-title">
 					<div className="section-heading">
 						<div>
-							<p className="kicker">Accepted intent · {review.semantic.plan.planId}</p>
-							<h2 id="semantic-title">{semanticUnit.title}</h2>
-							<p>{semanticUnit.intent}</p>
+							<p className="kicker">Change contract</p>
+							<h2 id="semantic-title">{semanticUnit?.title ?? review.semantic.plan.taskSummary}</h2>
+							<p>
+								{semanticUnit?.intent ??
+									`${review.semantic.plan.workUnits.length} accepted outcomes are evaluated together.`}
+							</p>
 						</div>
-						<div
-							className={`gate-summary ${semanticGate?.verdict === "valid" ? "is-valid" : "is-invalid"}`}
-						>
-							<span>{semanticGate?.verdict ?? "unbound"}</span>
-							<code>{semanticGate?.reasonCodes.join(" · ") || "all predicates satisfied"}</code>
+						<div className={`gate-summary ${isReady ? "is-valid" : "is-invalid"}`}>
+							<span>{isReady ? "Ready" : "Needs attention"}</span>
+							<code>
+								{reasonCodes.length === 0
+									? "Accepted promises still hold"
+									: humanizeReason(reasonCodes[0] as string)}
+							</code>
 						</div>
 					</div>
-					<div className="semantic-grid">
-						{semanticUnit.claims.map((claim) => {
-							const witness = semanticRecord?.claimWitnesses.find(
-								(candidate) => candidate.claimId === claim.id,
-							);
-							return (
-								<article key={claim.id}>
-									<span>Typed claim · {claim.id}</span>
-									<strong>{claim.rationale}</strong>
-									<code>{JSON.stringify(claim.predicate)}</code>
-									<small>
-										{witness === undefined
-											? "No current witness"
-											: `Witness ${short(witness.predicateDigest.value, 16)}`}
-									</small>
-								</article>
-							);
-						})}
-						<article>
-							<span>Policy checks</span>
-							<strong>{semanticUnit.requiredChecks.join(" · ")}</strong>
-							{review.semantic.checks
-								.filter((check) => semanticUnit.requiredChecks.includes(check.checkId))
-								.map((check) => (
-									<small key={check.checkId}>
-										{check.checkId}: exit {check.exitCode} · command{" "}
-										{short(check.commandDigest.value, 12)}
-									</small>
+					<div className="change-contract-grid">
+						<article className="contract-card">
+							<span className="contract-label">1 · Intent</span>
+							<h3>What should change—and remain true</h3>
+							<ul className="contract-list">
+								{semanticUnits.map((unit) => (
+									<li key={unit.id}>
+										<strong>{unit.title}</strong>
+										<small>{unit.intent}</small>
+									</li>
 								))}
-							<code>patch {semanticBinding.stablePatchId}</code>
-							<small>
-								{semanticRecord?.rebindFrom === null || semanticRecord === undefined
-									? "Original immutable binding"
-									: `Rebound from ${semanticRecord.rebindFrom}`}
-							</small>
+							</ul>
+							<div className="promise-list">
+								<span>Must remain true</span>
+								{semanticUnits
+									.flatMap((unit) => unit.claims)
+									.map((claim) => (
+										<p key={claim.id}>{claim.rationale}</p>
+									))}
+							</div>
+						</article>
+
+						<article
+							className={`contract-card ${unexpectedPaths.length > 0 ? "has-exception" : ""}`}
+						>
+							<span className="contract-label">2 · Reach</span>
+							<h3>
+								{unexpectedPaths.length > 0
+									? "Reached farther than accepted"
+									: broadReach
+										? "Broad reach was accepted"
+										: "Observed reach stays within intent"}
+							</h3>
+							<p className="reach-summary">
+								<strong>{observedPaths.length}</strong> changed paths ·{" "}
+								<strong>{observedGraphEffects.length}</strong> graph effects
+							</p>
+							<div className="reach-group">
+								<span>Expected</span>
+								<div className="scope-chips">
+									{expectedScopes.map((scope) => (
+										<code key={scope}>{scope}</code>
+									))}
+								</div>
+							</div>
+							<div className="reach-group">
+								<span>Observed</span>
+								<ul className="compact-paths">
+									{observedPaths.map((path) => (
+										<li
+											className={unexpectedPaths.includes(path) ? "is-unexpected" : ""}
+											key={path}
+										>
+											{path}
+											{unexpectedPaths.includes(path) ? " · unexpected" : ""}
+										</li>
+									))}
+								</ul>
+							</div>
+						</article>
+
+						<article className={`contract-card ${isReady ? "is-ready" : "needs-action"}`}>
+							<span className="contract-label">3 · Readiness</span>
+							<h3>{isReady ? "Ready for a human decision" : "Revise before approval"}</h3>
+							{reasonCodes.length === 0 ? (
+								<p>The accepted intent, observed reach and repository checks still agree.</p>
+							) : (
+								<ul className="readiness-reasons">
+									{reasonCodes.map((reason) => (
+										<li key={reason}>{humanizeReason(reason)}</li>
+									))}
+								</ul>
+							)}
+							<div className="check-list">
+								{checkResults.map((check) => (
+									<span className={check.exitCode === 0 ? "passed" : "failed"} key={check.checkId}>
+										{check.exitCode === 0 ? "✓" : "!"} {check.checkId}
+									</span>
+								))}
+							</div>
+							<div className="next-action">
+								<span>Next</span>
+								<strong>{nextAction(reasonCodes, failedChecks)}</strong>
+							</div>
 						</article>
 					</div>
 				</section>
@@ -845,6 +1001,49 @@ export function GenericRepositoryReview({ review }: { review: GenericReviewData 
 							<span>Blueprint</span>
 							<strong>{hash}</strong>
 						</div>
+						{review.semantic === undefined ? null : (
+							<>
+								<div>
+									<span>Plan / WorkUnit</span>
+									<strong>
+										{review.semantic.plan.planId} / {semanticUnit?.id ?? "whole change"}
+									</strong>
+								</div>
+								<div>
+									<span>Accepted source scopes</span>
+									<strong>{expectedScopes.join(" · ") || "none"}</strong>
+								</div>
+								<div>
+									<span>Binding / record</span>
+									<strong>
+										{semanticBinding?.stablePatchId ?? "aggregate"} /{" "}
+										{semanticRecord?.recordId ?? "aggregate"}
+									</strong>
+								</div>
+								<div>
+									<span>Gate input</span>
+									<strong>{review.semantic.gateResult.inputDigest.value}</strong>
+								</div>
+								<div>
+									<span>Typed predicates</span>
+									<code>
+										{JSON.stringify(
+											semanticUnits.flatMap((unit) =>
+												unit.claims.map((claim) => ({ id: claim.id, predicate: claim.predicate })),
+											),
+										)}
+									</code>
+								</div>
+								<div>
+									<span>Check command digests</span>
+									<code>
+										{checkResults
+											.map((check) => `${check.checkId}:${check.commandDigest.value}`)
+											.join(" · ") || "none"}
+									</code>
+								</div>
+							</>
+						)}
 						{decisions.length > 0 ? (
 							<div>
 								<span>Share reviews</span>

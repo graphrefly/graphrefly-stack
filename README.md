@@ -1,16 +1,33 @@
 # GraphReFly Stack
 
-**Semantic stacked diffs that know when their architectural assumptions expire.**
+**Review AI changes by intent, architectural reach, and deterministic readiness.**
 
 GraphReFly Stack is an OpenAI Build Week developer tool built with Codex, GPT-5.6, Git, and
-GraphReFly. Its generic local review binds every stacked commit to the GraphBlueprint generated at
-that Git object and its exact parent diff. Repositories that adopt semantic change records can also
-bind allowed source scopes, dependency claims, required checks, and a deterministic `GateResult`.
+GraphReFly. It compresses a large agent-generated change into the three questions a human reviewer
+actually needs: **Intent** (what should change and remain true), **Reach** (what code and graph
+structure actually changed), and **Readiness** (whether deterministic evidence still supports
+approval). Exact Plan, policy, predicate, binding, check, and witness records stay available under
+Technical details without becoming vocabulary every developer must learn.
 
 Git can report a clean rebase while an agent-generated change is no longer valid under the
-architecture it was planned against. GraphReFly Stack makes that mismatch visible, keeps unaffected
-work green, and asks GPT-5.6 to replan only the stale work. GPT-5.6 proposes; deterministic code
-decides validity.
+architecture it was planned against. GraphReFly Stack makes that mismatch visible, calls out
+unexpected reach before the raw diff, keeps unaffected work green, and asks GPT-5.6 to replan only
+the stale work. GPT-5.6 proposes; deterministic code decides validity.
+
+## Judge it in 90 seconds
+
+```bash
+pnpm add -D @graphrefly/stack@0.1.7
+pnpm exec grfs init --graph-module src/application-graph.ts
+pnpm exec grfs review --repo . --base <commit-before-the-change> --head HEAD
+```
+
+Open the printed loopback URL. The left column is the real Git stack, the Blueprint is executed and
+verified at the selected Git object, and the change contract immediately shows Intent, expected
+versus observed Reach, and Readiness. If exactly one accepted semantic Plan covers `HEAD`, Stack
+finds it automatically—ordinary reviewers do not pass `--plan-id`. Select **Review changes** to
+record Approve or Request changes against the exact commit and Blueprint; add new commits after a
+request, rerun review, and the earlier decision becomes stale because its bound witnesses changed.
 
 ## Install and review a GraphReFly repository
 
@@ -19,7 +36,7 @@ no hosted service, database, or credentials. Install it in the GraphReFly reposi
 review:
 
 ```bash
-pnpm add -D @graphrefly/stack
+pnpm add -D @graphrefly/stack@0.1.7
 pnpm exec grfs init --graph-module src/application-graph.ts
 
 BASE=<the commit immediately before your stack>
@@ -29,14 +46,15 @@ pnpm exec grfs review --repo . --base "$BASE" --head HEAD
 The review command stays running and prints its loopback URL; it does not launch a browser
 automatically. Open the printed URL (normally <http://127.0.0.1:4173>), then:
 
-1. Select each commit discovered from the real linear Git range.
-2. See the Blueprint and parent delta produced by the repository's installed GraphReFly 0.3.x
-   runtime.
-3. Verify that commit OID, Blueprint hash, upstream Mermaid diagram, delta events, and split code diff
-   move together.
-4. Use **Review changes** to record Approve or Request changes for the exact commit and Blueprint.
-5. Open **Help** for the Git → Blueprint delta → code diff relationship, and expand **Technical
-   details** only when troubleshooting runtime or immutable identities.
+1. Read **Intent**: the accepted outcome and behavior that must remain true.
+2. Read **Reach**: expected areas beside exact changed paths and GraphReFly effects; unexpected reach
+   is called out before the raw diff.
+3. Read **Readiness**: the unchanged deterministic verdict, failed checks or promises, and next
+   action.
+4. Select commits to synchronize the real OID, GraphBlueprint, parent delta, and split code diff.
+5. Use **Review changes** to record Approve or Request changes for the exact commit and Blueprint.
+6. Expand **Technical details** only when debugging Plan, WorkUnit, predicate, binding, record, or
+   digest evidence.
 
 Local review decisions and their summaries are strict immutable records under the repository's Git
 common directory at `.git/grfs/reviews`; they never appear in `git status`, change source files, or
@@ -216,9 +234,15 @@ and canonical milestones in `docs/evidence/milestones.jsonl` distinguish that wo
   stdout bound, read-only filesystem allowlists, and no network or child-process permission.
 - Generic payloads omit Blueprint provenance and reject absolute paths in topology metadata before
   serving browser data.
-- The first release supports a maximum of 64 commits in one merge-free linear range. DAG stacks,
-  per-revision dependency installs, monorepo package selection, hosted review, planning, mutual
-  exclusion, edit scopes, conflict avoidance, and revert remain roadmap work.
+- Local review supports bounded ranges of at most 64 Git objects. Merge-free changes use the linear
+  semantic runner; accepted merge histories route to the bounded clean-binary DAG runner. Manual
+  merge resolution, octopus merges, larger bounds, per-revision dependency installs, and monorepo
+  package selection remain explicit limits.
+- Repository planning, CI parity, optimistic pull-request integration, bounded DAG and merge-group
+  evidence, hosted redacted review contracts, and evidence-backed recovery are implemented and
+  independently tested. The public judging path intentionally stays on local repository review; it
+  does not claim a deployed hosted service, queue management, automatic merge, or arbitrary
+  filesystem prevention.
 
 Canonical scope, decisions, contracts, sequence, and evidence requirements are indexed by
 [`docs/sources.jsonl`](docs/sources.jsonl). Read [`docs/README.md`](docs/README.md) for the authority
