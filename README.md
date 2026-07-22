@@ -2,8 +2,8 @@
 
 **Review AI changes by intent, architectural reach, and deterministic readiness.**
 
-GraphReFly Stack is an OpenAI Build Week developer tool built with Codex, GPT-5.6, Git, and
-GraphReFly. It compresses a large agent-generated change into the three questions a human reviewer
+GraphReFly Stack is a developer tool built with Codex, GPT-5.6, Git, and GraphReFly. It compresses
+a large agent-generated change into the three questions a human reviewer
 actually needs: **Intent** (what should change and remain true), **Reach** (what code and graph
 structure actually changed), and **Readiness** (whether deterministic evidence still supports
 approval). Exact Plan, policy, predicate, binding, check, and witness records stay available under
@@ -14,7 +14,7 @@ architecture it was planned against. GraphReFly Stack makes that mismatch visibl
 unexpected reach before the raw diff, keeps unaffected work green, and asks GPT-5.6 to replan only
 the stale work. GPT-5.6 proposes; deterministic code decides validity.
 
-## Judge it in 90 seconds
+## Try it in 90 seconds
 
 ```bash
 pnpm add -D @graphrefly/stack@0.1.7
@@ -136,7 +136,7 @@ pnpm cli fixture create --force --json
 pnpm cli gate --case current-valid --json
 pnpm cli gate --case clean-rebase-semantic-stale --json # expected exit 2
 pnpm cli gate --case fresh-selective-replan --json
-pnpm cli export --output .private/exports/judge-run --json
+pnpm cli export --output .private/exports/product-run --json
 pnpm cli review --bundle evidence/runs/refresh-token-rotation-v1-live/evidence-bundle.json
 ```
 
@@ -172,8 +172,8 @@ GRAPHREFLY_STACK_CODEX_PATH=/path/to/compatible/codex \
 
 Authentication may come from an existing `CODEX_HOME`, `OPENAI_API_KEY`, or `CODEX_API_KEY`; never
 commit or share credentials. `GRAPHREFLY_STACK_MODEL` defaults to `gpt-5.6-sol`, and
-`GRAPHREFLY_STACK_REASONING_EFFORT` defaults to `high`. The validated Build Week run used Codex SDK
-0.143.0 with a compatible `codex-cli 0.144.5` runtime override. Exact model, effort, runtime, thread,
+`GRAPHREFLY_STACK_REASONING_EFFORT` defaults to `high`. The validated live run used Codex SDK 0.143.0
+with a compatible `codex-cli 0.144.5` runtime override. Exact model, effort, runtime, thread,
 token usage, prompt version, and response/output digests are preserved in the redacted bundle.
 
 The validated plan used 14,030 input, 370 output, and 52 reasoning tokens; the corrected selective
@@ -209,22 +209,13 @@ outputs are schema-validated, checked against locked anchors, bound to exact pro
 passed to deterministic code. The model cannot widen scopes, change dependencies or checks, approve
 work, or generate its own verdict.
 
-## Build Week work and prior work
-
-GraphReFly itself is a pre-existing external dependency. The generic product targets the published
-`@graphrefly/ts` 0.3.x Blueprint v2 API surface; the historical flagship preserves its earlier v1
-evidence. The GraphReFly Stack product, contracts, real-Git flagship fixture, deterministic semantic
-gate, Codex integration, evidence exporter, and review UI were created or materially implemented
-during the Build Week submission period beginning July 13, 2026. The repository's dated Git history
-and canonical milestones in `docs/evidence/milestones.jsonl` distinguish that work.
-
 ## Evidence, security, and limitations
 
 - `evidence/runs/refresh-token-rotation-v1-live/evidence-bundle.json` embeds its manifest and every
   redacted logical artifact, each bound by SHA-256 over canonical JSON. Expanded copies are generated
   output and are not tracked.
 - The portable bundle is not self-listed in its manifest because that would create a circular hash.
-- Raw provider responses, generated repositories, and sensitive submission drafts stay under
+- Raw provider responses, generated repositories, and sensitive project data stay under
   ignored `.private/` paths.
 - The review server only binds to `127.0.0.1` and sends a restrictive CSP. Its sole write surface is
   a size-bounded, same-origin `application/json` endpoint that appends validated review decisions
@@ -240,9 +231,8 @@ and canonical milestones in `docs/evidence/milestones.jsonl` distinguish that wo
   package selection remain explicit limits.
 - Repository planning, CI parity, optimistic pull-request integration, bounded DAG and merge-group
   evidence, hosted redacted review contracts, and evidence-backed recovery are implemented and
-  independently tested. The public judging path intentionally stays on local repository review; it
-  does not claim a deployed hosted service, queue management, automatic merge, or arbitrary
-  filesystem prevention.
+  independently tested. The primary local review path does not claim a deployed hosted service,
+  queue management, automatic merge, or arbitrary filesystem prevention.
 
 Canonical scope, decisions, contracts, sequence, and evidence requirements are indexed by
 [`docs/sources.jsonl`](docs/sources.jsonl). Read [`docs/README.md`](docs/README.md) for the authority
@@ -254,7 +244,7 @@ map.
 - `packages/` — contracts, deterministic core, and CLI composition root
 - `contracts/` and `fixtures/` — strict schemas, compatibility artifacts, and conformance scenarios
 - `evidence/` — curated redacted evidence bundles
-- `docs/` — canonical JSONL project and submission records
+- `docs/` — canonical JSONL product, contract, sequencer, and evidence records
 - `.agents/skills/` — project workflows that operate on canonical records
 - `.private/` — ignored raw responses, live runs, generated repositories, and drafts
 

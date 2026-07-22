@@ -14,11 +14,11 @@ the owning JSONL record and keep references pointing to it.
 
 ## Workflow routing
 
-- Long-lived Build Week sequencer: `.agents/skills/stack-goal-dispatch/SKILL.md` (`D14`)
+- Long-lived product sequencer: `.agents/skills/stack-goal-dispatch/SKILL.md` (`D47`)
 - Decision or scope question: `.agents/skills/stack-decision-guard/SKILL.md`
 - Scenario, contract, architecture, or UI review: `.agents/skills/stack-design-review/SKILL.md`
 - Implementation from the canonical sequencer: `.agents/skills/stack-dev-dispatch/SKILL.md`
-- Code, evidence, security, privacy, and demo review: `.agents/skills/stack-qa/SKILL.md` (`D13`)
+- Code, evidence, security, privacy, and product-readiness review: `.agents/skills/stack-qa/SKILL.md` (`D13`)
 
 ## Commands
 

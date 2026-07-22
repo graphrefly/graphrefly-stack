@@ -67,7 +67,6 @@ Answer every question. Use `not applicable` only with a concrete reason.
   rejected scope.
 - Name migrations or compatibility work caused by current fixtures, schemas, CLI commands, bundle
   versions, or UI assumptions.
-- Do not treat hackathon submission work as proof of production readiness.
 
 > **Phase fit / Blocking questions / Follow-ups / Rejected scope / Migration:** …
 

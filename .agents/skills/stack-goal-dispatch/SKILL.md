@@ -1,6 +1,6 @@
 ---
 name: stack-goal-dispatch
-description: Run or resume GraphReFly Stack product and delivery work as one long-lived Codex Goal across the current canonical design, implementation, QA, evidence, and explicitly activated submission phases. Use when the user wants Codex to keep advancing approved work across tasks without prompting for every phase, while preserving parked phases and pausing only for a genuinely new material decision, external blocker or authorization, or the current canonical product horizon.
+description: Run or resume GraphReFly Stack product work as one long-lived Codex Goal across the current canonical design, implementation, QA, and evidence phases. Use when the user wants Codex to keep advancing approved work across tasks without prompting for every phase, while preserving deferred work and pausing only for a genuinely new material decision, external blocker or authorization, or the current canonical product horizon.
 ---
 
 # GraphReFly Stack Goal Dispatch
@@ -19,7 +19,7 @@ Canonical JSONL remains the source of truth. This skill controls flow only.
 ## 1. Create or resume the Goal
 
 1. Call `get_goal`.
-2. If no Goal exists, call `create_goal` without a token budget. Set the objective to advance GraphReFly Stack through the current explicitly approved canonical product horizon, preserve truthful later submission readiness, and follow `docs/plan/phases.jsonl` and its gates. Do not hard-code `STACK-8` when canonical records park it.
+2. If no Goal exists, call `create_goal` without a token budget. Set the objective to advance GraphReFly Stack through the current explicitly approved canonical product horizon and follow `docs/plan/phases.jsonl` and its gates.
 3. If the active Goal matches this project, resume it. If a different unfinished Goal exists, stop and ask the user which objective owns the thread.
 4. On every continuation, inspect `git status`, `docs/sources.jsonl`, `docs/decisions/decisions.jsonl`, `docs/plan/phases.jsonl`, and the concern authorities referenced by the next phase.
 5. Prefer durable records and Git state over recollected chat prose. Record consequential progress before ending a task.
@@ -29,7 +29,7 @@ Canonical JSONL remains the source of truth. This skill controls flow only.
 1. Select only the single `ready` phase in `docs/plan/phases.jsonl`; require all dependencies to be `done`.
 2. Apply `stack-decision-guard` before changing scope, product semantics, architecture, or delivery policy.
 3. Define the current batch from the selected phase's gate and deliverables. Keep it as small as possible while still producing reviewable evidence.
-4. Continue automatically into the next canonical phase after its gate passes and the sequencer advances. Never skip a gate to save time, and never select a blocked or parked submission phase merely because no implementation phase is ready.
+4. Continue automatically into the next canonical phase after its gate passes and the sequencer advances. Never skip a gate or select deferred work merely because no implementation phase is ready.
 5. Keep the Goal horizon at the current explicitly approved product horizon. Backlog entries are not authorized phases: when a roadmap-design phase must select among them, consolidate the material choices through `stack-decision-guard` and `stack-design-review`, record the approved phases, then continue.
 
 ## 3. Handle design gates
@@ -46,7 +46,7 @@ Do not implement behavior whose contract is still unresolved.
 
 ## 4. Implement and verify
 
-Once the design gates are locked, use `stack-dev-dispatch` for the only ready implementation phase. Derive the batch from that phase's current gate and deliverables instead of replaying historical STACK phase assumptions. Submission work runs only when its phase is both canonically ready and explicitly reactivated.
+Once the design gates are locked, use `stack-dev-dispatch` for the only ready implementation phase. Derive the batch from that phase's current gate and deliverables instead of replaying historical phase assumptions.
 
 Run focused checks during a batch and `stack-qa` at phase boundaries. Update milestone evidence with commands, outputs, artifacts, provenance, and limitations. Do not claim success from logs or UI appearance alone.
 
@@ -63,4 +63,4 @@ Continue working automatically while the next action is authorized, reversible, 
 
 When pausing for a decision, present one consolidated decision point and preserve enough canonical state for the next task to resume immediately.
 
-Call `update_goal` with `complete` only when the current explicitly approved canonical product horizon is done, its evidence is truthful, and no required work inside that objective remains. A parked `STACK-8` neither completes nor blocks a productization Goal. Call the Goal `blocked` only after the same blocker has repeated for the required consecutive Goal turns. Otherwise leave the Goal active.
+Call `update_goal` with `complete` only when the current explicitly approved canonical product horizon is done, its evidence is truthful, and no required work inside that objective remains. Call the Goal `blocked` only after the same blocker has repeated for the required consecutive Goal turns. Otherwise leave the Goal active.

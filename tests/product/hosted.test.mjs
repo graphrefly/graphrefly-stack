@@ -25,6 +25,9 @@ const ciArtifactPath = new URL(
 	import.meta.url,
 );
 const ciBundle = JSON.parse(await readFile(ciArtifactPath, "utf8"));
+const stackVersion = JSON.parse(
+	await readFile(new URL("../../package.json", import.meta.url), "utf8"),
+).version;
 
 const claims = {
 	iss: HOSTED_OIDC_ISSUER,
@@ -72,7 +75,7 @@ test("hosted init writes a separate no-checkout least-privilege OIDC workflow", 
 	assert.equal(result.command, "hosted-init");
 	assert.equal(result.data.workflow, ".github/workflows/graphrefly-stack-hosted.yml");
 	assert.equal(result.data.profile, "gate-summary-v1");
-	assert.equal(result.data.stackVersion, "0.1.6");
+	assert.equal(result.data.stackVersion, stackVersion);
 	const workflow = await readFile(resolve(repository, result.data.workflow), "utf8");
 	assert.match(workflow, /^name: GraphReFly Stack Hosted Sync$/mu);
 	assert.match(workflow, /^ {2}workflow_run:$/mu);
@@ -80,7 +83,7 @@ test("hosted init writes a separate no-checkout least-privilege OIDC workflow", 
 	assert.match(workflow, /^ {6}actions: read$/mu);
 	assert.match(workflow, /^ {6}id-token: write$/mu);
 	assert.match(workflow, /github\.event\.workflow_run\.id/u);
-	assert.match(workflow, /@graphrefly\/stack@0\.1\.6/u);
+	assert.ok(workflow.includes(`@graphrefly/stack@${stackVersion}`));
 	assert.match(workflow, /--profile gate-summary-v1/u);
 	assert.match(workflow, /npm_config_ignore_scripts: "true"/u);
 	assert.match(workflow, /--endpoint "\$GRAPHREFLY_STACK_HOSTED_ENDPOINT"/u);
