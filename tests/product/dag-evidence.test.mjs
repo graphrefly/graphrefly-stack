@@ -812,10 +812,14 @@ test("composes a real accepted plan and branched DAG into one selective semantic
 			selectedEvidence: review.projection.selectedEvidence,
 		}),
 	});
-	assert.equal(decisionResponse.status, 201, await decisionResponse.text());
+	const decisionBody = await decisionResponse.text();
+	assert.equal(decisionResponse.status, 201, decisionBody);
+	const priorDecision = JSON.parse(decisionBody);
 	const decisions = await (await fetch(`${running.url}/api/review-decisions`)).json();
-	assert.equal(decisions.length, 1);
-	assert.deepEqual(decisions[0].target, {
+	assert.equal(decisions.schema, "graphrefly.stack.review-decision-history.v1");
+	assert.equal(decisions.current.length, 1);
+	assert.deepEqual(decisions.outdated, []);
+	assert.deepEqual(decisions.current[0].target, {
 		gateResultDigest: review.projection.gateResultDigest,
 		topologyDigest: review.projection.topologyDigest,
 		dependencyGraphDigest: review.projection.dependencyGraphDigest,
@@ -885,6 +889,27 @@ export function createGraph() {
 	assert.equal(recoveredRecords.get("LEFT").rebindFrom, originalRecords.get("LEFT").recordId);
 	assert.deepEqual(recoveredRecords.get("RIGHT"), originalRecords.get("RIGHT"));
 	assert.deepEqual(fingerprint(fixture.root), recoveredBefore);
+	const recoveredReviewRun = await createDagReviewEvidence({
+		repository: fixture.root,
+		base: fixture.base,
+		head: "recovered",
+		planId: "plan-dag",
+		repositoryIdentity: { provider: "github", owner: "clfhhc", name: "test-graphrefly" },
+	});
+	const { artifact: _recoveredReviewArtifact, ...recoveredReview } = recoveredReviewRun;
+	const recoveredServer = await startReviewServer({
+		host: "127.0.0.1",
+		port: 0,
+		distDir: defaultReviewDist,
+		reviewData: recoveredReview,
+		dagReviewState: { repository: fixture.root, review: recoveredReview },
+	});
+	const recoveredHistory = await (
+		await fetch(`${recoveredServer.url}/api/review-decisions`)
+	).json();
+	assert.deepEqual(recoveredHistory.current, []);
+	assert.deepEqual(recoveredHistory.outdated, [priorDecision]);
+	await new Promise((resolve) => recoveredServer.server.close(resolve));
 
 	git(fixture.root, ["switch", "-q", "-c", "rebase-upstream", accepted]);
 	await commitFile(

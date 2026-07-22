@@ -1,0 +1,61 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "urn:graphrefly-stack:schema:repository-review-bundle:v2",
+	"title": "GraphReFly Stack portable whole-change review bundle v2",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["schema", "repository", "reviewTargetDigest", "artifacts"],
+	"properties": {
+		"schema": { "const": "graphrefly.stack.repository-review-bundle.v2" },
+		"repository": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["label", "baseOid", "headOid"],
+			"properties": {
+				"label": { "type": "string", "minLength": 1, "maxLength": 200 },
+				"baseOid": {
+					"$ref": "urn:graphrefly-stack:schema:repository-review:v1#/definitions/GitOid"
+				},
+				"headOid": {
+					"$ref": "urn:graphrefly-stack:schema:repository-review:v1#/definitions/GitOid"
+				}
+			}
+		},
+		"reviewTargetDigest": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["algorithm", "value"],
+			"properties": {
+				"algorithm": { "const": "sha256" },
+				"value": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+			}
+		},
+		"artifacts": {
+			"type": "array",
+			"uniqueItems": true,
+			"items": {
+				"type": "object",
+				"additionalProperties": false,
+				"required": ["path", "hash", "record"],
+				"properties": {
+					"path": {
+						"type": "string",
+						"pattern": "^reviews/[0-9a-f-]{36}\\.json$"
+					},
+					"hash": {
+						"type": "object",
+						"additionalProperties": false,
+						"required": ["algorithm", "value"],
+						"properties": {
+							"algorithm": { "const": "sha256" },
+							"value": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+						}
+					},
+					"record": {
+						"$ref": "urn:graphrefly-stack:schema:repository-review-decision:v2"
+					}
+				}
+			}
+		}
+	}
+}

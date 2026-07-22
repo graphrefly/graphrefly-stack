@@ -108,7 +108,7 @@ export interface GenericReviewData {
 	};
 }
 
-type RepositoryReviewDecision = {
+type RepositoryReviewDecisionV1 = {
 	schema: "graphrefly.stack.repository-review-decision.v1";
 	id: string;
 	target: {
@@ -123,6 +123,30 @@ type RepositoryReviewDecision = {
 	summary: string;
 	recordedAt: string;
 	identityVerified: false;
+};
+
+type RepositoryReviewDecisionV2 = {
+	schema: "graphrefly.stack.repository-review-decision.v2";
+	id: string;
+	target: {
+		baseOid: string;
+		headOid: string;
+		reviewTargetDigest: { algorithm: "sha256"; value: string };
+	};
+	contextCommitOid?: string;
+	decision: "approve" | "request-changes";
+	reviewerLabel: string;
+	summary: string;
+	recordedAt: string;
+	identityVerified: false;
+};
+
+type RepositoryReviewDecision = RepositoryReviewDecisionV1 | RepositoryReviewDecisionV2;
+
+type ReviewDecisionHistory = {
+	schema: "graphrefly.stack.review-decision-history.v1";
+	current: RepositoryReviewDecision[];
+	outdated: RepositoryReviewDecision[];
 };
 
 function short(value: string, size = 8): string {
@@ -263,10 +287,14 @@ function StructuredCodeDiff({ files }: { files: FileDiff[] }) {
 	);
 }
 
-function decisionLabel(decision: RepositoryReviewDecision | undefined): string {
+function decisionLabel(decision: RepositoryReviewDecisionV2 | undefined): string {
 	if (decision?.decision === "approve") return "Approved";
 	if (decision?.decision === "request-changes") return "Changes requested";
-	return "Not reviewed";
+	return "Needs review";
+}
+
+function decisionActionLabel(decision: RepositoryReviewDecision): string {
+	return decision.decision === "approve" ? "Approved" : "Changes requested";
 }
 
 function HelpPanel({ onClose }: { onClose: () => void }) {
@@ -326,9 +354,9 @@ function HelpPanel({ onClose }: { onClose: () => void }) {
 					<div>
 						<h3>What does Approve mean here?</h3>
 						<p>
-							It records your local review of that exact commit and Blueprint in Git-scoped
-							metadata. It does not change a semantic check, approve a GitHub pull request, or merge
-							code. Export reviews only when you want to share them.
+							It records your review of the exact current base-to-head change in Git-scoped
+							metadata. The selected commit is context only. It does not change Readiness, approve a
+							GitHub pull request, or merge code.
 						</p>
 					</div>
 				</div>
@@ -344,16 +372,16 @@ function ReviewPanel({
 	onSaved,
 }: {
 	commit: ReviewCommit;
-	current?: RepositoryReviewDecision;
+	current?: RepositoryReviewDecisionV2;
 	onClose: () => void;
-	onSaved: (record: RepositoryReviewDecision) => void;
+	onSaved: (record: RepositoryReviewDecisionV2) => void;
 }) {
 	const [reviewerLabel, setReviewerLabel] = useState(current?.reviewerLabel ?? "");
 	const [summary, setSummary] = useState(current?.summary ?? "");
-	const [saving, setSaving] = useState<RepositoryReviewDecision["decision"] | null>(null);
+	const [saving, setSaving] = useState<RepositoryReviewDecisionV2["decision"] | null>(null);
 	const [error, setError] = useState<string | null>(null);
 
-	const save = async (decision: RepositoryReviewDecision["decision"]) => {
+	const save = async (decision: RepositoryReviewDecisionV2["decision"]) => {
 		if (reviewerLabel.trim() === "") {
 			setError("Enter a reviewer name before saving.");
 			return;
@@ -368,18 +396,18 @@ function ReviewPanel({
 					"X-GraphReFly-Review": "1",
 				},
 				body: JSON.stringify({
-					schema: "graphrefly.stack.repository-review-decision-request.v1",
-					commitOid: commit.oid,
+					schema: "graphrefly.stack.repository-review-decision-request.v2",
 					decision,
 					reviewerLabel,
 					summary,
+					contextCommitOid: commit.oid,
 				}),
 			});
 			if (!response.ok) {
 				const message = (await response.json().catch(() => null)) as { message?: string } | null;
 				throw new Error(message?.message ?? `Review could not be saved (${response.status})`);
 			}
-			onSaved((await response.json()) as RepositoryReviewDecision);
+			onSaved((await response.json()) as RepositoryReviewDecisionV2);
 			onClose();
 		} catch (reason) {
 			setError(reason instanceof Error ? reason.message : "Review could not be saved");
@@ -393,7 +421,11 @@ function ReviewPanel({
 			<header>
 				<div>
 					<p className="kicker">Local review</p>
-					<h3 id="review-panel-title">Review {short(commit.oid, 12)}</h3>
+					<h3 id="review-panel-title">Review the whole current change</h3>
+					<p>
+						Selected context: {short(commit.oid, 12)}. Your decision binds the full base-to-head
+						review.
+					</p>
 				</div>
 				<button className="icon-button" type="button" onClick={onClose} aria-label="Close review">
 					×
@@ -587,16 +619,24 @@ export function GenericRepositoryReview({ review }: { review: GenericReviewData 
 	const selectedCommit = useRef<HTMLButtonElement | null>(null);
 	const [helpOpen, setHelpOpen] = useState(false);
 	const [reviewOpen, setReviewOpen] = useState(false);
-	const [decisions, setDecisions] = useState<RepositoryReviewDecision[]>([]);
+	const [decisionHistory, setDecisionHistory] = useState<ReviewDecisionHistory>({
+		schema: "graphrefly.stack.review-decision-history.v1",
+		current: [],
+		outdated: [],
+	});
 	const [reviewStateError, setReviewStateError] = useState<string | null>(null);
 	const selected = review.commits.find((commit) => commit.oid === selectedOid) ?? review.commits[0];
 	if (selected === undefined) throw new Error("Repository review contains no commits");
 	const events = selected.delta.events ?? [];
 	const hash = selected.blueprint.hash?.value ?? "unavailable";
 	const diagnosticCount = selected.blueprint.diagnostics?.issues?.length ?? 0;
-	const latestDecision = (commitOid: string) =>
-		[...decisions].reverse().find((decision) => decision.target.commitOid === commitOid);
-	const currentDecision = latestDecision(selected.oid);
+	const currentDecision = [...decisionHistory.current]
+		.reverse()
+		.find(
+			(decision): decision is RepositoryReviewDecisionV2 =>
+				decision.schema === "graphrefly.stack.repository-review-decision.v2",
+		);
+	const humanState = decisionLabel(currentDecision);
 	const semanticBinding = review.semantic?.bindings.find(
 		(binding) => binding.commit.value === selected.oid,
 	);
@@ -653,9 +693,9 @@ export function GenericRepositoryReview({ review }: { review: GenericReviewData 
 		fetch("/api/review-decisions", { signal: controller.signal })
 			.then((response) => {
 				if (!response.ok) throw new Error(`Local reviews unavailable (${response.status})`);
-				return response.json() as Promise<RepositoryReviewDecision[]>;
+				return response.json() as Promise<ReviewDecisionHistory>;
 			})
-			.then(setDecisions)
+			.then(setDecisionHistory)
 			.catch((reason: unknown) => {
 				if (!(reason instanceof DOMException && reason.name === "AbortError")) {
 					setReviewStateError(
@@ -710,7 +750,7 @@ export function GenericRepositoryReview({ review }: { review: GenericReviewData 
 				</div>
 				{review.semantic === undefined ? (
 					<div className="gate-summary is-neutral">
-						<span>Structure available</span>
+						<span>Readiness · Structure available</span>
 						<code>Readiness needs an accepted intent</code>
 					</div>
 				) : (
@@ -719,8 +759,8 @@ export function GenericRepositoryReview({ review }: { review: GenericReviewData 
 					>
 						<span>
 							{review.semantic.gateResult.verdict === "pass"
-								? "Ready to review"
-								: "Needs attention"}
+								? "Readiness · Ready"
+								: "Readiness · Needs attention"}
 						</span>
 						<code>
 							{review.semantic.invalidWorkUnitIds.length === 0
@@ -739,7 +779,6 @@ export function GenericRepositoryReview({ review }: { review: GenericReviewData 
 					</div>
 					<div className="commit-stack" ref={commitStack}>
 						{[...review.commits].reverse().map((commit) => {
-							const commitDecision = latestDecision(commit.oid);
 							return (
 								<button
 									ref={commit.oid === selected.oid ? selectedCommit : undefined}
@@ -752,9 +791,7 @@ export function GenericRepositoryReview({ review }: { review: GenericReviewData 
 									}}
 									key={commit.oid}
 								>
-									<span
-										className={`commit-dot ${commitDecision?.decision === "approve" ? "is-valid" : commitDecision?.decision === "request-changes" ? "is-invalid" : "is-evidence"}`}
-									/>
+									<span className="commit-dot is-evidence" />
 									<span className="commit-main">
 										<strong>{commit.subject}</strong>
 										<small>
@@ -763,7 +800,7 @@ export function GenericRepositoryReview({ review }: { review: GenericReviewData 
 									</span>
 									<span className="commit-meta">
 										<b>{commit.delta.events?.length ?? 0} graph Δ</b>
-										<small>{decisionLabel(commitDecision)}</small>
+										<small>Review context</small>
 									</span>
 								</button>
 							);
@@ -938,7 +975,7 @@ export function GenericRepositoryReview({ review }: { review: GenericReviewData 
 					</div>
 					<div className="section-heading-actions">
 						<span className={`review-status ${currentDecision?.decision ?? "none"}`}>
-							{decisionLabel(currentDecision)}
+							{humanState}
 						</span>
 						<span className="compare-label">
 							{short(selected.parentOid)} ↔ {short(selected.oid)}
@@ -948,7 +985,7 @@ export function GenericRepositoryReview({ review }: { review: GenericReviewData 
 							type="button"
 							onClick={() => setReviewOpen((open) => !open)}
 						>
-							{currentDecision === undefined ? "Review changes" : "Update review"}
+							{currentDecision === undefined ? "Review whole change" : "Record new decision"}
 						</button>
 					</div>
 				</div>
@@ -959,10 +996,56 @@ export function GenericRepositoryReview({ review }: { review: GenericReviewData 
 						current={currentDecision}
 						onClose={() => setReviewOpen(false)}
 						onSaved={(record) => {
-							setDecisions((current) => [...current, record]);
+							setDecisionHistory((history) => ({
+								...history,
+								current: [...history.current, record],
+							}));
 							setReviewStateError(null);
 						}}
 					/>
+				) : null}
+				{currentDecision?.decision === "request-changes" ? (
+					<div className="correction-guidance">
+						<strong>Correct on this same feature branch.</strong>
+						<span>
+							Append corrective commits, push them, then use your Git provider's native Re-request
+							review action. Fresh evidence will return this human state to Needs review.
+						</span>
+					</div>
+				) : currentDecision === undefined && decisionHistory.outdated.length > 0 ? (
+					<div className="correction-guidance is-fresh">
+						<strong>Fresh revision · Needs review.</strong>
+						<span>
+							Earlier decisions are outdated for this exact change. Push the branch and use your Git
+							provider's native Re-request review action when the correction is ready.
+						</span>
+					</div>
+				) : null}
+				{decisionHistory.current.length > 0 || decisionHistory.outdated.length > 0 ? (
+					<details className="review-history" open={decisionHistory.outdated.length > 0}>
+						<summary>
+							Review history · {decisionHistory.current.length} current ·{" "}
+							{decisionHistory.outdated.length} outdated
+						</summary>
+						<div>
+							{[
+								...decisionHistory.current.map((decision) => ({ decision, status: "Current" })),
+								...decisionHistory.outdated.map((decision) => ({ decision, status: "Outdated" })),
+							].map(({ decision, status }) => (
+								<article key={decision.id} className={status === "Outdated" ? "is-outdated" : ""}>
+									<span>{status}</span>
+									<strong>{decisionActionLabel(decision)}</strong>
+									<small>
+										{decision.reviewerLabel} · {new Date(decision.recordedAt).toLocaleString()}
+										{decision.schema === "graphrefly.stack.repository-review-decision.v1"
+											? " · legacy commit decision"
+											: ""}
+									</small>
+									<p>{decision.summary || "No summary provided."}</p>
+								</article>
+							))}
+						</div>
+					</details>
 				) : null}
 				{reviewStateError === null ? null : (
 					<p className="review-state-warning">{reviewStateError}</p>
@@ -1044,7 +1127,9 @@ export function GenericRepositoryReview({ review }: { review: GenericReviewData 
 								</div>
 							</>
 						)}
-						{decisions.length > 0 ? (
+						{decisionHistory.current.some(
+							(decision) => decision.schema === "graphrefly.stack.repository-review-decision.v2",
+						) ? (
 							<div>
 								<span>Share reviews</span>
 								<a className="text-link" href="/api/review-decisions/export" download>

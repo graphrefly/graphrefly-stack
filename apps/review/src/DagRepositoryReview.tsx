@@ -104,12 +104,24 @@ type Decision = {
 	selectedEvidence?: Selection;
 };
 
+type DecisionHistory = {
+	schema: "graphrefly.stack.review-decision-history.v1";
+	current: Decision[];
+	outdated: Decision[];
+};
+
 function key(oid: Oid): string {
 	return `${oid.algorithm}:${oid.value}`;
 }
 
 function short(value: string, size = 9): string {
 	return value.slice(0, size);
+}
+
+function decisionLabel(decision: Decision | undefined): string {
+	if (decision?.decision === "approve") return "Approved";
+	if (decision?.decision === "request-changes") return "Changes requested";
+	return "Needs review";
 }
 
 function selectionKey(selection: Selection): string {
@@ -134,10 +146,15 @@ export function DagRepositoryReview({ review }: { review: DagReviewData }) {
 	const topology = review.domainBundle.topology;
 	const gate = review.domainBundle.gateResult;
 	const [selected, setSelected] = useState<Selection>(review.projection.selectedEvidence);
-	const [decisions, setDecisions] = useState<Decision[]>([]);
+	const [decisionHistory, setDecisionHistory] = useState<DecisionHistory>({
+		schema: "graphrefly.stack.review-decision-history.v1",
+		current: [],
+		outdated: [],
+	});
 	const [reviewerLabel, setReviewerLabel] = useState("");
 	const [summary, setSummary] = useState("");
 	const [stateMessage, setStateMessage] = useState<string | null>(null);
+	const currentDecision = decisionHistory.current.at(-1);
 	const selectedOid =
 		selected.kind === "work-unit"
 			? selected.commit
@@ -173,9 +190,9 @@ export function DagRepositoryReview({ review }: { review: DagReviewData }) {
 		fetch("/api/review-decisions", { signal: controller.signal })
 			.then((response) => {
 				if (!response.ok) throw new Error(`Local decisions unavailable (${response.status})`);
-				return response.json() as Promise<Decision[]>;
+				return response.json() as Promise<DecisionHistory>;
 			})
-			.then(setDecisions)
+			.then(setDecisionHistory)
 			.catch((error: unknown) => {
 				if (!(error instanceof DOMException && error.name === "AbortError")) {
 					setStateMessage(error instanceof Error ? error.message : "Local decisions unavailable");
@@ -200,7 +217,10 @@ export function DagRepositoryReview({ review }: { review: DagReviewData }) {
 			});
 			const body = (await response.json()) as Decision | { message?: string };
 			if (!response.ok) throw new Error("message" in body ? body.message : "Decision was rejected");
-			setDecisions((current) => [...current, body as Decision]);
+			setDecisionHistory((history) => ({
+				...history,
+				current: [...history.current, body as Decision],
+			}));
 			setSummary("");
 			setStateMessage("Decision recorded in repository-local state.");
 		} catch (error) {
@@ -233,9 +253,12 @@ export function DagRepositoryReview({ review }: { review: DagReviewData }) {
 						Minimal affected cut: {gate.minimalAffectedCut.join(" → ") || "none"}. Selecting
 						evidence below changes context, not the decision target.
 					</p>
+					<span className={`review-status ${currentDecision?.decision ?? "none"}`}>
+						Human review · {decisionLabel(currentDecision)}
+					</span>
 				</div>
 				<div className={`gate-summary ${gate.verdict === "pass" ? "is-valid" : "is-invalid"}`}>
-					<span>Gate {gate.verdict}</span>
+					<span>Readiness · {gate.verdict}</span>
 					<code>
 						{gate.units.filter((entry) => entry.verdict !== "valid").length} units need attention
 					</code>
@@ -391,7 +414,10 @@ export function DagRepositoryReview({ review }: { review: DagReviewData }) {
 				<div>
 					<p className="kicker">Repository-local decision</p>
 					<h2>Record review outcome</h2>
-					<p>{decisions.length} decisions currently bind this whole result.</p>
+					<p>
+						{decisionHistory.current.length} current · {decisionHistory.outdated.length} outdated.
+						Every new decision binds this whole result.
+					</p>
 				</div>
 				<label>
 					Reviewer
@@ -419,6 +445,45 @@ export function DagRepositoryReview({ review }: { review: DagReviewData }) {
 				</div>
 				{stateMessage ? <p className="state-message">{stateMessage}</p> : null}
 			</section>
+			{currentDecision?.decision === "request-changes" ? (
+				<div className="correction-guidance">
+					<strong>Correct on the same feature branch.</strong>
+					<span>
+						Append corrective commits, push them, then use your Git provider's native Re-request
+						review action. Stack will bind the next decision only to fresh DAG evidence.
+					</span>
+				</div>
+			) : currentDecision === undefined && decisionHistory.outdated.length > 0 ? (
+				<div className="correction-guidance is-fresh">
+					<strong>Fresh DAG evidence · Needs review.</strong>
+					<span>
+						Prior whole-result decisions remain visible below but no longer bind this result.
+					</span>
+				</div>
+			) : null}
+			{decisionHistory.current.length > 0 || decisionHistory.outdated.length > 0 ? (
+				<details className="review-history" open={decisionHistory.outdated.length > 0}>
+					<summary>
+						Review history · {decisionHistory.current.length} current ·{" "}
+						{decisionHistory.outdated.length} outdated
+					</summary>
+					<div>
+						{[
+							...decisionHistory.current.map((decision) => ({ decision, status: "Current" })),
+							...decisionHistory.outdated.map((decision) => ({ decision, status: "Outdated" })),
+						].map(({ decision, status }) => (
+							<article key={decision.id} className={status === "Outdated" ? "is-outdated" : ""}>
+								<span>{status}</span>
+								<strong>{decisionLabel(decision)}</strong>
+								<small>
+									{decision.reviewerLabel} · {new Date(decision.recordedAt).toLocaleString()}
+								</small>
+								<p>{decision.summary || "No summary provided."}</p>
+							</article>
+						))}
+					</div>
+				</details>
+			) : null}
 		</div>
 	);
 }

@@ -8,6 +8,7 @@ import {
 	DAG_REVIEW_DECISION_REQUEST_SCHEMA,
 	DAG_REVIEW_DECISION_SCHEMA,
 	DAG_SEMANTIC_ARTIFACTS_SCHEMA,
+	REVIEW_DECISION_HISTORY_SCHEMA,
 } from "@graphrefly-stack/contracts";
 
 import type { DagReviewEvidenceBundle } from "./dag-review-runner.js";
@@ -69,53 +70,143 @@ async function decisionsDirectory(
 	return repositoryStateDirectory(repository, "dag-review-decisions", digest.value);
 }
 
-export async function readDagReviewDecisions(
+function targetDigests(bundle: DagReviewEvidenceBundle): {
+	gateResultDigest: JsonObject;
+	topologyDigest: JsonObject;
+	dependencyGraphDigest: JsonObject;
+} {
+	const target = projection(bundle);
+	return {
+		gateResultDigest: target.gateResultDigest as JsonObject,
+		topologyDigest: target.topologyDigest as JsonObject,
+		dependencyGraphDigest: target.dependencyGraphDigest as JsonObject,
+	};
+}
+
+function sameDigest(left: unknown, right: unknown): boolean {
+	const leftDigest = left as JsonObject | undefined;
+	const rightDigest = right as JsonObject | undefined;
+	return (
+		leftDigest?.algorithm === rightDigest?.algorithm && leftDigest?.value === rightDigest?.value
+	);
+}
+
+function matchesCurrentBundle(bundle: DagReviewEvidenceBundle, decision: JsonObject): boolean {
+	const current = targetDigests(bundle);
+	const target = decision.target as JsonObject | undefined;
+	return (
+		sameDigest(target?.gateResultDigest, current.gateResultDigest) &&
+		sameDigest(target?.topologyDigest, current.topologyDigest) &&
+		sameDigest(target?.dependencyGraphDigest, current.dependencyGraphDigest)
+	);
+}
+
+async function readAllDagReviewDecisions(
 	repository: string,
 	bundle: DagReviewEvidenceBundle,
 ): Promise<JsonObject[]> {
 	assertDagReviewEvidenceIntegrity(bundle);
-	const directory = await decisionsDirectory(repository, bundle);
+	const root = await repositoryStateDirectory(repository, "dag-review-decisions");
 	const { decision: validate } = await validators();
 	if (validate === undefined) throw new Error("DAG review decision validator unavailable");
-	const entries = (await readdir(directory)).filter((entry) => entry.endsWith(".json")).sort();
+	const rootEntries = await readdir(root, { withFileTypes: true });
+	for (const entry of rootEntries) {
+		if (!entry.isDirectory() || entry.isSymbolicLink()) {
+			throw new DagReviewStateError(
+				"REVIEW_STATE_INVALID",
+				`DAG review decision directory is unsafe: ${entry.name}`,
+			);
+		}
+	}
+	const digestDirectories = rootEntries.map((entry) => entry.name).sort();
 	const decisions: JsonObject[] = [];
-	for (const entry of entries) {
-		const path = resolve(directory, entry);
-		const status = await lstat(path);
-		if (!status.isFile() || status.isSymbolicLink()) {
+	for (const digestDirectory of digestDirectories) {
+		if (!/^[0-9a-f]{64}$/u.test(digestDirectory)) {
 			throw new DagReviewStateError(
 				"REVIEW_STATE_INVALID",
-				`DAG review record path is unsafe: ${entry}`,
+				`DAG review decision directory is invalid: ${digestDirectory}`,
 			);
 		}
-		let value: unknown;
-		try {
-			value = JSON.parse(await readFile(path, "utf8"));
-		} catch {
-			throw new DagReviewStateError(
-				"REVIEW_STATE_INVALID",
-				`DAG review record is malformed: ${entry}`,
-			);
+		const directory = await repositoryStateDirectory(
+			repository,
+			"dag-review-decisions",
+			digestDirectory,
+		);
+		for (const entry of (await readdir(directory))
+			.filter((name) => name.endsWith(".json"))
+			.sort()) {
+			const path = resolve(directory, entry);
+			const status = await lstat(path);
+			if (!status.isFile() || status.isSymbolicLink()) {
+				throw new DagReviewStateError(
+					"REVIEW_STATE_INVALID",
+					`DAG review record path is unsafe: ${entry}`,
+				);
+			}
+			let value: unknown;
+			try {
+				value = JSON.parse(await readFile(path, "utf8"));
+			} catch {
+				throw new DagReviewStateError(
+					"REVIEW_STATE_INVALID",
+					`DAG review record is malformed: ${entry}`,
+				);
+			}
+			if (!validate(value)) {
+				throw new DagReviewStateError(
+					"REVIEW_STATE_INVALID",
+					`DAG review record failed validation: ${entry}`,
+				);
+			}
+			const record = value as JsonObject;
+			const gateDigest = (record.target as JsonObject | undefined)?.gateResultDigest as
+				| JsonObject
+				| undefined;
+			if (gateDigest?.value !== digestDirectory) {
+				throw new DagReviewStateError(
+					"REVIEW_STATE_INVALID",
+					`DAG review record is stored under the wrong target: ${entry}`,
+				);
+			}
+			if (matchesCurrentBundle(bundle, record)) {
+				try {
+					assertDagReviewDecisionIntegrity({ reviewEvidence: bundle, decision: record });
+				} catch {
+					throw new DagReviewStateError(
+						"REVIEW_STATE_INVALID",
+						`DAG review record target is invalid: ${entry}`,
+					);
+				}
+			}
+			decisions.push(record);
 		}
-		if (!validate(value)) {
-			throw new DagReviewStateError(
-				"REVIEW_STATE_INVALID",
-				`DAG review record failed validation: ${entry}`,
-			);
-		}
-		try {
-			assertDagReviewDecisionIntegrity({ reviewEvidence: bundle, decision: value });
-		} catch {
-			throw new DagReviewStateError(
-				"REVIEW_STATE_INVALID",
-				`DAG review record target is stale: ${entry}`,
-			);
-		}
-		decisions.push(value as JsonObject);
 	}
 	return decisions.sort((left, right) =>
 		String(left.recordedAt).localeCompare(String(right.recordedAt)),
 	);
+}
+
+export async function readDagReviewDecisionHistory(
+	repository: string,
+	bundle: DagReviewEvidenceBundle,
+): Promise<{
+	schema: typeof REVIEW_DECISION_HISTORY_SCHEMA;
+	current: JsonObject[];
+	outdated: JsonObject[];
+}> {
+	const decisions = await readAllDagReviewDecisions(repository, bundle);
+	return {
+		schema: REVIEW_DECISION_HISTORY_SCHEMA,
+		current: decisions.filter((decision) => matchesCurrentBundle(bundle, decision)),
+		outdated: decisions.filter((decision) => !matchesCurrentBundle(bundle, decision)),
+	};
+}
+
+export async function readDagReviewDecisions(
+	repository: string,
+	bundle: DagReviewEvidenceBundle,
+): Promise<JsonObject[]> {
+	return [...(await readDagReviewDecisionHistory(repository, bundle)).current];
 }
 
 export async function writeDagReviewDecision(

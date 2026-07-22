@@ -28,6 +28,7 @@
 	"scripts": {
 		"build": "pnpm --filter @graphrefly-stack/contracts build && pnpm --filter @graphrefly-stack/core build && pnpm --filter @graphrefly-stack/review build && pnpm --filter @graphrefly-stack/cli build && pnpm --filter @graphrefly-stack/hosted build",
 		"build:package": "pnpm build && node scripts/build-package.mjs",
+		"changeset": "changeset",
 		"check": "pnpm docs:check && pnpm skills:check && pnpm test:compatibility && pnpm test:contracts && pnpm test:architecture && pnpm test:semantic && pnpm test:product && pnpm test:package && pnpm test:live && biome check .",
 		"cli": "node packages/cli/dist/cli.js",
 		"docs:check": "node scripts/check-docs.mjs",
@@ -45,7 +46,9 @@
 		"lint": "biome lint .",
 		"format": "biome format --write .",
 		"format:check": "biome format .",
-		"prepack": "pnpm build:package"
+		"prepack": "pnpm build:package",
+		"release": "changeset publish",
+		"version-packages": "changeset version"
 	},
 	"dependencies": {
 		"@openai/codex-sdk": "0.143.0"
@@ -55,6 +58,8 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.4.6",
+		"@changesets/changelog-git": "^0.2.1",
+		"@changesets/cli": "^2.31.0",
 		"@graphrefly/ts": "0.3.0",
 		"@types/node": "26.1.1",
 		"@types/semver": "7.7.1",

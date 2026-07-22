@@ -1,0 +1,92 @@
+# Changesets release PR and npm Trusted Publishing workflow.
+#
+# One-time prerequisites:
+# - Install graphrefly-write-content on this repository and expose the existing organization-level
+#   GRAPHREFLY_WRITE_CONTENT_APP_CLIENT_ID variable and GRAPHREFLY_WRITE_CONTENT_APP_PRIVATE_KEY
+#   secret. The App needs Contents=write, Pull requests=write and Metadata=read.
+# - On npm, configure @graphrefly/stack Trusted Publisher as GitHub Actions with organization
+#   graphrefly, repository graphrefly-stack, workflow release.yml and npm publish permission.
+
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write
+
+    steps:
+      - name: Create GitHub App installation token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.GRAPHREFLY_WRITE_CONTENT_APP_CLIENT_ID }}
+          private-key: ${{ secrets.GRAPHREFLY_WRITE_CONTENT_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: true
+
+      - name: Configure Git committer
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          user_id=$(gh api "users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id)
+          git config user.name '${{ steps.app-token.outputs.app-slug }}[bot]'
+          git config user.email "${user_id}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+          package-manager-cache: false
+
+      - name: Verify npm Trusted Publishing support
+        run: |
+          npm_version=$(npm --version)
+          node -e "const [major, minor] = process.argv[1].split('.').map(Number); if (major < 11 || (major === 11 && minor < 5)) throw new Error('npm >= 11.5.1 is required for Trusted Publishing')" "$npm_version"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check
+        run: pnpm check
+
+      - name: Create release PR or publish
+        id: changesets
+        uses: changesets/action@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1.9.0
+        with:
+          publish: pnpm run release
+          version: pnpm run version-packages
+          commit: "chore: release packages"
+          title: "chore: release packages"
+          createGithubReleases: true
+          setupGitUser: false
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}

@@ -248,6 +248,19 @@ map.
 - `.agents/skills/` — project workflows that operate on canonical records
 - `.private/` — ignored raw responses, live runs, generated repositories, and drafts
 
+## Releases
+
+Published-package changes include a Changeset:
+
+```bash
+pnpm changeset
+```
+
+After the change reaches `main`, the Release workflow opens or updates a reviewable release PR. Its
+merge publishes `@graphrefly/stack` through npm Trusted Publishing after the complete project gate;
+ordinary pull requests receive no npm identity. Maintainer setup and the exact trust boundary are
+canonical in D49, C59, and E21 under [`docs/`](docs/README.md).
+
 ## License
 
 [MIT](LICENSE)

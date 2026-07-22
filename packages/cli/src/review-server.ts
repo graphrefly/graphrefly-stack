@@ -8,13 +8,13 @@ import type { RepositoryReview } from "@graphrefly-stack/contracts";
 import type { DagReviewEvidenceBundle } from "./dag-review-runner.js";
 import {
 	DagReviewStateError,
-	readDagReviewDecisions,
+	readDagReviewDecisionHistory,
 	writeDagReviewDecision,
 } from "./dag-review-state.js";
 import {
 	createRepositoryReviewBundle,
 	RepositoryReviewStateError,
-	readRepositoryReviewDecisions,
+	readRepositoryReviewDecisionHistory,
 	writeRepositoryReviewDecision,
 } from "./repository-review-state.js";
 import { runtimeReviewDist } from "./runtime-paths.js";
@@ -187,17 +187,17 @@ export async function startReviewServer(
 				return;
 			}
 			try {
-				const records =
+				const history =
 					dagState === undefined
-						? await readRepositoryReviewDecisions(
+						? await readRepositoryReviewDecisionHistory(
 								repositoryState?.repository as string,
 								repositoryState?.review as RepositoryReview,
 							)
-						: await readDagReviewDecisions(dagState.repository, dagState.review);
+						: await readDagReviewDecisionHistory(dagState.repository, dagState.review);
 				response.setHeader("Content-Type", "application/json; charset=utf-8");
 				response.writeHead(200);
 				if (request.method === "HEAD") response.end();
-				else response.end(JSON.stringify(records));
+				else response.end(JSON.stringify(history));
 			} catch {
 				response.writeHead(500).end("Local review state unavailable");
 			}

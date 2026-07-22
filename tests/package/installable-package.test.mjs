@@ -1260,6 +1260,16 @@ test("the npm tarball installs and reviews an independent GraphReFly 0.3.x repos
 			true,
 		);
 	}
+	for (const schema of [
+		"review-decision-request.schema.json",
+		"review-decision.schema.json",
+		"review-bundle.schema.json",
+	]) {
+		assert.equal(
+			packedPaths.includes(`package/dist/assets/contracts/repository/v2/${schema}`),
+			true,
+		);
+	}
 	for (const packedPath of [
 		"package/dist/assets/contracts/ci/v1/artifacts.schema.json",
 		"package/dist/assets/contracts/ci/v1/golden-suite.schema.json",
@@ -1440,17 +1450,18 @@ export function createApplicationGraph() {
 			"X-GraphReFly-Review": "1",
 		},
 		body: JSON.stringify({
-			schema: "graphrefly.stack.repository-review-decision-request.v1",
-			commitOid: head,
+			schema: "graphrefly.stack.repository-review-decision-request.v2",
 			decision: "approve",
 			reviewerLabel: "Package test",
 			summary: "Installed package review state is durable and portable.",
+			contextCommitOid: head,
 		}),
 	});
 	assert.equal(decisionResponse.status, 201);
 	const decision = await decisionResponse.json();
-	assert.equal(decision.target.commitOid, head);
-	assert.equal(decision.target.parentOid, base);
+	assert.equal(decision.target.headOid, head);
+	assert.match(decision.target.reviewTargetDigest.value, /^[0-9a-f]{64}$/u);
+	assert.equal(decision.contextCommitOid, head);
 	assert.equal(decision.identityVerified, false);
 	assert.match(
 		decision.id,
@@ -1459,7 +1470,11 @@ export function createApplicationGraph() {
 
 	const storedResponse = await fetch(`${url}/api/review-decisions`);
 	assert.equal(storedResponse.status, 200);
-	assert.deepEqual(await storedResponse.json(), [decision]);
+	assert.deepEqual(await storedResponse.json(), {
+		schema: "graphrefly.stack.review-decision-history.v1",
+		current: [decision],
+		outdated: [],
+	});
 	const exportResponse = await fetch(`${url}/api/review-decisions/export`);
 	assert.equal(exportResponse.status, 200);
 	const bundle = await exportResponse.json();

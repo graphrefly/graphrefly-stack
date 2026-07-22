@@ -6,6 +6,14 @@ export const REPOSITORY_REVIEW_DECISION_SCHEMA =
 	"graphrefly.stack.repository-review-decision.v1" as const;
 export const REPOSITORY_REVIEW_BUNDLE_SCHEMA =
 	"graphrefly.stack.repository-review-bundle.v1" as const;
+export const REPOSITORY_REVIEW_DECISION_REQUEST_V2_SCHEMA =
+	"graphrefly.stack.repository-review-decision-request.v2" as const;
+export const REPOSITORY_REVIEW_DECISION_V2_SCHEMA =
+	"graphrefly.stack.repository-review-decision.v2" as const;
+export const REPOSITORY_REVIEW_BUNDLE_V2_SCHEMA =
+	"graphrefly.stack.repository-review-bundle.v2" as const;
+export const REVIEW_DECISION_HISTORY_SCHEMA =
+	"graphrefly.stack.review-decision-history.v1" as const;
 export const SUPPORTED_GRAPHREFLY_RANGE = ">=0.3.0 <0.4.0" as const;
 
 export interface RepositoryConfig {
@@ -84,7 +92,7 @@ export interface RepositoryReview {
 	};
 }
 
-export interface RepositoryReviewDecisionRequest {
+export interface RepositoryReviewDecisionRequestV1 {
 	readonly schema: typeof REPOSITORY_REVIEW_DECISION_REQUEST_SCHEMA;
 	readonly commitOid: string;
 	readonly decision: "approve" | "request-changes";
@@ -100,7 +108,7 @@ export interface RepositoryReviewTarget {
 	readonly blueprintHash: string;
 }
 
-export interface RepositoryReviewDecision {
+export interface RepositoryReviewDecisionV1 {
 	readonly schema: typeof REPOSITORY_REVIEW_DECISION_SCHEMA;
 	readonly id: string;
 	readonly target: RepositoryReviewTarget;
@@ -111,7 +119,7 @@ export interface RepositoryReviewDecision {
 	readonly identityVerified: false;
 }
 
-export interface RepositoryReviewBundle {
+export interface RepositoryReviewBundleV1 {
 	readonly schema: typeof REPOSITORY_REVIEW_BUNDLE_SCHEMA;
 	readonly repository: {
 		readonly label: string;
@@ -121,6 +129,66 @@ export interface RepositoryReviewBundle {
 	readonly artifacts: readonly {
 		readonly path: string;
 		readonly hash: { readonly algorithm: "sha256"; readonly value: string };
-		readonly record: RepositoryReviewDecision;
+		readonly record: RepositoryReviewDecisionV1;
+	}[];
+}
+
+// Preserve the published v1 type names for consumers that still verify or
+// project historical repository review artifacts.
+export type RepositoryReviewDecisionRequest = RepositoryReviewDecisionRequestV1;
+export type RepositoryReviewBundle = RepositoryReviewBundleV1;
+
+export interface RepositoryReviewDecisionRequestV2 {
+	readonly schema: typeof REPOSITORY_REVIEW_DECISION_REQUEST_V2_SCHEMA;
+	readonly decision: "approve" | "request-changes";
+	readonly reviewerLabel: string;
+	readonly summary: string;
+	readonly contextCommitOid?: string;
+}
+
+export interface RepositoryReviewTargetV2 {
+	readonly baseOid: string;
+	readonly headOid: string;
+	readonly reviewTargetDigest: {
+		readonly algorithm: "sha256";
+		readonly value: string;
+	};
+}
+
+export interface RepositoryReviewDecisionV2 {
+	readonly schema: typeof REPOSITORY_REVIEW_DECISION_V2_SCHEMA;
+	readonly id: string;
+	readonly target: RepositoryReviewTargetV2;
+	readonly contextCommitOid?: string;
+	readonly decision: "approve" | "request-changes";
+	readonly reviewerLabel: string;
+	readonly summary: string;
+	readonly recordedAt: string;
+	readonly identityVerified: false;
+}
+
+export type RepositoryReviewDecision = RepositoryReviewDecisionV1 | RepositoryReviewDecisionV2;
+
+export interface RepositoryReviewDecisionHistory<T = RepositoryReviewDecision> {
+	readonly schema: typeof REVIEW_DECISION_HISTORY_SCHEMA;
+	readonly current: readonly T[];
+	readonly outdated: readonly T[];
+}
+
+export interface RepositoryReviewBundleV2 {
+	readonly schema: typeof REPOSITORY_REVIEW_BUNDLE_V2_SCHEMA;
+	readonly repository: {
+		readonly label: string;
+		readonly baseOid: string;
+		readonly headOid: string;
+	};
+	readonly reviewTargetDigest: {
+		readonly algorithm: "sha256";
+		readonly value: string;
+	};
+	readonly artifacts: readonly {
+		readonly path: string;
+		readonly hash: { readonly algorithm: "sha256"; readonly value: string };
+		readonly record: RepositoryReviewDecisionV2;
 	}[];
 }

@@ -18,6 +18,7 @@ export * from "./merge-group-integrity.js";
 export * from "./recovery.js";
 export * from "./recovery-integrity.js";
 export * from "./repository-review.js";
+export * from "./repository-review-integrity.js";
 export * from "./selective-recovery-integrity.js";
 export * from "./semantic.js";
 

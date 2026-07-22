@@ -2,13 +2,20 @@ import { randomUUID } from "node:crypto";
 import { lstat, mkdir, readdir, readFile, realpath, rename, writeFile } from "node:fs/promises";
 import { resolve, sep } from "node:path";
 import {
+	assertRepositoryReviewBundleV2Integrity,
 	createStrictAjv,
-	REPOSITORY_REVIEW_BUNDLE_SCHEMA,
+	REPOSITORY_REVIEW_BUNDLE_V2_SCHEMA,
+	REPOSITORY_REVIEW_DECISION_REQUEST_V2_SCHEMA,
 	REPOSITORY_REVIEW_DECISION_SCHEMA,
+	REPOSITORY_REVIEW_DECISION_V2_SCHEMA,
+	REVIEW_DECISION_HISTORY_SCHEMA,
 	type RepositoryReview,
-	type RepositoryReviewBundle,
+	type RepositoryReviewBundleV2,
 	type RepositoryReviewDecision,
-	type RepositoryReviewDecisionRequest,
+	type RepositoryReviewDecisionHistory,
+	type RepositoryReviewDecisionRequestV2,
+	type RepositoryReviewDecisionV1,
+	type RepositoryReviewDecisionV2,
 	sha256Jcs,
 } from "@graphrefly-stack/contracts";
 
@@ -21,6 +28,9 @@ const schemaPaths = [
 	"contracts/repository/v1/review-decision-request.schema.json",
 	"contracts/repository/v1/review-decision.schema.json",
 	"contracts/repository/v1/review-bundle.schema.json",
+	"contracts/repository/v2/review-decision-request.schema.json",
+	"contracts/repository/v2/review-decision.schema.json",
+	"contracts/repository/v2/review-bundle.schema.json",
 	"contracts/semantic/v1/artifacts.schema.json",
 ] as const;
 
@@ -41,9 +51,10 @@ async function validators() {
 	const ajv = createStrictAjv();
 	for (const schema of schemas) ajv.addSchema(schema);
 	return {
-		request: ajv.getSchema("urn:graphrefly-stack:schema:repository-review-decision-request:v1"),
-		decision: ajv.getSchema("urn:graphrefly-stack:schema:repository-review-decision:v1"),
-		bundle: ajv.getSchema("urn:graphrefly-stack:schema:repository-review-bundle:v1"),
+		requestV2: ajv.getSchema("urn:graphrefly-stack:schema:repository-review-decision-request:v2"),
+		decisionV1: ajv.getSchema("urn:graphrefly-stack:schema:repository-review-decision:v1"),
+		decisionV2: ajv.getSchema("urn:graphrefly-stack:schema:repository-review-decision:v2"),
+		bundleV2: ajv.getSchema("urn:graphrefly-stack:schema:repository-review-bundle:v2"),
 	};
 }
 
@@ -113,7 +124,17 @@ function blueprintHashFor(review: RepositoryReview, commitOid: string): string |
 		: undefined;
 }
 
-function matchesCurrentReview(review: RepositoryReview, record: RepositoryReviewDecision): boolean {
+export function repositoryReviewTargetDigest(review: RepositoryReview): {
+	algorithm: "sha256";
+	value: string;
+} {
+	return { algorithm: "sha256", value: sha256Jcs(review) };
+}
+
+function matchesCurrentV1Review(
+	review: RepositoryReview,
+	record: RepositoryReviewDecisionV1,
+): boolean {
 	const commit = review.commits.find((candidate) => candidate.oid === record.target.commitOid);
 	return (
 		commit !== undefined &&
@@ -124,38 +145,84 @@ function matchesCurrentReview(review: RepositoryReview, record: RepositoryReview
 	);
 }
 
+function matchesCurrentReview(review: RepositoryReview, record: RepositoryReviewDecision): boolean {
+	if (record.schema === REPOSITORY_REVIEW_DECISION_SCHEMA) {
+		return matchesCurrentV1Review(review, record);
+	}
+	const target = repositoryReviewTargetDigest(review);
+	return (
+		record.target.baseOid === review.repository.baseOid &&
+		record.target.headOid === review.repository.headOid &&
+		record.target.reviewTargetDigest.algorithm === target.algorithm &&
+		record.target.reviewTargetDigest.value === target.value
+	);
+}
+
+async function readAllRepositoryReviewDecisions(
+	repository: string,
+): Promise<RepositoryReviewDecision[]> {
+	const directory = await decisionsDirectory(repository);
+	const { decisionV1, decisionV2 } = await validators();
+	if (decisionV1 === undefined || decisionV2 === undefined) {
+		throw new Error("Repository review decision validators unavailable");
+	}
+	const entries = (await readdir(directory, { withFileTypes: true }))
+		.filter((entry) => entry.name.endsWith(".json"))
+		.sort((left, right) => left.name.localeCompare(right.name));
+	const records: RepositoryReviewDecision[] = [];
+	for (const entry of entries) {
+		if (!entry.isFile() || entry.isSymbolicLink()) {
+			throw new RepositoryReviewStateError(
+				"REVIEW_STATE_INVALID",
+				`Local review record path is unsafe: ${entry.name}`,
+			);
+		}
+		let value: unknown;
+		try {
+			value = JSON.parse(await readFile(resolve(directory, entry.name), "utf8"));
+		} catch {
+			throw new RepositoryReviewStateError(
+				"REVIEW_STATE_INVALID",
+				`Local review record is not valid JSON: ${entry.name}`,
+			);
+		}
+		const schema = (value as { schema?: unknown } | null)?.schema;
+		const valid =
+			schema === REPOSITORY_REVIEW_DECISION_SCHEMA
+				? decisionV1(value)
+				: schema === REPOSITORY_REVIEW_DECISION_V2_SCHEMA
+					? decisionV2(value)
+					: false;
+		if (!valid) {
+			const errors =
+				schema === REPOSITORY_REVIEW_DECISION_SCHEMA ? decisionV1.errors : decisionV2.errors;
+			throw new RepositoryReviewStateError(
+				"REVIEW_STATE_INVALID",
+				`Local review record failed validation: ${entry.name} (${JSON.stringify(errors)})`,
+			);
+		}
+		records.push(value as RepositoryReviewDecision);
+	}
+	return records.sort((left, right) => left.recordedAt.localeCompare(right.recordedAt));
+}
+
+export async function readRepositoryReviewDecisionHistory(
+	repository: string,
+	review: RepositoryReview,
+): Promise<RepositoryReviewDecisionHistory> {
+	const records = await readAllRepositoryReviewDecisions(repository);
+	return {
+		schema: REVIEW_DECISION_HISTORY_SCHEMA,
+		current: records.filter((record) => matchesCurrentReview(review, record)),
+		outdated: records.filter((record) => !matchesCurrentReview(review, record)),
+	};
+}
+
 export async function readRepositoryReviewDecisions(
 	repository: string,
 	review: RepositoryReview,
 ): Promise<RepositoryReviewDecision[]> {
-	const directory = await decisionsDirectory(repository);
-	const { decision: validate } = await validators();
-	if (validate === undefined) throw new Error("Repository review decision validator unavailable");
-	const entries = (await readdir(directory, { withFileTypes: true }))
-		.filter((entry) => entry.isFile() && entry.name.endsWith(".json"))
-		.map((entry) => entry.name)
-		.sort();
-	const records: RepositoryReviewDecision[] = [];
-	for (const entry of entries) {
-		let value: unknown;
-		try {
-			value = JSON.parse(await readFile(resolve(directory, entry), "utf8"));
-		} catch {
-			throw new RepositoryReviewStateError(
-				"REVIEW_STATE_INVALID",
-				`Local review record is not valid JSON: ${entry}`,
-			);
-		}
-		if (!validate(value)) {
-			throw new RepositoryReviewStateError(
-				"REVIEW_STATE_INVALID",
-				`Local review record failed validation: ${entry}`,
-			);
-		}
-		const record = value as RepositoryReviewDecision;
-		if (matchesCurrentReview(review, record)) records.push(record);
-	}
-	return records.sort((left, right) => left.recordedAt.localeCompare(right.recordedAt));
+	return [...(await readRepositoryReviewDecisionHistory(repository, review)).current];
 }
 
 export async function writeRepositoryReviewDecision(
@@ -163,7 +230,7 @@ export async function writeRepositoryReviewDecision(
 	review: RepositoryReview,
 	input: unknown,
 ): Promise<RepositoryReviewDecision> {
-	const { request: validateRequest, decision: validateDecision } = await validators();
+	const { requestV2: validateRequest, decisionV2: validateDecision } = await validators();
 	if (validateRequest === undefined || validateDecision === undefined) {
 		throw new Error("Repository review decision validators unavailable");
 	}
@@ -173,7 +240,13 @@ export async function writeRepositoryReviewDecision(
 			`Review decision request failed validation: ${JSON.stringify(validateRequest.errors)}`,
 		);
 	}
-	const request = input as RepositoryReviewDecisionRequest;
+	const request = input as RepositoryReviewDecisionRequestV2;
+	if (request.schema !== REPOSITORY_REVIEW_DECISION_REQUEST_V2_SCHEMA) {
+		throw new RepositoryReviewStateError(
+			"REVIEW_DECISION_INVALID",
+			"Whole-change review decision request schema is unsupported",
+		);
+	}
 	const reviewerLabel = request.reviewerLabel.trim();
 	const summary = request.summary.trim();
 	if (reviewerLabel.length === 0) {
@@ -182,24 +255,26 @@ export async function writeRepositoryReviewDecision(
 			"Reviewer name cannot be blank",
 		);
 	}
-	const commit = review.commits.find((candidate) => candidate.oid === request.commitOid);
-	const blueprintHash = blueprintHashFor(review, request.commitOid);
-	if (commit === undefined || blueprintHash === undefined) {
+	if (
+		request.contextCommitOid !== undefined &&
+		!review.commits.some((candidate) => candidate.oid === request.contextCommitOid)
+	) {
 		throw new RepositoryReviewStateError(
 			"REVIEW_TARGET_STALE",
-			"The selected commit is not part of the current review range",
+			"The selected context commit is not part of the current review range",
 		);
 	}
-	const record: RepositoryReviewDecision = {
-		schema: REPOSITORY_REVIEW_DECISION_SCHEMA,
+	const record: RepositoryReviewDecisionV2 = {
+		schema: REPOSITORY_REVIEW_DECISION_V2_SCHEMA,
 		id: randomUUID(),
 		target: {
 			baseOid: review.repository.baseOid,
 			headOid: review.repository.headOid,
-			parentOid: commit.parentOid,
-			commitOid: commit.oid,
-			blueprintHash,
+			reviewTargetDigest: repositoryReviewTargetDigest(review),
 		},
+		...(request.contextCommitOid === undefined
+			? {}
+			: { contextCommitOid: request.contextCommitOid }),
 		decision: request.decision,
 		reviewerLabel,
 		summary,
@@ -226,26 +301,31 @@ export async function writeRepositoryReviewDecision(
 export async function createRepositoryReviewBundle(
 	repository: string,
 	review: RepositoryReview,
-): Promise<RepositoryReviewBundle> {
-	const records = await readRepositoryReviewDecisions(repository, review);
-	const bundle: RepositoryReviewBundle = {
-		schema: REPOSITORY_REVIEW_BUNDLE_SCHEMA,
+): Promise<RepositoryReviewBundleV2> {
+	const records = (await readRepositoryReviewDecisions(repository, review)).filter(
+		(record): record is RepositoryReviewDecisionV2 =>
+			record.schema === REPOSITORY_REVIEW_DECISION_V2_SCHEMA,
+	);
+	const bundle: RepositoryReviewBundleV2 = {
+		schema: REPOSITORY_REVIEW_BUNDLE_V2_SCHEMA,
 		repository: {
 			label: review.repository.label,
 			baseOid: review.repository.baseOid,
 			headOid: review.repository.headOid,
 		},
+		reviewTargetDigest: repositoryReviewTargetDigest(review),
 		artifacts: records.map((record) => ({
 			path: `reviews/${record.id}.json`,
 			hash: { algorithm: "sha256", value: sha256Jcs(record) },
 			record,
 		})),
 	};
-	const { bundle: validate } = await validators();
+	const { bundleV2: validate } = await validators();
 	if (validate === undefined || !validate(bundle)) {
 		throw new Error(
 			`Generated review bundle failed validation: ${JSON.stringify(validate?.errors)}`,
 		);
 	}
+	assertRepositoryReviewBundleV2Integrity(bundle);
 	return bundle;
 }

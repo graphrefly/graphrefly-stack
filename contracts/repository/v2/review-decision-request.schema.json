@@ -1,0 +1,17 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "urn:graphrefly-stack:schema:repository-review-decision-request:v2",
+	"title": "GraphReFly Stack whole-change review decision request v2",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["schema", "decision", "reviewerLabel", "summary"],
+	"properties": {
+		"schema": { "const": "graphrefly.stack.repository-review-decision-request.v2" },
+		"decision": { "enum": ["approve", "request-changes"] },
+		"reviewerLabel": { "type": "string", "minLength": 1, "maxLength": 120 },
+		"summary": { "type": "string", "maxLength": 10000 },
+		"contextCommitOid": {
+			"$ref": "urn:graphrefly-stack:schema:repository-review:v1#/definitions/GitOid"
+		}
+	}
+}
