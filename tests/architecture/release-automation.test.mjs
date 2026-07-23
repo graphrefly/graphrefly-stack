@@ -43,6 +43,8 @@ test("CI is read-only and release authority is isolated to non-cancelling main p
 
 	assert.match(ci, /pull_request:\n\s+branches: \[main\]/);
 	assert.match(ci, /permissions:\n\s+contents: read/);
+	assert.match(ci, /runs-on: ubuntu-22\.04/);
+	assert.doesNotMatch(ci, /runs-on: ubuntu-(?:latest|24\.04)/);
 	assert.match(ci, /pnpm install --frozen-lockfile/);
 	assert.match(ci, /apt-get install --yes --no-install-recommends bubblewrap/);
 	assert.match(ci, /test -x \/usr\/bin\/bwrap/);
@@ -57,6 +59,8 @@ test("CI is read-only and release authority is isolated to non-cancelling main p
 	assert.match(release, /contents: write/);
 	assert.match(release, /pull-requests: write/);
 	assert.match(release, /id-token: write/);
+	assert.match(release, /runs-on: ubuntu-22\.04/);
+	assert.doesNotMatch(release, /runs-on: ubuntu-(?:latest|24\.04)/);
 	assert.match(release, /actions\/create-github-app-token@[0-9a-f]{40} # v3\.2\.0/);
 	assert.match(release, /fetch-depth: 0/);
 	assert.match(release, /registry-url: "https:\/\/registry\.npmjs\.org"/);
