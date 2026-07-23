@@ -44,6 +44,8 @@ test("CI is read-only and release authority is isolated to non-cancelling main p
 	assert.match(ci, /pull_request:\n\s+branches: \[main\]/);
 	assert.match(ci, /permissions:\n\s+contents: read/);
 	assert.match(ci, /pnpm install --frozen-lockfile/);
+	assert.match(ci, /apt-get install --yes --no-install-recommends bubblewrap/);
+	assert.match(ci, /test -x \/usr\/bin\/bwrap/);
 	assert.match(ci, /run: pnpm check/);
 	assert.doesNotMatch(ci, /id-token: write|contents: write|pull-requests: write/);
 	assert.doesNotMatch(ci, /uses: [^\n]+@v[0-9]+/u);
@@ -58,6 +60,8 @@ test("CI is read-only and release authority is isolated to non-cancelling main p
 	assert.match(release, /actions\/create-github-app-token@[0-9a-f]{40} # v3\.2\.0/);
 	assert.match(release, /fetch-depth: 0/);
 	assert.match(release, /registry-url: "https:\/\/registry\.npmjs\.org"/);
+	assert.match(release, /apt-get install --yes --no-install-recommends bubblewrap/);
+	assert.match(release, /test -x \/usr\/bin\/bwrap/);
 	assert.doesNotMatch(release, /\bNPM_TOKEN\b/);
 	assert.doesNotMatch(release, /uses: [^\n]+@v[0-9]+/u);
 	assert.equal([...release.matchAll(/uses: [^@\n]+@([0-9a-f]{40})/gu)].length, 5);
