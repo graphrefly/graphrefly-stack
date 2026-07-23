@@ -1,6 +1,6 @@
 {
 	"name": "@graphrefly/stack",
-	"version": "0.1.7",
+	"version": "0.1.8",
 	"private": false,
 	"description": "Review AI changes by intent, architectural reach, and deterministic readiness.",
 	"license": "MIT",
