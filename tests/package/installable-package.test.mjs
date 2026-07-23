@@ -113,7 +113,7 @@ export function createGraph() {
 		put(repository, "left.mjs", "export function applyLeft() {}\n"),
 		put(repository, "right.mjs", "export function applyRight() {}\n"),
 	]);
-	run(repository, "pnpm", ["install", "--ignore-scripts"]);
+	run(repository, "pnpm", ["install", "--ignore-scripts", "--no-frozen-lockfile"]);
 	run(repository, "git", ["init", "-b", "main"]);
 	const initialized = JSON.parse(
 		run(repository, "pnpm", [
@@ -337,7 +337,7 @@ export function createGraph() {
 		),
 		put(repository, "feature.mjs", "export function applyFeature() {}\n"),
 	]);
-	run(repository, "pnpm", ["install", "--ignore-scripts"]);
+	run(repository, "pnpm", ["install", "--ignore-scripts", "--no-frozen-lockfile"]);
 	run(repository, "git", ["init", "-b", "main"]);
 	const initialized = JSON.parse(
 		run(repository, "pnpm", [
@@ -1325,7 +1325,7 @@ export function createApplicationGraph() {
 `,
 		),
 	]);
-	run(repository, "pnpm", ["install", "--ignore-scripts"]);
+	run(repository, "pnpm", ["install", "--ignore-scripts", "--no-frozen-lockfile"]);
 	run(repository, "git", ["init", "-b", "main"]);
 	const base = commit(repository, "create existing GraphReFly repository");
 
@@ -1346,7 +1346,7 @@ export function createApplicationGraph() {
 	const consumerPackage = JSON.parse(await readFile(resolve(repository, "package.json"), "utf8"));
 	consumerPackage.devDependencies = { "@graphrefly/stack": `file:${tarball}` };
 	await put(repository, "package.json", `${JSON.stringify(consumerPackage, null, 2)}\n`);
-	run(repository, "pnpm", ["install", "--ignore-scripts"]);
+	run(repository, "pnpm", ["install", "--ignore-scripts", "--no-frozen-lockfile"]);
 	const packedCli = await realpath(
 		resolve(repository, "node_modules/@graphrefly/stack/dist/grfs.js"),
 	);
@@ -1798,7 +1798,7 @@ export function createApplicationGraph() {
 `,
 		),
 	]);
-	run(mountedRepository, "pnpm", ["install", "--ignore-scripts"]);
+	run(mountedRepository, "pnpm", ["install", "--ignore-scripts", "--no-frozen-lockfile"]);
 	run(mountedRepository, "git", ["init", "-b", "main"]);
 	const mountedInit = JSON.parse(
 		run(mountedRepository, "pnpm", [
