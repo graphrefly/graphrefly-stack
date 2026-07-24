@@ -44,7 +44,11 @@ import {
 	verifyRecoveryExport,
 } from "./recovery-runner.js";
 import { initializeRepository, RepositoryInitError } from "./repository-init.js";
-import { createRepositoryReview, RepositoryReviewError } from "./repository-review.js";
+import {
+	createRepositoryReview,
+	RepositoryReviewError,
+	renderRepositoryBlueprintDiagrams,
+} from "./repository-review.js";
 import {
 	ReviewRoutingError,
 	resolveRepositoryIdentity,
@@ -1102,7 +1106,24 @@ export async function runCli(argv = process.argv.slice(2)): Promise<number> {
 					repositoryIdentity,
 				});
 				const { artifact: _artifact, ...review } = run;
-				reviewData = review;
+				if (json) {
+					reviewData = review;
+				} else {
+					const diagrams = await renderRepositoryBlueprintDiagrams({
+						repository: selected.repository,
+						blueprints: review.objects.map((entry) => entry.blueprint as Record<string, unknown>),
+					});
+					reviewData = {
+						...review,
+						presentation: {
+							schema: "graphrefly.stack.dag-review-presentation.v1",
+							diagrams: review.objects.map((entry, index) => ({
+								oid: entry.oid,
+								diagram: diagrams[index],
+							})),
+						},
+					};
+				}
 				dagReviewState = { repository: resolve(repository), review };
 			} else {
 				const repositoryReview =

@@ -126,6 +126,36 @@ test("the generic review bounds long desktop commit stacks without trapping narr
 	);
 });
 
+test("linear and DAG review share graph and diff primitives without a blank-selection path", async () => {
+	const [dag, generic, primitives, graph, main, cli, stylesheet] = await Promise.all([
+		readFile(new URL("apps/review/src/DagRepositoryReview.tsx", root), "utf8"),
+		readFile(new URL("apps/review/src/GenericRepositoryReview.tsx", root), "utf8"),
+		readFile(new URL("apps/review/src/ReviewPrimitives.tsx", root), "utf8"),
+		readFile(new URL("apps/review/src/GitDagGraph.tsx", root), "utf8"),
+		readFile(new URL("apps/review/src/main.tsx", root), "utf8"),
+		readFile(new URL("packages/cli/src/cli.ts", root), "utf8"),
+		readFile(new URL("apps/review/src/styles.css", root), "utf8"),
+	]);
+	assert.match(dag, /invalidDependencies = unitGate\?\.invalidDependencies \?\? \[\]/u);
+	assert.doesNotMatch(dag, /unitGate\?\.invalidDependencies\.map/u);
+	assert.match(dag, /<GitDagGraph/u);
+	assert.match(dag, /<BlueprintDiagram/u);
+	assert.match(dag, /<StructuredCodeDiff/u);
+	assert.match(generic, /from "\.\/ReviewPrimitives"/u);
+	assert.match(primitives, /export function BlueprintDiagram/u);
+	assert.match(primitives, /export function StructuredCodeDiff/u);
+	assert.match(graph, /gitEdges\.map/u);
+	assert.match(graph, /semanticEdges\.map/u);
+	assert.match(graph, /<svg/u);
+	assert.match(main, /<ReviewErrorBoundary>/u);
+	assert.match(cli, /if \(json\) \{\s*reviewData = review;/u);
+	assert.match(cli, /graphrefly\.stack\.dag-review-presentation\.v1/u);
+	assert.match(
+		stylesheet,
+		/\.git-dag-scroll\s*\{[^}]*max-height:[^}]*overflow-y:\s*auto;[^}]*scrollbar-gutter:\s*stable;/su,
+	);
+});
+
 test("the primary semantic review is decision-sized while proof remains secondary", async () => {
 	const source = await readFile(
 		new URL("apps/review/src/GenericRepositoryReview.tsx", root),

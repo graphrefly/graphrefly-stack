@@ -424,6 +424,24 @@ function diagramFor(
 	};
 }
 
+export async function renderRepositoryBlueprintDiagrams(options: {
+	repository: string;
+	blueprints: readonly Record<string, unknown>[];
+}): Promise<RepositoryDiagram[]> {
+	let repository: string;
+	try {
+		const requested = await realpath(resolve(options.repository));
+		repository = await realpath(gitText(requested, ["rev-parse", "--show-toplevel"]));
+	} catch {
+		throw new RepositoryReviewError(
+			"REPOSITORY_INVALID",
+			"Repository must be a local Git worktree",
+		);
+	}
+	const runtime = await resolveTargetRuntime(repository);
+	return options.blueprints.map((blueprint) => diagramFor(runtime, blueprint));
+}
+
 async function validateDependencyContinuity(
 	repository: string,
 	revisions: readonly string[],

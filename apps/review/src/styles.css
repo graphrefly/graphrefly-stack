@@ -197,81 +197,10 @@ summary:focus-visible {
 .dag-review .selection-heading h1 {
 	font-size: clamp(2rem, 4vw, 4rem);
 }
-.dag-map,
-.dag-evidence-grid > article,
 .dag-decision-panel {
 	background: var(--paper);
 	border: 1px solid var(--ink);
 }
-.dag-map {
-	padding: 20px;
-}
-.dag-layers {
-	display: grid;
-	gap: 14px;
-	margin-top: 18px;
-}
-.dag-layer {
-	display: grid;
-	grid-template-columns: 70px 1fr;
-	gap: 12px;
-	align-items: stretch;
-}
-.dag-layer > small {
-	padding-top: 12px;
-	color: var(--muted);
-	font-family: "SFMono-Regular", Consolas, monospace;
-}
-.dag-layer > div {
-	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-	gap: 10px;
-}
-.dag-node {
-	display: grid;
-	gap: 5px;
-	min-height: 92px;
-	padding: 12px;
-	text-align: left;
-	background: #f3f7f8;
-	border: 1px solid var(--line-strong);
-	cursor: pointer;
-}
-.dag-node span,
-.dag-node small {
-	font-family: "SFMono-Regular", Consolas, monospace;
-	font-size: 0.65rem;
-}
-.dag-node span {
-	color: var(--muted);
-	text-transform: uppercase;
-}
-.dag-node small {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-.dag-node.is-valid {
-	border-left: 6px solid var(--valid);
-}
-.dag-node.is-invalid {
-	border-left: 6px solid var(--blocked);
-}
-.dag-node.is-not-evaluated {
-	border-left: 6px solid #cc8b25;
-}
-.dag-node.is-not-applicable {
-	border-left: 6px solid var(--line-strong);
-}
-.dag-node.is-selected {
-	outline: 3px solid var(--blue);
-	outline-offset: 2px;
-}
-.dag-node:disabled {
-	cursor: default;
-	opacity: 0.78;
-}
-.edge-ledger,
 .parent-switcher,
 .decision-actions {
 	display: flex;
@@ -279,34 +208,29 @@ summary:focus-visible {
 	gap: 9px;
 	align-items: center;
 }
-.edge-ledger {
-	margin-top: 18px;
-	padding-top: 14px;
-	border-top: 1px solid var(--line);
-}
-.edge-ledger code {
-	padding: 5px 8px;
-	color: var(--blue);
-	border: 1px dashed var(--blue);
-}
 .parent-switcher {
 	margin: 16px 0;
+}
+.parent-switcher.compact {
+	justify-content: flex-end;
+	margin: 0;
+}
+.parent-switcher.compact > span {
+	width: 100%;
+	color: var(--muted);
+	font-family: "SFMono-Regular", Consolas, monospace;
+	font-size: 0.56rem;
+	text-align: right;
+	text-transform: uppercase;
+}
+.parent-switcher.compact button {
+	padding: 6px 8px;
+	font-size: 0.62rem;
 }
 .parent-switcher button[aria-pressed="true"] {
 	color: #fff;
 	background: var(--blue);
 }
-.dag-evidence-grid {
-	display: grid;
-	grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr);
-	gap: 16px;
-	margin-top: 16px;
-}
-.dag-evidence-grid > article {
-	min-width: 0;
-	padding: 22px;
-}
-.dag-evidence-grid h2,
 .dag-decision-panel h2 {
 	margin: 6px 0;
 }
@@ -322,24 +246,6 @@ summary:focus-visible {
 	padding: 6px 8px;
 	background: #edf3f5;
 	border: 1px solid var(--line);
-}
-.dag-file-diff {
-	margin-top: 10px;
-	border: 1px solid var(--line);
-}
-.dag-file-diff summary {
-	padding: 9px;
-	cursor: pointer;
-	background: #edf3f5;
-}
-.dag-file-diff pre,
-.dag-evidence-grid pre {
-	overflow: auto;
-	margin: 0;
-	padding: 12px;
-	font-size: 0.72rem;
-	background: #12222c;
-	color: #edf6fa;
 }
 .dag-decision-panel {
 	display: grid;
@@ -383,10 +289,184 @@ summary:focus-visible {
 	margin: 0;
 	color: var(--blue);
 }
+
+.dag-workbench {
+	grid-template-columns: minmax(360px, 420px) minmax(0, 1fr);
+}
+.git-dag-scroll {
+	max-height: min(680px, calc(100vh - 220px));
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	scrollbar-gutter: stable;
+}
+.git-dag-graph {
+	position: relative;
+	padding: 10px 12px 18px 0;
+}
+.git-dag-lines {
+	position: absolute;
+	top: 10px;
+	left: 0;
+	overflow: visible;
+	pointer-events: none;
+}
+.git-parent-edge,
+.semantic-dependency-edge {
+	fill: none;
+	stroke: var(--blue);
+	stroke-linecap: round;
+	stroke-width: 2.5;
+}
+.git-parent-edge.parent-2 {
+	stroke: #a35d87;
+}
+.semantic-dependency-edge {
+	stroke: #a06b17;
+	stroke-dasharray: 5 5;
+	stroke-width: 2;
+}
+.git-dag-marker circle,
+.git-dag-marker rect {
+	fill: var(--paper);
+	stroke: var(--blue);
+	stroke-width: 3;
+}
+.git-dag-marker.is-join circle {
+	fill: #e8d9e5;
+	stroke: #8b5075;
+}
+.git-dag-marker.is-transport circle {
+	fill: #dce4e8;
+	stroke: #708692;
+}
+.git-dag-marker.is-base rect {
+	fill: var(--ink);
+	stroke: var(--ink);
+}
+.git-dag-row {
+	display: grid;
+	gap: 3px;
+	width: 100%;
+	height: 68px;
+	padding: 9px 10px;
+	color: var(--ink);
+	text-align: left;
+	background: transparent;
+	border: 1px solid transparent;
+	cursor: pointer;
+}
+.git-dag-row:hover {
+	background: #edf4f7;
+}
+.git-dag-row.is-selected {
+	background: #e3f0f5;
+	border-color: #9bbac8;
+	box-shadow: inset 4px 0 var(--blue);
+}
+.git-dag-row.is-passive {
+	color: #607581;
+	cursor: default;
+	opacity: 0.78;
+}
+.git-dag-row strong,
+.git-dag-row small,
+.git-dag-kind {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.git-dag-row strong {
+	font-size: 0.76rem;
+}
+.git-dag-row small,
+.git-dag-kind {
+	font-family: "SFMono-Regular", Consolas, monospace;
+	font-size: 0.58rem;
+}
+.git-dag-row small {
+	color: var(--muted);
+}
+.git-dag-kind {
+	color: var(--blue);
+	font-weight: 800;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+.git-dag-legend {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	padding: 12px 18px;
+	color: var(--muted);
+	font-family: "SFMono-Regular", Consolas, monospace;
+	font-size: 0.58rem;
+	border-top: 1px solid var(--line);
+}
+.git-dag-legend span {
+	display: inline-flex;
+	gap: 6px;
+	align-items: center;
+}
+.git-line-sample,
+.semantic-line-sample {
+	display: inline-block;
+	width: 24px;
+	height: 0;
+	border-top: 2px solid var(--blue);
+}
+.semantic-line-sample {
+	border-top-color: #a06b17;
+	border-top-style: dashed;
+}
+.diagram-unavailable {
+	display: grid;
+	place-content: center;
+	gap: 8px;
+	color: var(--muted);
+	text-align: center;
+}
+.diagram-unavailable strong {
+	color: var(--ink);
+}
+.diagram-unavailable span {
+	max-width: 52ch;
+	font-size: 0.75rem;
+	line-height: 1.5;
+}
+.dag-promise {
+	padding-top: 8px;
+	margin: 0;
+	font-size: 0.74rem;
+	border-top: 1px solid var(--line);
+}
+.review-crash {
+	display: grid;
+	gap: 10px;
+	place-content: center;
+}
+.review-crash span {
+	max-width: 70ch;
+	color: var(--muted);
+	font-family: "SFMono-Regular", Consolas, monospace;
+	font-size: 0.72rem;
+}
+.review-crash button {
+	justify-self: start;
+	padding: 9px 12px;
+	color: #fff;
+	background: var(--blue);
+	border: 1px solid var(--ink);
+	cursor: pointer;
+}
 @media (max-width: 980px) {
-	.dag-evidence-grid,
 	.dag-decision-panel {
 		grid-template-columns: 1fr;
+	}
+	.git-dag-scroll {
+		max-height: none;
+		overflow-y: visible;
+		overscroll-behavior: auto;
+		scrollbar-gutter: auto;
 	}
 	.state-message {
 		grid-column: auto;
