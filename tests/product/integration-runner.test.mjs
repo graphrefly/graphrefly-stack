@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
-import { spawnSync } from "node:child_process";
-import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { spawn, spawnSync } from "node:child_process";
+import { mkdir, mkdtemp, readdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import test from "node:test";
@@ -44,6 +44,50 @@ function sourceFingerprint(repository) {
 		refs: git(repository, ["for-each-ref", "--format=%(refname) %(objectname)"]),
 		objects: git(repository, ["count-objects", "-v"]),
 	};
+}
+
+function collectProcess(child) {
+	let stdout = "";
+	let stderr = "";
+	child.stdout.setEncoding("utf8");
+	child.stderr.setEncoding("utf8");
+	child.stdout.on("data", (chunk) => {
+		stdout += chunk;
+	});
+	child.stderr.on("data", (chunk) => {
+		stderr += chunk;
+	});
+	return new Promise((resolveProcess, rejectProcess) => {
+		child.once("error", rejectProcess);
+		child.once("close", (status) => resolveProcess({ status, stdout, stderr }));
+	});
+}
+
+async function waitForIntegrationClone(repository, existingDirectories) {
+	const deadline = Date.now() + 20_000;
+	while (Date.now() < deadline) {
+		const entries = await readdir(tmpdir(), { withFileTypes: true });
+		for (const entry of entries) {
+			if (
+				!entry.isDirectory() ||
+				existingDirectories.has(entry.name) ||
+				!entry.name.startsWith("graphrefly-stack-integration-")
+			) {
+				continue;
+			}
+			try {
+				const config = await readFile(
+					resolve(tmpdir(), entry.name, "repository", ".git", "config"),
+					"utf8",
+				);
+				if (config.includes(repository)) return;
+			} catch {
+				// The isolated clone is still being created.
+			}
+		}
+		await new Promise((resolveWait) => setTimeout(resolveWait, 20));
+	}
+	throw new Error("Integration runner did not expose its isolated clone");
 }
 
 async function createFixture(root) {
@@ -381,17 +425,42 @@ process.stdout.write(JSON.stringify(value));
 	assert.deepEqual(blueprintFailure.result.reasonCodes, ["CANDIDATE_BLUEPRINT_INVALID"]);
 
 	git(fixture.repository, ["branch", "moving-head", recoveredHead]);
-	const moveHead = setTimeout(() => {
-		git(fixture.repository, ["branch", "-f", "moving-head", fixture.mergeBase]);
-	}, 1000);
-	const moved = await runIntegration({
-		repository: fixture.repository,
-		target: executionTarget,
-		head: "moving-head",
-		planId: "integration-plan",
-		repositoryIdentity: identity,
-	});
-	clearTimeout(moveHead);
+	const existingIntegrationDirectories = new Set(
+		(await readdir(tmpdir(), { withFileTypes: true }))
+			.filter(
+				(entry) => entry.isDirectory() && entry.name.startsWith("graphrefly-stack-integration-"),
+			)
+			.map((entry) => entry.name),
+	);
+	const movingProcess = spawn(
+		process.execPath,
+		[
+			cli,
+			"integration",
+			"--repo",
+			fixture.repository,
+			"--target",
+			executionTarget,
+			"--head",
+			"moving-head",
+			"--plan-id",
+			"integration-plan",
+			"--provider",
+			identity.provider,
+			"--owner",
+			identity.owner,
+			"--name",
+			identity.name,
+			"--json",
+		],
+		{ env: process.env, stdio: ["ignore", "pipe", "pipe"] },
+	);
+	const movingResultPromise = collectProcess(movingProcess);
+	await waitForIntegrationClone(fixture.repository, existingIntegrationDirectories);
+	git(fixture.repository, ["branch", "-f", "moving-head", fixture.mergeBase]);
+	const movingResult = await movingResultPromise;
+	assert.equal(movingResult.status, 1, movingResult.stderr || movingResult.stdout);
+	const moved = JSON.parse(movingResult.stdout).data;
 	assert.equal(moved.result.outcome, "error");
 	assert.deepEqual(moved.result.reasonCodes, ["HEAD_MOVED"]);
 	assert.equal(moved.result.observedRevisions.head.value, fixture.mergeBase);
