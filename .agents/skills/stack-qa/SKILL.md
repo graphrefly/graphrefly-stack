@@ -7,6 +7,16 @@ description: Perform the single GraphReFly Stack quality gate combining adversar
 
 Apply `D13`; do not create a second completion verdict from another review workflow.
 
+## Code-intelligence routing
+
+After gathering the complete diff, call `codegraph_explore` for changed implementation symbols or journey
+endpoints in each indexed affected repo before raw source Read/`rg`. Ask for exact source, call paths,
+callers/dependents, relevant tests, public/package/build boundaries, and blast radius. Treat returned source as
+already read and query again only for uncovered paths. Read the diff, canonical JSONL, docs/configs,
+dependency manifests, untracked files, and stale/unindexed files directly. If an index is absent or disabled,
+use direct inspection and never initialize it autonomously. Codegraph informs review scope; compiler, tests,
+lint, build, replay, browser, security/privacy checks, and the recorded phase gate determine correctness.
+
 1. Read `docs/sources.jsonl`, the changed phase and its gate, locked decisions, product scope and
    contracts, antipatterns, and evidence requirements relevant to the milestone.
 2. Inspect the diff and execution path. Rank findings by user impact and demo risk:

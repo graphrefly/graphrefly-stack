@@ -8,6 +8,16 @@ description: Review a GraphReFly Stack product, workflow, scenario, contract, ar
 Use the complete nine-question format. A design review produces a decision-ready report; it does not
 implement the product or silently lock material choices.
 
+## Code-intelligence routing
+
+For implementation source in an indexed affected repo, call `codegraph_explore` before raw source Read/`rg`.
+Query the design target or end-to-end journey for exact source, call paths, callers/dependents, closest
+precedents, tests, public/package boundaries, and blast radius. Treat returned source as already read and
+query again only for uncovered paths. Read canonical JSONL, docs/configs, dependency manifests, git diff,
+untracked files, and stale/unindexed files directly. If the index is absent or disabled, use direct inspection
+and never initialize it autonomously. Codegraph supplies design evidence; canonical decisions, contracts, and
+later executable gates determine readiness.
+
 ## Phase 0: Resolve scope and authority
 
 1. Read `docs/sources.jsonl`, then the complete decisions, product scope, product contracts,

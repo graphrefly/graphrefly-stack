@@ -5,6 +5,15 @@ description: Check a GraphReFly Stack proposal against canonical scope, locked d
 
 # GraphReFly Stack decision guard
 
+## Code-intelligence routing
+
+When a proposal depends on current implementation, call `codegraph_explore` before raw source Read/`rg`.
+Ask for the exact symbols or journey endpoints, call paths, callers/dependents, tests, public/package
+boundaries, and blast radius. Treat returned source as already read and query again only for uncovered paths.
+Read canonical JSONL, docs/configs, dependency manifests, git diff, untracked files, and stale/unindexed files
+directly. If the index is absent or disabled, use direct inspection and never initialize it autonomously.
+Codegraph verifies the premise; canonical decisions and contracts determine the verdict.
+
 1. Read `docs/sources.jsonl`; treat its paths as the authority map.
 2. Read `docs/decisions/decisions.jsonl`, `docs/product/scope.jsonl`,
    `docs/product/contracts.jsonl`, `docs/plan/phases.jsonl`, and
