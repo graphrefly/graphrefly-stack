@@ -1,5 +1,6 @@
 {"id":"A-sources","concern":"authority map","path":"docs/sources.jsonl","authority":"canonical","writers":["stack-goal-dispatch","stack-decision-guard","stack-design-review","stack-dev-dispatch","stack-qa"]}
-{"id":"A-decisions","concern":"architectural and product decisions","path":"docs/decisions/decisions.jsonl","authority":"canonical","writers":["stack-goal-dispatch","stack-decision-guard","stack-design-review"]}
+{"id":"A-upstream-authority","concern":"language-neutral protocol and cross-project responsibility boundaries","path":"../graphrefly/authority/ledgers.jsonl","authority":"canonical","writers":[]}
+{"id":"A-decisions","concern":"Stack-local architectural and product decisions","path":"docs/decisions/decisions.jsonl","authority":"canonical","writers":["stack-goal-dispatch","stack-decision-guard","stack-design-review"]}
 {"id":"A-sequencer","concern":"ordered implementation sequence and current next work","path":"docs/plan/phases.jsonl","authority":"canonical","writers":["stack-goal-dispatch","stack-dev-dispatch","stack-qa"]}
 {"id":"A-backlog","concern":"deferred or trigger-gated work","path":"docs/plan/backlog.jsonl","authority":"canonical","writers":["stack-decision-guard","stack-design-review","stack-dev-dispatch","stack-qa"]}
 {"id":"A-antipatterns","concern":"reusable failure lessons","path":"docs/plan/antipatterns.jsonl","authority":"canonical","writers":["stack-qa"]}

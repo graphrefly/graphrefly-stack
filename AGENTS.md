@@ -2,6 +2,10 @@
 
 > This file points; it does not host project truth. Canonical records are JSONL under `docs/`.
 
+Stack decision identity is `graphrefly-stack:<D#>`. Language-neutral protocol and cross-project
+responsibility boundaries remain in the `graphrefly` owner ledgers resolved through
+`~/src/graphrefly/authority/ledgers.jsonl`; new cross-repo refs must be origin-qualified.
+
 ## Read first
 
 1. `docs/sources.jsonl` — authority map: one canonical file per concern
@@ -26,6 +30,9 @@ the owning JSONL record and keep references pointing to it.
 mise run bootstrap
 pnpm check
 pnpm docs:check
+npm --prefix ~/src/graphrefly run authority:check:workspace
 pnpm lint
 pnpm format
 ```
+
+New Stack decisions after D60 must satisfy ~/src/graphrefly/authority/README.md.
