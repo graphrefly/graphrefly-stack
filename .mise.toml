@@ -1,5 +1,5 @@
 [tools]
-node = "24"
+node = "26.4.0"
 
 [tasks.bootstrap]
 description = "Enable Corepack and install the pinned pnpm workspace"

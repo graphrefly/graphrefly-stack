@@ -207,7 +207,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 24.18.0
+	          node-version: 26.4.0
       - name: Enable repository-pinned pnpm
         run: corepack enable
       - name: Resolve pnpm store
@@ -218,7 +218,7 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: \${{ steps.pnpm-store.outputs.path }}
-          key: graphrefly-stack-\${{ runner.os }}-\${{ runner.arch }}-node-24.18.0-manifest-\${{ hashFiles('package.json') }}-lock-\${{ hashFiles('pnpm-lock.yaml') }}
+	          key: graphrefly-stack-\${{ runner.os }}-\${{ runner.arch }}-node-26.4.0-manifest-\${{ hashFiles('package.json') }}-lock-\${{ hashFiles('pnpm-lock.yaml') }}
       - name: Install frozen dependencies without lifecycle scripts
         run: pnpm install --frozen-lockfile --ignore-scripts
       - name: Provision deny-network check sandbox

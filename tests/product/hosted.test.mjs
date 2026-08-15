@@ -83,6 +83,7 @@ test("hosted init writes a separate no-checkout least-privilege OIDC workflow", 
 	assert.match(workflow, /^ {6}actions: read$/mu);
 	assert.match(workflow, /^ {6}id-token: write$/mu);
 	assert.match(workflow, /github\.event\.workflow_run\.id/u);
+	assert.match(workflow, /node-version: 26\.4\.0/u);
 	assert.ok(workflow.includes(`@graphrefly/stack@${stackVersion}`));
 	assert.match(workflow, /--profile gate-summary-v1/u);
 	assert.match(workflow, /npm_config_ignore_scripts: "true"/u);

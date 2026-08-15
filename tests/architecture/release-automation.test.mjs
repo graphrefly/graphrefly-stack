@@ -23,6 +23,7 @@ function readJson(path) {
 test("Changesets owns only the public root package release intent", () => {
 	const packageJson = readJson("package.json");
 	const config = readJson(".changeset/config.json");
+	const nodeVersion = readFileSync(join(repositoryRoot, ".node-version"), "utf8").trim();
 
 	assert.equal(packageJson.name, "@graphrefly/stack");
 	assert.equal(packageJson.private, false);
@@ -31,6 +32,8 @@ test("Changesets owns only the public root package release intent", () => {
 	assert.equal(packageJson.scripts["version-packages"], "changeset version");
 	assert.equal(packageJson.scripts.release, "changeset publish");
 	assert.equal(packageJson.scripts.prepack, "pnpm build:package");
+	assert.equal(nodeVersion, "26.4.0");
+	assert.equal(packageJson.engines.node, ">=26.4.0 <27");
 	assert.equal(config.changelog, "@changesets/changelog-git");
 	assert.equal(config.access, "public");
 	assert.equal(config.baseBranch, "main");
@@ -44,6 +47,7 @@ test("CI is read-only and release authority is isolated to non-cancelling main p
 	assert.match(ci, /pull_request:\n\s+branches: \[main\]/);
 	assert.match(ci, /permissions:\n\s+contents: read/);
 	assert.match(ci, /runs-on: ubuntu-22\.04/);
+	assert.match(ci, /node-version: "26\.4\.0"/);
 	assert.doesNotMatch(ci, /runs-on: ubuntu-(?:latest|24\.04)/);
 	assert.match(ci, /pnpm install --frozen-lockfile/);
 	assert.match(ci, /apt-get install --yes --no-install-recommends bubblewrap/);
@@ -60,6 +64,7 @@ test("CI is read-only and release authority is isolated to non-cancelling main p
 	assert.match(release, /pull-requests: write/);
 	assert.match(release, /id-token: write/);
 	assert.match(release, /runs-on: ubuntu-22\.04/);
+	assert.match(release, /node-version: "26\.4\.0"/);
 	assert.doesNotMatch(release, /runs-on: ubuntu-(?:latest|24\.04)/);
 	assert.match(release, /actions\/create-github-app-token@[0-9a-f]{40} # v3\.2\.0/);
 	assert.match(release, /fetch-depth: 0/);

@@ -65,7 +65,8 @@ test("ci init writes one deterministic least-privilege pull-request and merge-gr
 		workflow,
 		/ref: \$\{\{ github\.event\.pull_request\.head\.sha \|\| github\.event\.merge_group\.head_sha \}\}/u,
 	);
-	assert.match(workflow, /node-version: 24\.18\.0/u);
+	assert.match(workflow, /node-version: 26\.4\.0/u);
+	assert.match(workflow, /node-26\.4\.0-manifest-/u);
 	assert.match(workflow, /cancel-in-progress: \$\{\{ github\.event_name == 'pull_request' \}\}/u);
 	assert.match(workflow, /pnpm install --frozen-lockfile --ignore-scripts/u);
 	assert.match(workflow, /sudo apt-get install --yes --no-install-recommends bubblewrap/u);
