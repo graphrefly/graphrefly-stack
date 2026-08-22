@@ -1,23 +1,54 @@
 # GraphReFly Stack
 
-**Review AI changes by intent, architectural reach, and deterministic readiness.**
+**Bind source changes to executable GraphReFly identities and review their consequences with
+deterministic evidence.**
 
-GraphReFly Stack is a developer tool built with Codex, GPT-5.6, Git, and GraphReFly. It compresses
-a large agent-generated change into the three questions a human reviewer
-actually needs: **Intent** (what should change and remain true), **Reach** (what code and graph
-structure actually changed), and **Readiness** (whether deterministic evidence still supports
-approval). Exact Plan, policy, predicate, binding, check, and witness records stay available under
-Technical details without becoming vocabulary every developer must learn.
+GraphReFly Stack is the opinionated, read-only-by-default assurance layer between a GraphReFly
+repository and its review or delivery system. Its current product direction binds exact executable
+GraphReFly identities to source, intent, authoritative evidence, and review projections. It owns
+those linkage and projection records; it does not replace source, executable topology, runtime,
+policy, tests, durable workflow, a Git forge, or merge authority. The canonical boundary and strict
+sequence are [D54-D59](docs/decisions/decisions.jsonl) and
+[P41-P44](docs/product/scope.jsonl).
+
+## Current direction and product layers
+
+| Layer | Responsibility | Current status |
+| --- | --- | --- |
+| **Current core** | Source-to-executable binding, ref-first evidence manifests, consequence projection, and grounded review | `STACK-SOURCE-BOUND` is planned; later phases remain deferred and are not claimed as shipped |
+| **Forge adapters** | Carry repository events, checks, identity, review state, and final admission without becoming semantic truth | GitHub CI and hosted-sync contracts are retained optional adapters; no hosted Stack service is deployed |
+| **Retained capabilities** | Plan, WorkUnit, Gate, integration, bounded DAG, and recovery evidence | Implemented and independently tested, but historical or optional repository-admission capabilities rather than the universal Stack ontology |
+
+The revised sequence is **Source-Bound Foundation → EvidenceManifest → Consequence Review →
+Grounded Handoff**. EvidenceManifest is ref-first: external task, run, actor, authorization,
+environment, model, test, and verifier provenance stays with its owning system and is linked through
+exact owner, revision, digest, and freshness coordinates when relevant. Exact fields land with the
+approved EvidenceManifest phase; this README does not define a second contract.
+
+GitHub, GitLab, Cursor Origin, and similar forges remain transport and admission owners. Stack may
+project deterministic evidence into their checks and review surfaces, but it does not host Git,
+operate agents, infer an all-SDLC property graph, or auto-merge. Evidence readiness, human review,
+and owner admission remain separate axes; a forge may later automate admission under its own
+explicit policy without changing Stack's evidence result. New forge adapters require a concrete
+consumer rather than speculative platform breadth.
+
+## What the published package does today
+
+The published 0.1.8 package compresses a large agent-generated change into three reviewer-facing
+questions: **Intent** (what should change and remain true), **Reach** (what code and graph structure
+actually changed), and **Readiness** (whether deterministic evidence still supports approval).
+Exact Plan, policy, predicate, binding, check, and witness records stay available under Technical
+details without becoming vocabulary every developer must learn.
 
 Git can report a clean rebase while an agent-generated change is no longer valid under the
-architecture it was planned against. GraphReFly Stack makes that mismatch visible, calls out
-unexpected reach before the raw diff, keeps unaffected work green, and asks GPT-5.6 to replan only
-the stale work. GPT-5.6 proposes; deterministic code decides validity.
+architecture it was planned against. The retained semantic-review path makes that mismatch visible,
+calls out unexpected reach before the raw diff, keeps unaffected work green, and can ask GPT-5.6 to
+replan only stale work. GPT-5.6 proposes; deterministic code decides validity.
 
 ## Try it in 90 seconds
 
 ```bash
-pnpm add -D @graphrefly/stack@0.1.7
+pnpm add -D @graphrefly/stack@0.1.8
 pnpm exec grfs init --graph-module src/application-graph.ts
 pnpm exec grfs review --repo . --base <commit-before-the-change> --head HEAD
 ```
@@ -31,12 +62,12 @@ request, rerun review, and the earlier decision becomes stale because its bound 
 
 ## Install and review a GraphReFly repository
 
-Requirements: macOS or Linux, Node.js 24, pnpm 11.7, and Git. The CLI and local web review shell use
+Requirements: macOS or Linux, Node.js 26.4.0, pnpm 11.7, and Git. The CLI and local web review shell use
 no hosted service, database, or credentials. Install it in the GraphReFly repository you want to
 review:
 
 ```bash
-pnpm add -D @graphrefly/stack@0.1.7
+pnpm add -D @graphrefly/stack@0.1.8
 pnpm exec grfs init --graph-module src/application-graph.ts
 
 BASE=<the commit immediately before your stack>
@@ -60,9 +91,9 @@ Local review decisions and their summaries are strict immutable records under th
 common directory at `.git/grfs/reviews`; they never appear in `git status`, change source files, or
 update Git refs. The Technical details disclosure offers an explicit portable review export after a
 decision exists. That content-hashed bundle is the explicit sharing boundary for another reviewer or
-CI. A future hosted GraphReFly Stack can wrap selected exported artifacts in its policy-redacted
-upload envelope; this release neither treats the local export as upload-ready nor uploads review
-state automatically.
+CI. The retained GitHub-first hosted-sync adapter can wrap selected exported artifacts in its
+policy-redacted upload envelope, but no hosted Stack service is deployed. This release neither
+treats the local export as upload-ready nor uploads review state automatically.
 
 `--graph-module` means the repository's root Graph construction module, not the only Graph module
 allowed in the repository. That root module may import, compose, and mount any number of Graphs and
@@ -231,8 +262,9 @@ work, or generate its own verdict.
   package selection remain explicit limits.
 - Repository planning, CI parity, optimistic pull-request integration, bounded DAG and merge-group
   evidence, hosted redacted review contracts, and evidence-backed recovery are implemented and
-  independently tested. The primary local review path does not claim a deployed hosted service,
-  queue management, automatic merge, or arbitrary filesystem prevention.
+  independently tested as retained optional capabilities. The primary local review path does not
+  claim the revised source-bound consequence product, a deployed hosted service, queue management,
+  automatic merge, or arbitrary filesystem prevention.
 
 Canonical scope, decisions, contracts, sequence, and evidence requirements are indexed by
 [`docs/sources.jsonl`](docs/sources.jsonl). Read [`docs/README.md`](docs/README.md) for the authority
