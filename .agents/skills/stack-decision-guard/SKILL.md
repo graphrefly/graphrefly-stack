@@ -5,6 +5,12 @@ description: Check a GraphReFly Stack proposal against canonical scope, locked d
 
 # GraphReFly Stack decision guard
 
+Load and apply the personal `$project-governance` skill at
+`~/.codex/skills/project-governance/SKILL.md` before classifying or appending any decision, work,
+execution authorization, attempt, incident, receipt or evidence record. It supplies only the
+cross-project classification and manual-authorization floor; Stack retains its independent product
+authority, IDs, ledgers and gates.
+
 ## Code-intelligence routing
 
 When a proposal depends on current implementation, call `codegraph_explore` before raw source Read/`rg`.

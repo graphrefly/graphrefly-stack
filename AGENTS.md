@@ -16,6 +16,15 @@ responsibility boundaries remain in the `graphrefly` owner ledgers resolved thro
 Do not duplicate canonical facts in this file, skills, README prose, or implementation plans. Update
 the owning JSONL record and keep references pointing to it.
 
+## Personal project governance
+
+Before decision or work admission, design review, dispatch, QA, long-running goal progression,
+live/provider/spend authorization, retry, or stalled-work recovery, load and follow the personal
+`$project-governance` skill at `~/.codex/skills/project-governance/SKILL.md`. This adopts a
+cross-project classification and manual-authorization floor only; Stack retains its independent
+product authority, IDs, ledgers and gates. Use a qualified GraphReFly family contract only for an
+actual cross-project boundary, never as Stack product authority.
+
 ## Workflow routing
 
 - Long-lived product sequencer: `.agents/skills/stack-goal-dispatch/SKILL.md` (`D47`)
