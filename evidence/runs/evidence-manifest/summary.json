@@ -1,0 +1,61 @@
+{
+	"kind": "evidence-manifest-phase-evidence",
+	"work_ref": "graphrefly-stack:STACK-EVIDENCE-MANIFEST",
+	"source_commit": "11edaa1dea97060645a200f3200ca4024b92c32d",
+	"origin_trial_commit": "a1d66e38d744c90566399bc44bf2acdce80fdf9f",
+	"origin_development_commit": "2487dc5de3573c50dbda09bb411c3e618ab729c1",
+	"origin_run_id": "20260906-212544-7251",
+	"loop_roles": {
+		"dev": "codex",
+		"review": "codex",
+		"triage": "codex"
+	},
+	"report_path": "evidence/runs/evidence-manifest/evidence-bundle.json",
+	"report_digest": "sha256:1fe68a98da212d70d99ea1c988828bd060d6ba54180fd7be26027961687c87f6",
+	"report_id": "df6079aa2fceef09d5b770e041f053979dd78b2498572a89d5f520a8e162a6e9",
+	"manifest_id": "66ac1b28d892a9323517e13a6ade177a4c2d14f65b9343f32ce43844a7ad784e",
+	"subject": {
+		"base": "1560839a7e25a6c0733970d76714d12244e4b929",
+		"head": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+		"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+	},
+	"source_binding_refs": 12,
+	"authority_refs": 7,
+	"authority_kinds": ["artifact", "decision", "policy", "test", "verifier"],
+	"located_test_occurrence": {
+		"path": ".private/evidence-manifest/node-test.json",
+		"digest": "sha256:3a2d3e472fcdf93fab24c0ee92ec5ec5676667b75b81ba43d33ae588274a9c98"
+	},
+	"runtime": {
+		"name": "@graphrefly/ts",
+		"version": "0.8.0",
+		"node": "v26.4.0"
+	},
+	"focused_tests": {
+		"pass": 14,
+		"fail": 0,
+		"skipped": 0
+	},
+	"product_tests": {
+		"pass": 125,
+		"fail": 0,
+		"skipped": 0
+	},
+	"pilot_full_check_source_digest": "01e800abe3743ea657f7c275b37a2392cdfeafc0e0ffcb3b7afa1173996627ae",
+	"integration_full_check": {
+		"command": "pnpm check",
+		"exit": 0,
+		"source_digest": "f88ad7a2f9daf4dcdefd57c78c062a7ab507ab0c4a44929992b28f49ddb42e52",
+		"log_digest": "e72691215217a76e8c83596db0298d0fb2fb2254fd862919c972edcc4c4caded",
+		"completed": "2026-09-07T05:17:55.925Z"
+	},
+	"independent_qa": "Decision supersession finding fixed; same reviewer confirmed closure; final context-free follow-up review found no remaining acceptance gap.",
+	"integration_rebinding": {
+		"pilot_report_id": "438373993e8825912359be1363bb94299f5154a2889b888b80253057a0815e46",
+		"old_owner_commit": "9649bd7f99da3afdb1113b1b6ed618dd81ae3e00",
+		"new_owner_commit": "1231c6a04912efdf79abd85f76da566e23aac049",
+		"verified_difference": "Only prior-source-proof and verifier owner commit coordinates plus derived manifest/proof identities changed; code, exact subject, source bindings and observed test evidence are unchanged."
+	},
+	"scope": "C61 required linkage in the retained RefreshSession fixture only; optional runtime occurrence absent; no consequence review, portable bundle, admission, Canvas or whole E22 completion.",
+	"ownership": "delivered, not yet ownership-verified"
+}

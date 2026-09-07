@@ -5,7 +5,7 @@
 		"version": "1"
 	},
 	"artifact_ref": "graphrefly-stack:evidence-manifest-proof",
-	"id": "438373993e8825912359be1363bb94299f5154a2889b888b80253057a0815e46",
+	"id": "df6079aa2fceef09d5b770e041f053979dd78b2498572a89d5f520a8e162a6e9",
 	"llmRequired": false,
 	"manifest": {
 		"authorities": [
@@ -189,7 +189,7 @@
 				},
 				"kind": "artifact",
 				"location": {
-					"commit": "9649bd7f99da3afdb1113b1b6ed618dd81ae3e00",
+					"commit": "1231c6a04912efdf79abd85f76da566e23aac049",
 					"occurrence": null,
 					"path": "evidence/runs/source-bound/evidence-bundle.json",
 					"repository": "git-roots:62004a23ac7502243adc09d7633f8015279ea57a68f55931ec46f6732604f983",
@@ -200,7 +200,7 @@
 					"scope": "Exact prior source-bound proof bytes, independently verified against current execution",
 					"sources": [
 						{
-							"commit": "9649bd7f99da3afdb1113b1b6ed618dd81ae3e00",
+							"commit": "1231c6a04912efdf79abd85f76da566e23aac049",
 							"occurrence": null,
 							"path": "evidence/runs/source-bound/evidence-bundle.json",
 							"repository": "git-roots:62004a23ac7502243adc09d7633f8015279ea57a68f55931ec46f6732604f983",
@@ -305,7 +305,7 @@
 				},
 				"kind": "verifier",
 				"location": {
-					"commit": "9649bd7f99da3afdb1113b1b6ed618dd81ae3e00",
+					"commit": "1231c6a04912efdf79abd85f76da566e23aac049",
 					"occurrence": null,
 					"path": "evidence/runs/source-bound/evidence-bundle.json",
 					"repository": "git-roots:62004a23ac7502243adc09d7633f8015279ea57a68f55931ec46f6732604f983",
@@ -330,7 +330,7 @@
 							"selector": null
 						},
 						{
-							"commit": "9649bd7f99da3afdb1113b1b6ed618dd81ae3e00",
+							"commit": "1231c6a04912efdf79abd85f76da566e23aac049",
 							"occurrence": null,
 							"path": "evidence/runs/source-bound/evidence-bundle.json",
 							"repository": "git-roots:62004a23ac7502243adc09d7633f8015279ea57a68f55931ec46f6732604f983",
@@ -417,7 +417,7 @@
 			"runtimeOccurrence": "absent",
 			"scope": "retained-refresh-session-required-linkage-only"
 		},
-		"id": "e94a3927f6b75b68b5943bae0fe6fe53da2bb20de52061a9b436929ed05412dc",
+		"id": "66ac1b28d892a9323517e13a6ade177a4c2d14f65b9343f32ce43844a7ad784e",
 		"schema": "graphrefly.stack.evidence-manifest.v1",
 		"subject": {
 			"base": "1560839a7e25a6c0733970d76714d12244e4b929",
