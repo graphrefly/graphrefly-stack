@@ -1,6 +1,6 @@
 {
 	"adapter": {
-		"sourceDigest": "48b2e0c83652fdb6ab64f61150189e61af141053bd01623d9a363dd2c0e33cfd",
+		"sourceDigest": "8b7fb3a7a4c7bdebb9f363d2d2d69aa1a6fc19e3a8c2fa4bf776cb994fbb443b",
 		"tool": "grounded-handoff-report",
 		"version": "1"
 	},
@@ -2890,7 +2890,7 @@
 			}
 		}
 	],
-	"id": "033f81d9d07bfc05ee6561d122d09897f72b31b378c32f70e333accf44992624",
+	"id": "b752a95e505a2bbda0a7c276479e07bfb2b29df13ee09e44d26d838be5631f2c",
 	"limitations": [
 		"Structural reachability is an inference and not observed runtime occurrence or causality",
 		"The handoff is proposal-only and does not execute a capability or mutate an owning system",

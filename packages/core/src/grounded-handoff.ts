@@ -10,6 +10,7 @@ import {
 } from "@graphrefly-stack/contracts/evidence-manifest";
 import {
 	assertGroundedExplanation,
+	assertGroundedReviewProjection,
 	assertHandoffProposal,
 	assertOwnerHandoffResult,
 	type GroundedClaim,
@@ -247,6 +248,8 @@ export function reprojectGroundedReview(options: {
 		options.proposal.target.projectionId !== options.projection.id
 	)
 		throw new Error("GROUNDED_REVIEW_COORDINATE");
+	if (options.human.status !== "outdated" && options.human.targetDigest !== options.projection.id)
+		throw new Error("GROUNDED_REVIEW_HUMAN_COORDINATE");
 	let result: OwnerHandoffResult | null = null;
 	let reason: GroundedReviewProjection["ownerEvidence"]["reason"] = "NO_OWNER_RESULT";
 	if (options.ownerResults.length > 1) reason = "DUPLICATE_OWNER_RESULT";
@@ -300,5 +303,7 @@ export function reprojectGroundedReview(options: {
 			reason,
 		},
 	};
-	return { ...body, id: groundedReviewDigest(body) };
+	const projected = { ...body, id: groundedReviewDigest(body) };
+	assertGroundedReviewProjection(projected);
+	return projected;
 }

@@ -294,6 +294,14 @@ export function assertGroundedReviewProjection(
 	)
 		throw new Error("GROUNDED_REVIEW_SCHEMA");
 	if (
+		(projection.axes.human.status !== "outdated" &&
+			projection.axes.human.targetDigest !== projection.consequenceProjectionId) ||
+		(projection.axes.ownerAdmission !== null &&
+			(projection.axes.ownerAdmission.targetDigest !== projection.consequenceProjectionId ||
+				!["admitted", "rejected"].includes(projection.axes.ownerAdmission.status)))
+	)
+		throw new Error("GROUNDED_REVIEW_COORDINATE");
+	if (
 		(projection.ownerEvidence.status === "absent" &&
 			(projection.ownerEvidence.resultId !== null ||
 				projection.axes.ownerAdmission !== null ||

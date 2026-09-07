@@ -70,6 +70,17 @@ test("proposal is bounded data and cannot select an unknown claim", () => {
 });
 
 test("only one fresh exactly correlated owner result reprojects the owner axis", () => {
+	assert.throws(
+		() =>
+			reprojectGroundedReview({
+				projection: consequence.projections[0],
+				explanation: saved.explanations[0],
+				proposal: saved.proposal,
+				human: { status: "approved", targetDigest: "f".repeat(64) },
+				ownerResults: [],
+			}),
+		/GROUNDED_REVIEW_HUMAN_COORDINATE/,
+	);
 	const humanOnly = reprojectGroundedReview({
 		projection: consequence.projections[0],
 		explanation: saved.explanations[0],

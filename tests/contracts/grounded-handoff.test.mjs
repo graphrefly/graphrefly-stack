@@ -109,6 +109,22 @@ test("classification, correlation, grounding and proof identities fail closed", 
 	const extra = structuredClone(proof.proposal);
 	extra.authority = true;
 	assert.throws(() => assertHandoffProposal(extra), /SCHEMA/);
+
+	const wrongHumanCoordinate = structuredClone(proof.reviewProjections[0]);
+	wrongHumanCoordinate.axes.human.targetDigest = "f".repeat(64);
+	wrongHumanCoordinate.id = groundedReviewDigest(wrongHumanCoordinate);
+	assert.throws(
+		() => assertGroundedReviewProjection(wrongHumanCoordinate),
+		/GROUNDED_REVIEW_COORDINATE/,
+	);
+
+	const wrongOwnerCoordinate = structuredClone(proof.reviewProjections[1]);
+	wrongOwnerCoordinate.axes.ownerAdmission.targetDigest = "f".repeat(64);
+	wrongOwnerCoordinate.id = groundedReviewDigest(wrongOwnerCoordinate);
+	assert.throws(
+		() => assertGroundedReviewProjection(wrongOwnerCoordinate),
+		/GROUNDED_REVIEW_COORDINATE/,
+	);
 });
 
 test("retained proof preserves the complete fail-closed owner-result matrix", () => {
