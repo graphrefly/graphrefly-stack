@@ -1,0 +1,72 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "urn:graphrefly-stack:schema:grounded-handoff-owner-result:v1",
+	"type": "object",
+	"additionalProperties": false,
+	"required": [
+		"schema",
+		"id",
+		"owner",
+		"proposalId",
+		"target",
+		"status",
+		"evidenceRefs",
+		"statement"
+	],
+	"properties": {
+		"schema": { "const": "refresh-session.owner-handoff-result.v1" },
+		"id": { "$ref": "#/definitions/Digest" },
+		"owner": { "$ref": "#/definitions/Label" },
+		"proposalId": { "$ref": "#/definitions/Digest" },
+		"target": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["subject", "projectionId"],
+			"properties": {
+				"subject": { "$ref": "#/definitions/Subject" },
+				"projectionId": { "$ref": "#/definitions/Digest" }
+			}
+		},
+		"status": { "enum": ["admitted", "rejected"] },
+		"evidenceRefs": {
+			"type": "array",
+			"minItems": 1,
+			"maxItems": 64,
+			"uniqueItems": true,
+			"items": { "$ref": "#/definitions/Ref" }
+		},
+		"statement": { "$ref": "#/definitions/Label" }
+	},
+	"definitions": {
+		"Digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+		"Oid": { "type": "string", "pattern": "^(?:[a-f0-9]{40}|[a-f0-9]{64})$" },
+		"Label": {
+			"type": "string",
+			"minLength": 1,
+			"maxLength": 2000,
+			"pattern": "^[^\\x00-\\x1f]+$"
+		},
+		"Subject": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["repository", "base", "head"],
+			"properties": {
+				"repository": { "$ref": "#/definitions/Label" },
+				"base": { "$ref": "#/definitions/Oid" },
+				"head": { "$ref": "#/definitions/Oid" }
+			}
+		},
+		"Ref": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["manifestId", "authorityRef", "authorityDigest", "owner", "kind"],
+			"properties": {
+				"manifestId": { "$ref": "#/definitions/Digest" },
+				"authorityRef": { "$ref": "#/definitions/Label" },
+				"authorityDigest": { "$ref": "#/definitions/Digest" },
+				"owner": { "$ref": "#/definitions/Label" },
+				"kind": { "enum": ["decision", "policy", "test", "verifier", "artifact"] }
+			}
+		}
+	}
+}

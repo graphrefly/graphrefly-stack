@@ -1,0 +1,73 @@
+{
+	"artifact_ref": "graphrefly-stack:grounded-handoff-proof",
+	"attemptId": "8bc3898c459d5deebd8e283ad212c4a2019d3454c2be38f1a4796516e8cb0738",
+	"compression": {
+		"available": 28,
+		"reviewed": 27,
+		"unit": "classified review claims / exact bound technical records"
+	},
+	"consequenceProofId": "12ba96806b603ed1f6f0a31b6b71c65df590b905c9518d21719abee4bb280a60",
+	"explanationIds": [
+		"17ee71f84540d2684e8d426b51b47a2daa14c148a4b0e49c1f17b5ae07afdda5",
+		"1bdd7b423ef3cc2ee74a39ed02a994dd7e920eab22000c91999e51ec9feb4220"
+	],
+	"id": "033f81d9d07bfc05ee6561d122d09897f72b31b378c32f70e333accf44992624",
+	"llmRequired": false,
+	"ownerAxisAfter": {
+		"reason": "ADMITTED",
+		"resultId": "dbf3c57ba9a6794769a7700aa73c126026041ff1d2a8ddbdc82a62173d9f5354",
+		"status": "admitted"
+	},
+	"ownerAxisBefore": {
+		"reason": "NO_OWNER_RESULT",
+		"resultId": null,
+		"status": "absent"
+	},
+	"ownerEvidenceCommit": "314d6d221ff61fe7a9bd4023b1903ff38a379da3",
+	"ownerResultControls": [
+		{
+			"case": "cross-revision",
+			"reason": "WRONG_SUBJECT"
+		},
+		{
+			"case": "duplicate",
+			"reason": "DUPLICATE_OWNER_RESULT"
+		},
+		{
+			"case": "malformed",
+			"reason": "MALFORMED_OWNER_RESULT"
+		},
+		{
+			"case": "missing",
+			"reason": "NO_OWNER_RESULT"
+		},
+		{
+			"case": "rehashed-tamper",
+			"reason": "STALE_OWNER_RESULT"
+		},
+		{
+			"case": "stale",
+			"reason": "STALE_OWNER_RESULT"
+		},
+		{
+			"case": "wrong-evidence",
+			"reason": "WRONG_EVIDENCE"
+		},
+		{
+			"case": "wrong-owner",
+			"reason": "WRONG_OWNER"
+		},
+		{
+			"case": "wrong-proposal",
+			"reason": "WRONG_PROPOSAL"
+		},
+		{
+			"case": "wrong-target",
+			"reason": "WRONG_TARGET"
+		}
+	],
+	"ownerResultId": "dbf3c57ba9a6794769a7700aa73c126026041ff1d2a8ddbdc82a62173d9f5354",
+	"proposalId": "dcca8dd70746d9bbedc5de6c53c61e7b0c9d1ad50e94bbf912fcc7fd4cb71d15",
+	"revision": "stack-handoff-v1",
+	"schema": "graphrefly-stack/grounded-handoff-proof/v1"
+}

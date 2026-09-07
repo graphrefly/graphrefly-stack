@@ -1,0 +1,150 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "urn:graphrefly-stack:schema:grounded-handoff-proof:v1",
+	"type": "object",
+	"additionalProperties": false,
+	"required": [
+		"artifact_ref",
+		"schema",
+		"revision",
+		"id",
+		"consequenceReview",
+		"explanations",
+		"proposal",
+		"ownerEvidence",
+		"reviewProjections",
+		"ownerResultControls",
+		"compression",
+		"attempt",
+		"adapter",
+		"llmRequired",
+		"limitations"
+	],
+	"properties": {
+		"artifact_ref": { "const": "graphrefly-stack:grounded-handoff-proof" },
+		"schema": { "const": "graphrefly-stack/grounded-handoff-proof/v1" },
+		"revision": { "const": "stack-handoff-v1" },
+		"id": { "$ref": "#/definitions/Digest" },
+		"consequenceReview": { "type": "object" },
+		"explanations": {
+			"type": "array",
+			"minItems": 2,
+			"maxItems": 2,
+			"items": { "type": "object" }
+		},
+		"proposal": { "type": "object" },
+		"ownerEvidence": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["result", "coordinate"],
+			"properties": {
+				"result": { "type": "object" },
+				"coordinate": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["repository", "ref", "commit", "path", "blob", "bytesDigest"],
+					"properties": {
+						"repository": { "$ref": "#/definitions/Label" },
+						"ref": { "$ref": "#/definitions/Label" },
+						"commit": { "$ref": "#/definitions/Oid" },
+						"path": { "$ref": "#/definitions/Label" },
+						"blob": { "$ref": "#/definitions/Oid" },
+						"bytesDigest": { "$ref": "#/definitions/Digest" }
+					}
+				}
+			}
+		},
+		"reviewProjections": {
+			"type": "array",
+			"minItems": 2,
+			"maxItems": 2,
+			"items": { "type": "object" }
+		},
+		"ownerResultControls": {
+			"type": "array",
+			"minItems": 10,
+			"maxItems": 10,
+			"uniqueItems": true,
+			"items": {
+				"type": "object",
+				"additionalProperties": false,
+				"required": ["case", "inputs", "projection"],
+				"properties": {
+					"case": {
+						"enum": [
+							"cross-revision",
+							"duplicate",
+							"malformed",
+							"missing",
+							"rehashed-tamper",
+							"stale",
+							"wrong-evidence",
+							"wrong-owner",
+							"wrong-proposal",
+							"wrong-target"
+						]
+					},
+					"inputs": {
+						"type": "array",
+						"maxItems": 2,
+						"items": {
+							"type": "object",
+							"additionalProperties": false,
+							"required": ["current", "value"],
+							"properties": {
+								"current": { "type": "boolean" },
+								"value": { "type": "object" }
+							}
+						}
+					},
+					"projection": { "type": "object" }
+				}
+			}
+		},
+		"compression": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["reviewed", "available", "unit"],
+			"properties": {
+				"reviewed": { "type": "integer", "minimum": 1 },
+				"available": { "type": "integer", "minimum": 1 },
+				"unit": { "$ref": "#/definitions/Label" }
+			}
+		},
+		"attempt": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["schema", "id", "baselineRevision", "consequenceProofId", "ownerEvidenceCommit"],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.grounded-handoff-attempt.v1" },
+				"id": { "$ref": "#/definitions/Digest" },
+				"baselineRevision": { "$ref": "#/definitions/Oid" },
+				"consequenceProofId": { "$ref": "#/definitions/Digest" },
+				"ownerEvidenceCommit": { "$ref": "#/definitions/Oid" }
+			}
+		},
+		"adapter": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["tool", "version", "sourceDigest"],
+			"properties": {
+				"tool": { "$ref": "#/definitions/Label" },
+				"version": { "$ref": "#/definitions/Label" },
+				"sourceDigest": { "$ref": "#/definitions/Digest" }
+			}
+		},
+		"llmRequired": { "const": false },
+		"limitations": {
+			"type": "array",
+			"minItems": 1,
+			"maxItems": 32,
+			"uniqueItems": true,
+			"items": { "$ref": "#/definitions/Label" }
+		}
+	},
+	"definitions": {
+		"Digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+		"Oid": { "type": "string", "pattern": "^(?:[a-f0-9]{40}|[a-f0-9]{64})$" },
+		"Label": { "type": "string", "minLength": 1, "maxLength": 2000, "pattern": "^[^\\x00-\\x1f]+$" }
+	}
+}

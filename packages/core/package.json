@@ -5,10 +5,11 @@
 	"type": "module",
 	"exports": {
 		".": "./dist/index.js",
-		"./consequence-review": "./dist/consequence-review.js"
+		"./consequence-review": "./dist/consequence-review.js",
+		"./grounded-handoff": "./src/grounded-handoff.ts"
 	},
 	"scripts": {
-		"build": "tsc -p tsconfig.json"
+		"build": "tsc -p tsconfig.json && tsc -p tsconfig.grounded.json"
 	},
 	"dependencies": {
 		"@graphrefly-stack/contracts": "workspace:*",
