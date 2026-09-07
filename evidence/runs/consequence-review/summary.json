@@ -5,15 +5,15 @@
 		"reviewed": 10,
 		"unit": "distinct decision-surface entries / bound technical records"
 	},
-	"guidanceId": "470e445c24bb25fe22e0c263054379e504c4d6f00cbda8a747a749fc5420de1b",
+	"guidanceId": "d7432d08e900db3fb564b561c49b6b2ed2ede22ff757c71538c3507058a7355a",
 	"guidanceStatus": "overlap-observed",
-	"id": "bac6e6b25d0d97ba0d278e44d2a8904884e4c141eba044c6cb1df20eef6c7960",
+	"id": "12ba96806b603ed1f6f0a31b6b71c65df590b905c9518d21719abee4bb280a60",
 	"integrationOutcome": "compatible",
 	"integrationResultDigest": "b22ed2d4bcdadb813e3cc29ff9ad86f766a85cadc4e93ab8f44b556f2ffaec8b",
 	"llmRequired": false,
 	"projectionIds": [
-		"4b6984c188b72f77f65c0e31d26b46b46b23de2053b5dd615565819a44e5d836",
-		"0a28ef2fff33a661e87a865f87f35a1a70fd8000faa3f84fed6312a46f1532d5"
+		"a816ccda7536ed1a170802452b3c87ae43726868383e5cff6c5a0860666b5a2c",
+		"a04b51d7ca0d40eb105c5e28669caccc6096b5c177121fd78fb121fe3f6cbe9e"
 	],
 	"repository": {
 		"base": "f8c4d1978f9af3334105f51bcc3acff2852452f8",

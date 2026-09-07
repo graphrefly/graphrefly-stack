@@ -11,7 +11,10 @@ import {
 	withIsolatedGitCandidate,
 } from "../../packages/cli/dist/integration-candidate.js";
 import { assembleIntegrationResult } from "../../packages/cli/dist/integration-semantics.js";
-import { assertConsequenceProof } from "../../packages/contracts/dist/consequence-review.js";
+import {
+	assertConsequenceProof,
+	sealConsequenceChangeSet,
+} from "../../packages/contracts/dist/consequence-review.js";
 import { canonicalize, sha256Jcs } from "../../packages/contracts/dist/jcs.js";
 import {
 	compareConsequenceProjections,
@@ -212,11 +215,12 @@ function buildChange(changeId, base, head, runtime, integrationVerification) {
 		)
 	)
 		throw new Error("CONSEQUENCE_CHANGE_SCOPE");
-	const exactChangeId = sha256Jcs({
+	const change = sealConsequenceChangeSet({
 		schema: "graphrefly.stack.git-change-set.v1",
 		subject,
 		rawDiffDigest: hashBytes(rawChange),
 	});
+	const exactChangeId = change.id;
 	const blueprint = {
 		version: runtime.blueprint.version,
 		topologyHash: runtime.blueprint.hash.value,
@@ -247,6 +251,7 @@ function buildChange(changeId, base, head, runtime, integrationVerification) {
 	const sourceArtifactBody = {
 		schema: "graphrefly.stack.consequence-source-evidence.v1",
 		changeId: exactChangeId,
+		change,
 		subject,
 		blueprint,
 		topology: runtime.blueprint.topology,
@@ -382,7 +387,7 @@ function buildChange(changeId, base, head, runtime, integrationVerification) {
 		attestation: structuredClone(verifierResult),
 	};
 	const projection = deriveConsequenceProjection({
-		changeId: exactChangeId,
+		change,
 		subject,
 		blueprint,
 		manifest,

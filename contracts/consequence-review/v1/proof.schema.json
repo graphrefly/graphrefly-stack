@@ -124,6 +124,16 @@
 			"maxLength": 1000,
 			"pattern": "^[^\\x00-\\x1f]+$"
 		},
+		"ChangeSubject": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["repository", "base", "head"],
+			"properties": {
+				"repository": { "$ref": "#/definitions/Label" },
+				"base": { "$ref": "#/definitions/Oid" },
+				"head": { "$ref": "#/definitions/Oid" }
+			}
+		},
 		"Readiness": {
 			"type": "object",
 			"additionalProperties": false,
@@ -222,7 +232,7 @@
 			"required": ["schema", "subject", "topologyHash", "sourceDigest", "result", "coverage"],
 			"properties": {
 				"schema": { "const": "refresh-session/business-verifier-observation/v1" },
-				"subject": { "type": "object" },
+				"subject": { "$ref": "#/definitions/ChangeSubject" },
 				"topologyHash": { "$ref": "#/definitions/Digest" },
 				"sourceDigest": { "$ref": "#/definitions/Digest" },
 				"result": {
@@ -249,6 +259,17 @@
 				}
 			}
 		},
+		"ChangeSet": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["schema", "id", "subject", "rawDiffDigest"],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.git-change-set.v1" },
+				"id": { "$ref": "#/definitions/Digest" },
+				"subject": { "$ref": "#/definitions/ChangeSubject" },
+				"rawDiffDigest": { "$ref": "#/definitions/Digest" }
+			}
+		},
 		"SourceEvidence": {
 			"type": "object",
 			"additionalProperties": false,
@@ -270,6 +291,7 @@
 						"schema",
 						"id",
 						"changeId",
+						"change",
 						"subject",
 						"blueprint",
 						"topology",
@@ -281,7 +303,8 @@
 						"schema": { "const": "graphrefly.stack.consequence-source-evidence.v1" },
 						"id": { "$ref": "#/definitions/Digest" },
 						"changeId": { "$ref": "#/definitions/Digest" },
-						"subject": { "type": "object" },
+						"change": { "$ref": "#/definitions/ChangeSet" },
+						"subject": { "$ref": "#/definitions/ChangeSubject" },
 						"blueprint": { "type": "object" },
 						"topology": { "type": "object" },
 						"anchors": {
@@ -326,7 +349,7 @@
 						"resultDigest": { "$ref": "#/definitions/Digest" },
 						"result": { "enum": ["passed", "failed"] },
 						"freshness": { "enum": ["current", "stale", "unknown"] },
-						"subject": { "type": "object" },
+						"subject": { "$ref": "#/definitions/ChangeSubject" },
 						"topologyHash": { "$ref": "#/definitions/Digest" },
 						"coverage": {
 							"type": "array",

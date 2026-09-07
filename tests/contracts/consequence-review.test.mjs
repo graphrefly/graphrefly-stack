@@ -11,6 +11,7 @@ import {
 	sealConsequenceProjection,
 } from "../../packages/contracts/dist/consequence-review.js";
 import { sha256Jcs } from "../../packages/contracts/dist/jcs.js";
+import { seal } from "../../packages/contracts/dist/source-bound.js";
 
 const proof = JSON.parse(
 	readFileSync("evidence/runs/consequence-review/evidence-bundle.json", "utf8"),
@@ -73,6 +74,43 @@ test("proof cross-bindings reject internally valid coordinate, guidance, axes an
 	emptied.axes[0].evidence = structuredClone(emptied.projections[0].readiness);
 	emptied.axes[0].human.targetDigest = emptied.projections[0].id;
 	assert.throws(() => assertConsequenceProof(resealProof(emptied)), /SOURCE_EVIDENCE/);
+
+	const forgedChange = structuredClone(proof);
+	forgedChange.sourceEvidence[0].changeId = "f".repeat(64);
+	forgedChange.sourceEvidence[0].sourceArtifact.changeId = "f".repeat(64);
+	forgedChange.sourceEvidence[0].sourceArtifact.change.id = "f".repeat(64);
+	forgedChange.projections[0].changeId = "f".repeat(64);
+	forgedChange.projections[0].id = consequenceDigest(forgedChange.projections[0]);
+	forgedChange.guidance.leftProjectionId = forgedChange.projections[0].id;
+	forgedChange.guidance.id = guidanceDigest(forgedChange.guidance);
+	forgedChange.axes[0].evidence = structuredClone(forgedChange.projections[0].readiness);
+	forgedChange.axes[0].human.targetDigest = forgedChange.projections[0].id;
+	forgedChange.sourceEvidence[0].sourceArtifact.id = sha256Jcs(
+		Object.fromEntries(
+			Object.entries(forgedChange.sourceEvidence[0].sourceArtifact).filter(([key]) => key !== "id"),
+		),
+	);
+	assert.throws(
+		() => assertConsequenceProof(resealProof(forgedChange)),
+		/CONSEQUENCE_CHANGE_DIGEST/,
+	);
+
+	const orphanResolution = structuredClone(proof);
+	const sourceArtifact = orphanResolution.sourceEvidence[0].sourceArtifact;
+	sourceArtifact.resolutions.push(
+		seal({
+			...sourceArtifact.resolutions[0],
+			id: undefined,
+			anchorId: "f".repeat(64),
+		}),
+	);
+	sourceArtifact.id = sha256Jcs(
+		Object.fromEntries(Object.entries(sourceArtifact).filter(([key]) => key !== "id")),
+	);
+	assert.throws(
+		() => assertConsequenceProof(resealProof(orphanResolution)),
+		/CONSEQUENCE_PROOF_SOURCE_EVIDENCE/,
+	);
 });
 
 test("schemas and nested integrity reject extra fields, reordered sets and tamper after rehash", () => {

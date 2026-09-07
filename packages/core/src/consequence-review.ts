@@ -1,6 +1,8 @@
 import {
+	assertConsequenceChangeSet,
 	assertConsequenceIntegration,
 	assertConsequenceProjection,
+	type ConsequenceChangeSet,
 	type ConsequenceGuidance,
 	type ConsequenceProjection,
 	type ConsequenceUnknownCode,
@@ -49,7 +51,7 @@ export type ConsequenceSourceInput = {
 	resolution: ResolutionResult;
 };
 export type DeriveConsequenceOptions = {
-	changeId: string;
+	change: ConsequenceChangeSet;
 	subject: ChangeSubject;
 	blueprint: ConsequenceProjection["blueprint"];
 	manifest: EvidenceManifest;
@@ -156,8 +158,10 @@ function observationMatches(
 export function deriveConsequenceProjection(
 	options: DeriveConsequenceOptions,
 ): ConsequenceProjection {
+	assertConsequenceChangeSet(options.change);
 	assertEvidenceManifest(options.manifest);
 	if (
+		!same(options.change.subject, options.subject) ||
 		!same(options.subject, options.manifest.subject) ||
 		!same(options.blueprint, options.manifest.blueprint)
 	) {
@@ -168,6 +172,8 @@ export function deriveConsequenceProjection(
 	const sourceScope = uniqueSorted(options.sourceScope);
 	const suppliedBindingRefs = uniqueSorted(options.bindings.map((binding) => binding.id));
 	const manifestBindingRefs = uniqueSorted(options.manifest.bindingRefs);
+	const suppliedAnchorIds = uniqueSorted(options.sources.map((source) => source.anchor.id));
+	const boundAnchorIds = uniqueSorted(options.bindings.map((binding) => binding.anchorId));
 	const topologyNodes = new Set(options.topology.nodes.map((node) => node.id));
 	const bindingByAnchor = new Map<string, GraphSourceBinding[]>();
 	for (const binding of options.bindings) {
@@ -190,6 +196,8 @@ export function deriveConsequenceProjection(
 		unknowns.push({ code: "INCOMPLETE_COVERAGE", subject: "source-scope" });
 	if (!same(suppliedBindingRefs, manifestBindingRefs))
 		unknowns.push({ code: "INCOMPLETE_COVERAGE", subject: "manifest-binding-set" });
+	if (!same(suppliedAnchorIds, boundAnchorIds))
+		unknowns.push({ code: "INCOMPLETE_COVERAGE", subject: "binding-source-set" });
 	for (const source of options.sources) {
 		assertSourceRecord(source.anchor);
 		assertSourceRecord(source.resolution);
@@ -260,13 +268,13 @@ export function deriveConsequenceProjection(
 			observationMatches(options, observation) &&
 			observation.freshness === "current" &&
 			observation.result === "failed" &&
-			observation.coverage.some((scope) => required.includes(scope)),
+			observation.attestation.coverage.required.some((scope) => required.includes(scope)),
 	);
 	const stale = observations.filter(
 		(observation) =>
 			observationMatches(options, observation) &&
 			observation.freshness === "stale" &&
-			observation.coverage.some((scope) => required.includes(scope)),
+			observation.attestation.coverage.required.some((scope) => required.includes(scope)),
 	);
 	const verifiedUnchanged: ConsequenceProjection["verifiedUnchanged"] = [];
 	for (const scope of uniqueSorted(options.unchangedControls)) {
@@ -293,7 +301,7 @@ export function deriveConsequenceProjection(
 				(observation) =>
 					observationMatches(options, observation) && observation.freshness === "current",
 			)
-			.flatMap((observation) => observation.coverage),
+			.flatMap((observation) => observation.attestation.coverage.required),
 	);
 	for (const scope of required)
 		if (!covered.has(scope)) unknowns.push({ code: "MISSING_EVIDENCE", subject: scope });
@@ -327,7 +335,7 @@ export function deriveConsequenceProjection(
 		subject: structuredClone(options.subject),
 		blueprint: structuredClone(options.blueprint),
 		manifestId: options.manifest.id,
-		changeId: options.changeId,
+		changeId: options.change.id,
 		sourceScope,
 		direct: sortedDirect,
 		reachable,

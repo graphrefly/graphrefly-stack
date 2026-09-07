@@ -179,7 +179,7 @@ function options(index = 0) {
 	const source = evidence.sourceArtifact;
 	const projection = proof.projections[index];
 	return {
-		changeId: evidence.changeId,
+		change: source.change,
 		subject: evidence.manifest.subject,
 		blueprint: evidence.manifest.blueprint,
 		manifest: evidence.manifest,
@@ -256,6 +256,9 @@ test("source and evidence failure matrix is explicit with blocked/stale/unknown 
 	const forgedDigest = options();
 	forgedDigest.verifierObservations[0].resultDigest = "f".repeat(64);
 	assert.equal(deriveConsequenceProjection(forgedDigest).readiness.status, "unknown");
+	const forgedChange = options();
+	forgedChange.change = { ...forgedChange.change, id: "f".repeat(64) };
+	assert.throws(() => deriveConsequenceProjection(forgedChange), /CONSEQUENCE_CHANGE_DIGEST/);
 	const forgedTopology = options();
 	forgedTopology.topology.nodes[0].deps = [];
 	assert.throws(() => deriveConsequenceProjection(forgedTopology), /CONSEQUENCE_TOPOLOGY_HASH/);
@@ -274,6 +277,21 @@ test("source and evidence failure matrix is explicit with blocked/stale/unknown 
 			(entry) => entry.code === "INCOMPLETE_COVERAGE" && entry.subject === "manifest-binding-set",
 		),
 	);
+	const orphanBinding = options();
+	orphanBinding.bindings.push(
+		seal({
+			...orphanBinding.bindings[0],
+			id: undefined,
+			anchorId: "f".repeat(64),
+		}),
+	);
+	const orphanProjection = deriveConsequenceProjection(orphanBinding);
+	assert.equal(orphanProjection.readiness.status, "unknown");
+	assert(
+		orphanProjection.unknowns.some(
+			(entry) => entry.code === "INCOMPLETE_COVERAGE" && entry.subject === "binding-source-set",
+		),
+	);
 	const requiredAsUnchanged = options();
 	requiredAsUnchanged.unchangedControls = ["AdmitRefresh"];
 	const unchangedProjection = deriveConsequenceProjection(requiredAsUnchanged);
@@ -281,6 +299,30 @@ test("source and evidence failure matrix is explicit with blocked/stale/unknown 
 	assert.equal(unchangedProjection.verifiedUnchanged.length, 0);
 	assert(
 		unchangedProjection.unknowns.some(
+			(entry) => entry.code === "MISSING_EVIDENCE" && entry.subject === "AdmitRefresh",
+		),
+	);
+	const requiredAttestedOnlyAsUnchanged = options();
+	const observation = requiredAttestedOnlyAsUnchanged.verifierObservations[0];
+	observation.attestation.coverage.required = observation.attestation.coverage.required.filter(
+		(scope) => scope !== "AdmitRefresh",
+	);
+	observation.attestation.coverage.unchangedControls = [
+		...new Set([...observation.attestation.coverage.unchangedControls, "AdmitRefresh"]),
+	].sort();
+	const shiftedDigest = sha256Jcs(observation.attestation);
+	observation.authorityDigest = shiftedDigest;
+	observation.resultDigest = shiftedDigest;
+	const shiftedAuthority = requiredAttestedOnlyAsUnchanged.manifest.authorities.find(
+		(entry) => entry.ref === observation.authorityRef,
+	);
+	shiftedAuthority.digest = shiftedDigest;
+	shiftedAuthority.freshness.authorityDigest = shiftedDigest;
+	requiredAttestedOnlyAsUnchanged.manifest = sealManifest(requiredAttestedOnlyAsUnchanged.manifest);
+	const shiftedProjection = deriveConsequenceProjection(requiredAttestedOnlyAsUnchanged);
+	assert.equal(shiftedProjection.readiness.status, "unknown");
+	assert(
+		shiftedProjection.unknowns.some(
 			(entry) => entry.code === "MISSING_EVIDENCE" && entry.subject === "AdmitRefresh",
 		),
 	);

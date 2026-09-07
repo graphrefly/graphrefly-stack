@@ -1,6 +1,6 @@
 {
 	"adapter": {
-		"sourceDigest": "7e5979082b8588440db3b8f23c6ddb3f9948c2ce2a116f7491d9d53f67d0e449",
+		"sourceDigest": "f0dde8339c5bdb50d53f03d8d341c0ba3ffbb97cd9b2f577be5cae23c3bf6a72",
 		"tool": "consequence-review-report",
 		"version": "1"
 	},
@@ -13,7 +13,7 @@
 			},
 			"human": {
 				"status": "needs-review",
-				"targetDigest": "4b6984c188b72f77f65c0e31d26b46b46b23de2053b5dd615565819a44e5d836"
+				"targetDigest": "a816ccda7536ed1a170802452b3c87ae43726868383e5cff6c5a0860666b5a2c"
 			},
 			"ownerAdmission": null
 		},
@@ -24,7 +24,7 @@
 			},
 			"human": {
 				"status": "needs-review",
-				"targetDigest": "0a28ef2fff33a661e87a865f87f35a1a70fd8000faa3f84fed6312a46f1532d5"
+				"targetDigest": "a04b51d7ca0d40eb105c5e28669caccc6096b5c177121fd78fb121fe3f6cbe9e"
 			},
 			"ownerAdmission": null
 		}
@@ -51,15 +51,15 @@
 				"ValidateTokenContract"
 			]
 		},
-		"id": "470e445c24bb25fe22e0c263054379e504c4d6f00cbda8a747a749fc5420de1b",
+		"id": "d7432d08e900db3fb564b561c49b6b2ed2ede22ff757c71538c3507058a7355a",
 		"integration": {
 			"candidateDigest": "e9066f6715b5b1376fc6797f96063922144c668575fe2d6414c8eee8c4d807df",
 			"outcome": "compatible",
 			"resultDigest": "b22ed2d4bcdadb813e3cc29ff9ad86f766a85cadc4e93ab8f44b556f2ffaec8b",
 			"verifierDigest": "78bcb76a134bbc18710eb7d6c3b6270875d3afeeae79f1baee5eb6199172872c"
 		},
-		"leftProjectionId": "4b6984c188b72f77f65c0e31d26b46b46b23de2053b5dd615565819a44e5d836",
-		"rightProjectionId": "0a28ef2fff33a661e87a865f87f35a1a70fd8000faa3f84fed6312a46f1532d5",
+		"leftProjectionId": "a816ccda7536ed1a170802452b3c87ae43726868383e5cff6c5a0860666b5a2c",
+		"rightProjectionId": "a04b51d7ca0d40eb105c5e28669caccc6096b5c177121fd78fb121fe3f6cbe9e",
 		"schema": "graphrefly.stack.consequence-guidance.v1",
 		"status": "overlap-observed",
 		"witnesses": [
@@ -85,7 +85,7 @@
 			}
 		]
 	},
-	"id": "bac6e6b25d0d97ba0d278e44d2a8904884e4c141eba044c6cb1df20eef6c7960",
+	"id": "12ba96806b603ed1f6f0a31b6b71c65df590b905c9518d21719abee4bb280a60",
 	"integration": {
 		"candidate": {
 			"accepted": {
@@ -351,8 +351,8 @@
 					"nodeId": "PersistSession"
 				}
 			],
-			"id": "4b6984c188b72f77f65c0e31d26b46b46b23de2053b5dd615565819a44e5d836",
-			"manifestId": "52eda29ea6c7fe8679463c52f47671a4f83daee32eb0191f0a793b0c67df31b3",
+			"id": "a816ccda7536ed1a170802452b3c87ae43726868383e5cff6c5a0860666b5a2c",
+			"manifestId": "8f316b3dcfb627179ac1f3ce3b9bb0e6c70cdb24b06a2ba0d4d8ac77f08bf910",
 			"provenance": {
 				"authorityRefs": [
 					"graphrefly-stack:D57",
@@ -368,7 +368,7 @@
 					"60f0bd3d98ef576f201ee1d2d94931b1678d248462ee062cac1527d71eb2a9a7",
 					"74b51f383ae0d3c586a6c28ce5e23174951eae9219c2dcb55ad30de8159b9577"
 				],
-				"manifestId": "52eda29ea6c7fe8679463c52f47671a4f83daee32eb0191f0a793b0c67df31b3",
+				"manifestId": "8f316b3dcfb627179ac1f3ce3b9bb0e6c70cdb24b06a2ba0d4d8ac77f08bf910",
 				"sourceResolutionRefs": [
 					"93303f452f6aca3ec3b8c609f3e47013f9b440e0e28624c9a688ef0a767752d5",
 					"a0c844b1a99b34a6e5bc4e37a4d72d6b26a966d8a5b80011c7591d85388e8ec3"
@@ -544,8 +544,8 @@
 					"nodeId": "MapFailureResponse"
 				}
 			],
-			"id": "0a28ef2fff33a661e87a865f87f35a1a70fd8000faa3f84fed6312a46f1532d5",
-			"manifestId": "44e83b703c94eebf8d76962bd9d0e989fe1b249a3a25ca0043c8d1c5791887c9",
+			"id": "a04b51d7ca0d40eb105c5e28669caccc6096b5c177121fd78fb121fe3f6cbe9e",
+			"manifestId": "85e44570ea7d00f4d099d6e8804050b72d81e295b22e8bb9a450b161033b3c20",
 			"provenance": {
 				"authorityRefs": [
 					"graphrefly-stack:D57",
@@ -561,7 +561,7 @@
 					"57c864d2b417df15b6f0eabb808961cc88d22fd9658ef7d801ee015dfe680ce1",
 					"e416bd8b88a1ddfb8d5d1012198d8537f7642a3e6cd03e6dde53c2ae0109be6e"
 				],
-				"manifestId": "44e83b703c94eebf8d76962bd9d0e989fe1b249a3a25ca0043c8d1c5791887c9",
+				"manifestId": "85e44570ea7d00f4d099d6e8804050b72d81e295b22e8bb9a450b161033b3c20",
 				"sourceResolutionRefs": [
 					"39f5da4b51dc7e1fde1db2370ca8e2c0f7ec200c160a0870c6f8512b470ed0d6",
 					"833183542b380663e24998f2136a3e56aa5f0ed108e3f9954736c45120f13c78"
@@ -779,9 +779,9 @@
 							"60f0bd3d98ef576f201ee1d2d94931b1678d248462ee062cac1527d71eb2a9a7",
 							"74b51f383ae0d3c586a6c28ce5e23174951eae9219c2dcb55ad30de8159b9577"
 						],
-						"digest": "e8abb20722e151401cfa60af646a02e5e5ab5772941dfe71d01fb0cb7a1231a4",
+						"digest": "a1af53f8b86986636c287f8194eadf42ede7e493e77b4cd8a70017bebe85e607",
 						"freshness": {
-							"authorityDigest": "e8abb20722e151401cfa60af646a02e5e5ab5772941dfe71d01fb0cb7a1231a4",
+							"authorityDigest": "a1af53f8b86986636c287f8194eadf42ede7e493e77b4cd8a70017bebe85e607",
 							"status": "current",
 							"subject": {
 								"base": "f8c4d1978f9af3334105f51bcc3acff2852452f8",
@@ -792,7 +792,7 @@
 						"kind": "artifact",
 						"location": {
 							"commit": null,
-							"occurrence": "e8abb20722e151401cfa60af646a02e5e5ab5772941dfe71d01fb0cb7a1231a4",
+							"occurrence": "a1af53f8b86986636c287f8194eadf42ede7e493e77b4cd8a70017bebe85e607",
 							"path": "evidence/runs/consequence-review/evidence-bundle.json",
 							"repository": "graphrefly-stack:local-consequence-review",
 							"selector": "/sourceEvidence/0/sourceArtifact"
@@ -1006,7 +1006,7 @@
 					"runtimeOccurrence": "absent",
 					"scope": "retained-refresh-session-required-linkage-only"
 				},
-				"id": "52eda29ea6c7fe8679463c52f47671a4f83daee32eb0191f0a793b0c67df31b3",
+				"id": "8f316b3dcfb627179ac1f3ce3b9bb0e6c70cdb24b06a2ba0d4d8ac77f08bf910",
 				"schema": "graphrefly.stack.evidence-manifest.v1",
 				"subject": {
 					"base": "f8c4d1978f9af3334105f51bcc3acff2852452f8",
@@ -1117,8 +1117,18 @@
 					"topologyHash": "7c2a04e2c2f10dc39cb85cac16ea0b376b381c8ec263bffa8c00edd59d726a16",
 					"version": "graphrefly.blueprint.v2"
 				},
+				"change": {
+					"id": "110fe2b5bf4cd9771ef632681fbcfeec6e45149ae34bd3ad68c6f4101cfbbe00",
+					"rawDiffDigest": "4aa03cd380e5d20d36b550cc39c1d865769edf1455e87ea3dd3dc14930e998d5",
+					"schema": "graphrefly.stack.git-change-set.v1",
+					"subject": {
+						"base": "f8c4d1978f9af3334105f51bcc3acff2852452f8",
+						"head": "3f7735ee97c774d56f4e2e439e1b2718919840e0",
+						"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+					}
+				},
 				"changeId": "110fe2b5bf4cd9771ef632681fbcfeec6e45149ae34bd3ad68c6f4101cfbbe00",
-				"id": "e8abb20722e151401cfa60af646a02e5e5ab5772941dfe71d01fb0cb7a1231a4",
+				"id": "a1af53f8b86986636c287f8194eadf42ede7e493e77b4cd8a70017bebe85e607",
 				"resolutions": [
 					{
 						"anchorId": "813cf04ae7e86bdee9872dc1c73e4c8f184f993d2e7dd9064a71fcd5e49ff01e",
@@ -1618,9 +1628,9 @@
 							"57c864d2b417df15b6f0eabb808961cc88d22fd9658ef7d801ee015dfe680ce1",
 							"e416bd8b88a1ddfb8d5d1012198d8537f7642a3e6cd03e6dde53c2ae0109be6e"
 						],
-						"digest": "94e5d8fc5bb880e9e66c6d1e103718f0de206eeaf4ec11308d9a1902ff2c7040",
+						"digest": "8af390b60fc36b055124a328a595f8eedb9f88fd9e3605afba9af11c7868140c",
 						"freshness": {
-							"authorityDigest": "94e5d8fc5bb880e9e66c6d1e103718f0de206eeaf4ec11308d9a1902ff2c7040",
+							"authorityDigest": "8af390b60fc36b055124a328a595f8eedb9f88fd9e3605afba9af11c7868140c",
 							"status": "current",
 							"subject": {
 								"base": "f8c4d1978f9af3334105f51bcc3acff2852452f8",
@@ -1631,7 +1641,7 @@
 						"kind": "artifact",
 						"location": {
 							"commit": null,
-							"occurrence": "94e5d8fc5bb880e9e66c6d1e103718f0de206eeaf4ec11308d9a1902ff2c7040",
+							"occurrence": "8af390b60fc36b055124a328a595f8eedb9f88fd9e3605afba9af11c7868140c",
 							"path": "evidence/runs/consequence-review/evidence-bundle.json",
 							"repository": "graphrefly-stack:local-consequence-review",
 							"selector": "/sourceEvidence/1/sourceArtifact"
@@ -1845,7 +1855,7 @@
 					"runtimeOccurrence": "absent",
 					"scope": "retained-refresh-session-required-linkage-only"
 				},
-				"id": "44e83b703c94eebf8d76962bd9d0e989fe1b249a3a25ca0043c8d1c5791887c9",
+				"id": "85e44570ea7d00f4d099d6e8804050b72d81e295b22e8bb9a450b161033b3c20",
 				"schema": "graphrefly.stack.evidence-manifest.v1",
 				"subject": {
 					"base": "f8c4d1978f9af3334105f51bcc3acff2852452f8",
@@ -1956,8 +1966,18 @@
 					"topologyHash": "7c2a04e2c2f10dc39cb85cac16ea0b376b381c8ec263bffa8c00edd59d726a16",
 					"version": "graphrefly.blueprint.v2"
 				},
+				"change": {
+					"id": "744918a673b863a71a7dcf39aeb6f73b976f155053f0a17564e8d24087838a5c",
+					"rawDiffDigest": "f8a5ea06ad9c1338ee99ebaccb374ed7e869be84579f6188563d2e3fa2981a1c",
+					"schema": "graphrefly.stack.git-change-set.v1",
+					"subject": {
+						"base": "f8c4d1978f9af3334105f51bcc3acff2852452f8",
+						"head": "6e5ad729dd005c1c92656c1d20eef2a36ba1108e",
+						"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+					}
+				},
 				"changeId": "744918a673b863a71a7dcf39aeb6f73b976f155053f0a17564e8d24087838a5c",
-				"id": "94e5d8fc5bb880e9e66c6d1e103718f0de206eeaf4ec11308d9a1902ff2c7040",
+				"id": "8af390b60fc36b055124a328a595f8eedb9f88fd9e3605afba9af11c7868140c",
 				"resolutions": [
 					{
 						"anchorId": "beaee8de5ca41540a22a91dba1a3aaf0ad8980fbb8b7ea79ad2a70c9082a6ece",

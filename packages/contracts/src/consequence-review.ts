@@ -26,6 +26,12 @@ import {
 } from "./source-bound.js";
 
 export type ConsequenceReadiness = "verified" | "blocked" | "stale" | "unknown";
+export type ConsequenceChangeSet = {
+	schema: "graphrefly.stack.git-change-set.v1";
+	id: string;
+	subject: ChangeSubject;
+	rawDiffDigest: string;
+};
 export type ConsequenceUnknownCode =
 	| "AMBIGUOUS_SOURCE"
 	| "CHANGED_SOURCE"
@@ -139,6 +145,7 @@ export type ConsequenceReviewProof = {
 			schema: "graphrefly.stack.consequence-source-evidence.v1";
 			id: string;
 			changeId: string;
+			change: ConsequenceChangeSet;
 			subject: ChangeSubject;
 			blueprint: ConsequenceProjection["blueprint"];
 			topology: Record<string, unknown>;
@@ -200,6 +207,45 @@ const validateResult = integrationAjv.getSchema(
 function digestWithoutId(value: Record<string, unknown>): string {
 	const { id: _id, ...body } = value;
 	return sha256Jcs(body);
+}
+export function consequenceChangeDigest(
+	value: Omit<ConsequenceChangeSet, "id"> | ConsequenceChangeSet,
+): string {
+	return digestWithoutId(value as unknown as Record<string, unknown>);
+}
+export function assertConsequenceChangeSet(value: unknown): asserts value is ConsequenceChangeSet {
+	if (
+		typeof value !== "object" ||
+		value === null ||
+		Array.isArray(value) ||
+		Object.keys(value).sort().join(",") !== "id,rawDiffDigest,schema,subject"
+	)
+		throw new Error("CONSEQUENCE_CHANGE_SCHEMA");
+	const change = value as ConsequenceChangeSet;
+	if (
+		change.schema !== "graphrefly.stack.git-change-set.v1" ||
+		!/^[a-f0-9]{64}$/.test(change.id) ||
+		!/^[a-f0-9]{64}$/.test(change.rawDiffDigest) ||
+		typeof change.subject !== "object" ||
+		change.subject === null ||
+		Object.keys(change.subject).sort().join(",") !== "base,head,repository" ||
+		typeof change.subject?.repository !== "string" ||
+		!change.subject.repository ||
+		!/^([a-f0-9]{40}|[a-f0-9]{64})$/.test(change.subject.base) ||
+		!/^([a-f0-9]{40}|[a-f0-9]{64})$/.test(change.subject.head)
+	)
+		throw new Error("CONSEQUENCE_CHANGE_SCHEMA");
+	if (change.id !== consequenceChangeDigest(change)) throw new Error("CONSEQUENCE_CHANGE_DIGEST");
+}
+export function sealConsequenceChangeSet(
+	value: Omit<ConsequenceChangeSet, "id">,
+): ConsequenceChangeSet {
+	const result = {
+		...structuredClone(value),
+		id: consequenceChangeDigest(value),
+	} as ConsequenceChangeSet;
+	assertConsequenceChangeSet(result);
+	return result;
 }
 function orderedUnique(values: unknown[]): boolean {
 	return values.every(
@@ -327,6 +373,7 @@ export function assertConsequenceProof(value: unknown): void {
 		throw new Error("CONSEQUENCE_PROOF_GUIDANCE");
 	for (const [index, evidence] of proof.sourceEvidence.entries()) {
 		assertEvidenceManifest(evidence.manifest);
+		assertConsequenceChangeSet(evidence.sourceArtifact.change);
 		for (const record of [
 			...evidence.sourceArtifact.anchors,
 			...evidence.sourceArtifact.resolutions,
@@ -348,6 +395,8 @@ export function assertConsequenceProof(value: unknown): void {
 		if (
 			evidence.sourceArtifact.id !== sha256Jcs(sourceBody) ||
 			evidence.changeId !== evidence.sourceArtifact.changeId ||
+			evidence.changeId !== evidence.sourceArtifact.change.id ||
+			!same(evidence.sourceArtifact.change.subject, evidence.sourceArtifact.subject) ||
 			canonicalize(evidence.manifest.subject) !== canonicalize(evidence.sourceArtifact.subject) ||
 			canonicalize(evidence.manifest.blueprint) !==
 				canonicalize(evidence.sourceArtifact.blueprint) ||
@@ -400,6 +449,10 @@ export function assertConsequenceProof(value: unknown): void {
 		}
 		if (
 			anchorById.size !== evidence.sourceArtifact.anchors.length ||
+			resolutionByAnchor.size !== anchorById.size ||
+			bindingByAnchor.size !== anchorById.size ||
+			[...resolutionByAnchor.keys()].some((anchorId) => !anchorById.has(anchorId)) ||
+			[...bindingByAnchor.keys()].some((anchorId) => !anchorById.has(anchorId)) ||
 			evidence.sourceArtifact.anchors.some((anchor) => {
 				const resolutions = resolutionByAnchor.get(anchor.id) ?? [];
 				const bindings = bindingByAnchor.get(anchor.id) ?? [];
