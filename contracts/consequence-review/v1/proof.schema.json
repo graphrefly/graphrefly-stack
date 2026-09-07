@@ -1,0 +1,342 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "urn:graphrefly-stack:schema:consequence-review-proof:v1",
+	"type": "object",
+	"additionalProperties": false,
+	"required": [
+		"artifact_ref",
+		"schema",
+		"revision",
+		"id",
+		"repository",
+		"runtime",
+		"sourceEvidence",
+		"projections",
+		"guidance",
+		"axes",
+		"integration",
+		"compression",
+		"adapter",
+		"llmRequired",
+		"limitations"
+	],
+	"properties": {
+		"artifact_ref": { "const": "graphrefly-stack:consequence-review-proof" },
+		"schema": { "const": "graphrefly-stack/consequence-review-proof/v1" },
+		"revision": { "const": "stack-review-v1" },
+		"id": { "$ref": "#/definitions/Digest" },
+		"repository": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["identity", "base", "left", "right", "candidateTree"],
+			"properties": {
+				"identity": { "$ref": "#/definitions/Label" },
+				"base": { "$ref": "#/definitions/Oid" },
+				"left": { "$ref": "#/definitions/Oid" },
+				"right": { "$ref": "#/definitions/Oid" },
+				"candidateTree": { "$ref": "#/definitions/Oid" }
+			}
+		},
+		"runtime": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"name",
+				"version",
+				"typescriptVersion",
+				"lockIntegrity",
+				"installedFilesDigest",
+				"typescriptLockIntegrity",
+				"typescriptInstalledFilesDigest",
+				"foundationProofId"
+			],
+			"properties": {
+				"name": { "const": "@graphrefly/ts" },
+				"version": { "const": "0.8.0" },
+				"typescriptVersion": { "const": "5.9.3" },
+				"lockIntegrity": { "$ref": "#/definitions/Label" },
+				"installedFilesDigest": { "$ref": "#/definitions/Digest" },
+				"typescriptLockIntegrity": { "$ref": "#/definitions/Label" },
+				"typescriptInstalledFilesDigest": { "$ref": "#/definitions/Digest" },
+				"foundationProofId": { "$ref": "#/definitions/Digest" }
+			}
+		},
+		"sourceEvidence": {
+			"type": "array",
+			"minItems": 2,
+			"maxItems": 2,
+			"items": { "$ref": "#/definitions/SourceEvidence" }
+		},
+		"projections": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "object" } },
+		"guidance": { "type": "object" },
+		"axes": {
+			"type": "array",
+			"minItems": 2,
+			"maxItems": 2,
+			"items": { "$ref": "#/definitions/Axes" }
+		},
+		"integration": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["candidate", "result", "resultDigest", "verification"],
+			"properties": {
+				"candidate": { "type": "object" },
+				"result": { "type": "object" },
+				"resultDigest": { "$ref": "#/definitions/Digest" },
+				"verification": { "$ref": "#/definitions/IntegrationVerification" }
+			}
+		},
+		"compression": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["reviewed", "available", "unit"],
+			"properties": {
+				"reviewed": { "type": "integer", "minimum": 0 },
+				"available": { "type": "integer", "minimum": 1 },
+				"unit": { "$ref": "#/definitions/Label" }
+			}
+		},
+		"adapter": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["tool", "version", "sourceDigest"],
+			"properties": {
+				"tool": { "$ref": "#/definitions/Label" },
+				"version": { "$ref": "#/definitions/Label" },
+				"sourceDigest": { "$ref": "#/definitions/Digest" }
+			}
+		},
+		"llmRequired": { "const": false },
+		"limitations": {
+			"type": "array",
+			"minItems": 1,
+			"maxItems": 32,
+			"uniqueItems": true,
+			"items": { "$ref": "#/definitions/Label" }
+		}
+	},
+	"definitions": {
+		"Digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+		"Oid": { "type": "string", "pattern": "^(?:[a-f0-9]{40}|[a-f0-9]{64})$" },
+		"Label": {
+			"type": "string",
+			"minLength": 1,
+			"maxLength": 1000,
+			"pattern": "^[^\\x00-\\x1f]+$"
+		},
+		"Readiness": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["status", "reasons"],
+			"properties": {
+				"status": { "enum": ["verified", "blocked", "stale", "unknown"] },
+				"reasons": {
+					"type": "array",
+					"uniqueItems": true,
+					"items": { "$ref": "#/definitions/Label" }
+				}
+			}
+		},
+		"Axes": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["evidence", "human", "ownerAdmission"],
+			"properties": {
+				"evidence": { "$ref": "#/definitions/Readiness" },
+				"human": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["status", "targetDigest"],
+					"properties": {
+						"status": { "enum": ["needs-review", "approved", "changes-requested", "outdated"] },
+						"targetDigest": { "$ref": "#/definitions/Digest" }
+					}
+				},
+				"ownerAdmission": {
+					"oneOf": [
+						{ "type": "null" },
+						{
+							"type": "object",
+							"additionalProperties": false,
+							"required": ["owner", "ref", "status", "targetDigest"],
+							"properties": {
+								"owner": { "$ref": "#/definitions/Label" },
+								"ref": { "$ref": "#/definitions/Label" },
+								"status": { "$ref": "#/definitions/Label" },
+								"targetDigest": { "$ref": "#/definitions/Digest" }
+							}
+						}
+					]
+				}
+			}
+		},
+		"IntegrationVerification": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"schema",
+				"id",
+				"verifierRef",
+				"candidateDigest",
+				"resultDigest",
+				"candidateTree",
+				"inputs",
+				"candidateDeltaBinding",
+				"effectDigest",
+				"status"
+			],
+			"properties": {
+				"schema": { "const": "graphrefly.stack.integration-result-verification.v1" },
+				"id": { "$ref": "#/definitions/Digest" },
+				"verifierRef": { "$ref": "#/definitions/Label" },
+				"candidateDigest": { "$ref": "#/definitions/Digest" },
+				"resultDigest": { "$ref": "#/definitions/Digest" },
+				"candidateTree": { "$ref": "#/definitions/Oid" },
+				"inputs": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["targetDelta", "headDelta", "candidateDelta"],
+					"properties": {
+						"targetDelta": { "type": "object" },
+						"headDelta": { "type": "object" },
+						"candidateDelta": { "type": "object" }
+					}
+				},
+				"candidateDeltaBinding": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["from", "to", "digest"],
+					"properties": {
+						"from": { "$ref": "#/definitions/Oid" },
+						"to": { "$ref": "#/definitions/Oid" },
+						"digest": { "$ref": "#/definitions/Digest" }
+					}
+				},
+				"effectDigest": { "$ref": "#/definitions/Digest" },
+				"status": { "const": "verified" }
+			}
+		},
+		"VerifierAttestation": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["schema", "subject", "topologyHash", "sourceDigest", "result", "coverage"],
+			"properties": {
+				"schema": { "const": "refresh-session/business-verifier-observation/v1" },
+				"subject": { "type": "object" },
+				"topologyHash": { "$ref": "#/definitions/Digest" },
+				"sourceDigest": { "$ref": "#/definitions/Digest" },
+				"result": {
+					"type": "object",
+					"required": ["status"],
+					"properties": { "status": { "enum": ["passed", "failed"] } }
+				},
+				"coverage": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["required", "unchangedControls"],
+					"properties": {
+						"required": {
+							"type": "array",
+							"uniqueItems": true,
+							"items": { "$ref": "#/definitions/Label" }
+						},
+						"unchangedControls": {
+							"type": "array",
+							"uniqueItems": true,
+							"items": { "$ref": "#/definitions/Label" }
+						}
+					}
+				}
+			}
+		},
+		"SourceEvidence": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"changeId",
+				"manifest",
+				"sourceArtifact",
+				"testResult",
+				"verifierResult",
+				"verifierObservation"
+			],
+			"properties": {
+				"changeId": { "$ref": "#/definitions/Label" },
+				"manifest": { "type": "object" },
+				"sourceArtifact": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": [
+						"schema",
+						"id",
+						"changeId",
+						"subject",
+						"blueprint",
+						"topology",
+						"anchors",
+						"resolutions",
+						"bindings"
+					],
+					"properties": {
+						"schema": { "const": "graphrefly.stack.consequence-source-evidence.v1" },
+						"id": { "$ref": "#/definitions/Digest" },
+						"changeId": { "$ref": "#/definitions/Label" },
+						"subject": { "type": "object" },
+						"blueprint": { "type": "object" },
+						"topology": { "type": "object" },
+						"anchors": {
+							"type": "array",
+							"minItems": 1,
+							"maxItems": 64,
+							"items": { "type": "object" }
+						},
+						"resolutions": {
+							"type": "array",
+							"minItems": 1,
+							"maxItems": 64,
+							"items": { "type": "object" }
+						},
+						"bindings": {
+							"type": "array",
+							"minItems": 1,
+							"maxItems": 64,
+							"items": { "type": "object" }
+						}
+					}
+				},
+				"testResult": { "type": "object" },
+				"verifierResult": { "$ref": "#/definitions/VerifierAttestation" },
+				"verifierObservation": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": [
+						"authorityRef",
+						"authorityDigest",
+						"resultDigest",
+						"result",
+						"freshness",
+						"subject",
+						"topologyHash",
+						"coverage",
+						"attestation"
+					],
+					"properties": {
+						"authorityRef": { "$ref": "#/definitions/Label" },
+						"authorityDigest": { "$ref": "#/definitions/Digest" },
+						"resultDigest": { "$ref": "#/definitions/Digest" },
+						"result": { "enum": ["passed", "failed"] },
+						"freshness": { "enum": ["current", "stale", "unknown"] },
+						"subject": { "type": "object" },
+						"topologyHash": { "$ref": "#/definitions/Digest" },
+						"coverage": {
+							"type": "array",
+							"uniqueItems": true,
+							"items": { "$ref": "#/definitions/Label" }
+						},
+						"attestation": { "$ref": "#/definitions/VerifierAttestation" }
+					}
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,2326 @@
+{
+	"adapter": {
+		"sourceDigest": "3d0fffac6b01c94dde449339cd927684427d28ea64c5af624b9a5df879d56d45",
+		"tool": "consequence-review-report",
+		"version": "1"
+	},
+	"artifact_ref": "graphrefly-stack:consequence-review-proof",
+	"axes": [
+		{
+			"evidence": {
+				"reasons": [],
+				"status": "verified"
+			},
+			"human": {
+				"status": "needs-review",
+				"targetDigest": "d3cdcb7cf3b76b9b3406e0caa662872c5e11510b7fd55192af0f28825c6767b3"
+			},
+			"ownerAdmission": null
+		},
+		{
+			"evidence": {
+				"reasons": [],
+				"status": "verified"
+			},
+			"human": {
+				"status": "needs-review",
+				"targetDigest": "41e76b3b8f53dfe87220b61a9164c030297a5a40de9abe872e52fa0a7184ae37"
+			},
+			"ownerAdmission": null
+		}
+	],
+	"compression": {
+		"available": 43,
+		"reviewed": 10,
+		"unit": "distinct decision-surface entries / bound technical records"
+	},
+	"guidance": {
+		"coverage": {
+			"complete": true,
+			"scope": [
+				"AdmitRefresh",
+				"ApplyBrokerPolicy",
+				"BuildHttpRefreshOutcome",
+				"EmitSecurityAudit",
+				"EvaluateSessionPolicy",
+				"IndependentPasswordResetFlow",
+				"MapFailureResponse",
+				"PersistSession",
+				"SessionStore",
+				"UpdateSessionMetrics",
+				"ValidateTokenContract"
+			]
+		},
+		"id": "3e5e96201c2c8bb334b9cec046c48a8a04f71efb885dc7aa5c805270b02f46aa",
+		"integration": {
+			"candidateDigest": "e9066f6715b5b1376fc6797f96063922144c668575fe2d6414c8eee8c4d807df",
+			"outcome": "compatible",
+			"resultDigest": "b22ed2d4bcdadb813e3cc29ff9ad86f766a85cadc4e93ab8f44b556f2ffaec8b",
+			"verifierDigest": "78bcb76a134bbc18710eb7d6c3b6270875d3afeeae79f1baee5eb6199172872c"
+		},
+		"leftProjectionId": "d3cdcb7cf3b76b9b3406e0caa662872c5e11510b7fd55192af0f28825c6767b3",
+		"rightProjectionId": "41e76b3b8f53dfe87220b61a9164c030297a5a40de9abe872e52fa0a7184ae37",
+		"schema": "graphrefly.stack.consequence-guidance.v1",
+		"status": "overlap-observed",
+		"witnesses": [
+			{
+				"kind": "graph",
+				"value": "AdmitRefresh"
+			},
+			{
+				"kind": "graph",
+				"value": "BuildHttpRefreshOutcome"
+			},
+			{
+				"kind": "graph",
+				"value": "EmitSecurityAudit"
+			},
+			{
+				"kind": "graph",
+				"value": "MapFailureResponse"
+			},
+			{
+				"kind": "graph",
+				"value": "UpdateSessionMetrics"
+			}
+		]
+	},
+	"id": "bd5f6add00337ca3edf7ab81d30acb1a34565d06ae5c5ec7a32c93a1aca9c909",
+	"integration": {
+		"candidate": {
+			"accepted": {
+				"planDigest": {
+					"algorithm": "sha256",
+					"value": "8b890722f932e0e61e16cddde1a94f8c11cd66155200e1529e0cbbfc852ec5bd"
+				},
+				"policyDigest": {
+					"algorithm": "sha256",
+					"value": "e28e678ad14bf01c9f5b9c498978539ff21dd25f26a81825485f9f19d9fe648b"
+				}
+			},
+			"evidence": {
+				"baseBlueprint": {
+					"blueprintHash": {
+						"algorithm": "sha256",
+						"value": "7c2a04e2c2f10dc39cb85cac16ea0b376b381c8ec263bffa8c00edd59d726a16"
+					},
+					"revision": {
+						"algorithm": "sha1",
+						"value": "f8c4d1978f9af3334105f51bcc3acff2852452f8"
+					}
+				},
+				"candidateBlueprint": {
+					"blueprintHash": {
+						"algorithm": "sha256",
+						"value": "7c2a04e2c2f10dc39cb85cac16ea0b376b381c8ec263bffa8c00edd59d726a16"
+					},
+					"revision": {
+						"algorithm": "sha1",
+						"value": "02cab67eaae43cddc9ccea125392bb1cccf71841"
+					}
+				},
+				"headBlueprint": {
+					"blueprintHash": {
+						"algorithm": "sha256",
+						"value": "7c2a04e2c2f10dc39cb85cac16ea0b376b381c8ec263bffa8c00edd59d726a16"
+					},
+					"revision": {
+						"algorithm": "sha1",
+						"value": "6e5ad729dd005c1c92656c1d20eef2a36ba1108e"
+					}
+				},
+				"headDelta": {
+					"deltaDigest": {
+						"algorithm": "sha256",
+						"value": "c616305934c9bfa8bb366ada18a99b29f3a119d5b0671e632acd3942a0c6858b"
+					},
+					"from": {
+						"algorithm": "sha1",
+						"value": "f8c4d1978f9af3334105f51bcc3acff2852452f8"
+					},
+					"to": {
+						"algorithm": "sha1",
+						"value": "6e5ad729dd005c1c92656c1d20eef2a36ba1108e"
+					}
+				},
+				"targetBlueprint": {
+					"blueprintHash": {
+						"algorithm": "sha256",
+						"value": "7c2a04e2c2f10dc39cb85cac16ea0b376b381c8ec263bffa8c00edd59d726a16"
+					},
+					"revision": {
+						"algorithm": "sha1",
+						"value": "3f7735ee97c774d56f4e2e439e1b2718919840e0"
+					}
+				},
+				"targetDelta": {
+					"deltaDigest": {
+						"algorithm": "sha256",
+						"value": "c616305934c9bfa8bb366ada18a99b29f3a119d5b0671e632acd3942a0c6858b"
+					},
+					"from": {
+						"algorithm": "sha1",
+						"value": "f8c4d1978f9af3334105f51bcc3acff2852452f8"
+					},
+					"to": {
+						"algorithm": "sha1",
+						"value": "3f7735ee97c774d56f4e2e439e1b2718919840e0"
+					}
+				}
+			},
+			"headGate": {
+				"inputDigest": {
+					"algorithm": "sha256",
+					"value": "7a43649b249003a5b4f6c80287b85d39e7750048c295071ca06facdf1f8ae47b"
+				},
+				"resultDigest": {
+					"algorithm": "sha256",
+					"value": "fe7aad8a1cd0ce49ad2ecbfd468b168f66e247c145e4ad6005412d8a9bfc9b12"
+				},
+				"verdict": "pass"
+			},
+			"merge": {
+				"algorithm": "git-ort-three-way",
+				"revision": "v1",
+				"status": "merged",
+				"tree": {
+					"algorithm": "sha1",
+					"value": "02cab67eaae43cddc9ccea125392bb1cccf71841"
+				}
+			},
+			"provider": {
+				"kind": "graphrefly",
+				"runtimeVersion": "0.8.0"
+			},
+			"repository": {
+				"name": "refresh-session",
+				"owner": "retained-fixture",
+				"provider": "local"
+			},
+			"revisions": {
+				"head": {
+					"algorithm": "sha1",
+					"value": "6e5ad729dd005c1c92656c1d20eef2a36ba1108e"
+				},
+				"mergeBase": {
+					"algorithm": "sha1",
+					"value": "f8c4d1978f9af3334105f51bcc3acff2852452f8"
+				},
+				"target": {
+					"algorithm": "sha1",
+					"value": "3f7735ee97c774d56f4e2e439e1b2718919840e0"
+				}
+			},
+			"schema": "graphrefly.stack.integration-candidate.v1",
+			"status": "ready",
+			"topology": {
+				"headRange": "linear",
+				"mergeBase": "unique"
+			}
+		},
+		"result": {
+			"candidateDigest": {
+				"algorithm": "sha256",
+				"value": "e9066f6715b5b1376fc6797f96063922144c668575fe2d6414c8eee8c4d807df"
+			},
+			"conflicts": [],
+			"observedRevisions": {
+				"head": {
+					"algorithm": "sha1",
+					"value": "6e5ad729dd005c1c92656c1d20eef2a36ba1108e"
+				},
+				"target": {
+					"algorithm": "sha1",
+					"value": "3f7735ee97c774d56f4e2e439e1b2718919840e0"
+				}
+			},
+			"outcome": "compatible",
+			"overlaps": [],
+			"reasonCodes": [],
+			"schema": "graphrefly.stack.integration-result.v1"
+		},
+		"resultDigest": "b22ed2d4bcdadb813e3cc29ff9ad86f766a85cadc4e93ab8f44b556f2ffaec8b",
+		"verification": {
+			"candidateDeltaBinding": {
+				"digest": "c616305934c9bfa8bb366ada18a99b29f3a119d5b0671e632acd3942a0c6858b",
+				"from": "f8c4d1978f9af3334105f51bcc3acff2852452f8",
+				"to": "02cab67eaae43cddc9ccea125392bb1cccf71841"
+			},
+			"candidateDigest": "e9066f6715b5b1376fc6797f96063922144c668575fe2d6414c8eee8c4d807df",
+			"candidateTree": "02cab67eaae43cddc9ccea125392bb1cccf71841",
+			"effectDigest": "25919ba588e8c8c1991355a5b2446a82f8c57aed8b33ac564b32520c12a5f889",
+			"id": "78bcb76a134bbc18710eb7d6c3b6270875d3afeeae79f1baee5eb6199172872c",
+			"inputs": {
+				"candidateDelta": {
+					"events": [],
+					"fromBlueprintVersion": "graphrefly.blueprint.v2",
+					"fromHash": {
+						"algorithm": "sha256",
+						"input": "strictCanonicalTopologyBytes",
+						"kind": "topology",
+						"value": "7c2a04e2c2f10dc39cb85cac16ea0b376b381c8ec263bffa8c00edd59d726a16"
+					},
+					"toBlueprintVersion": "graphrefly.blueprint.v2",
+					"toHash": {
+						"algorithm": "sha256",
+						"input": "strictCanonicalTopologyBytes",
+						"kind": "topology",
+						"value": "7c2a04e2c2f10dc39cb85cac16ea0b376b381c8ec263bffa8c00edd59d726a16"
+					},
+					"version": "graphrefly.blueprint-delta.v1"
+				},
+				"headDelta": {
+					"events": [],
+					"fromBlueprintVersion": "graphrefly.blueprint.v2",
+					"fromHash": {
+						"algorithm": "sha256",
+						"input": "strictCanonicalTopologyBytes",
+						"kind": "topology",
+						"value": "7c2a04e2c2f10dc39cb85cac16ea0b376b381c8ec263bffa8c00edd59d726a16"
+					},
+					"toBlueprintVersion": "graphrefly.blueprint.v2",
+					"toHash": {
+						"algorithm": "sha256",
+						"input": "strictCanonicalTopologyBytes",
+						"kind": "topology",
+						"value": "7c2a04e2c2f10dc39cb85cac16ea0b376b381c8ec263bffa8c00edd59d726a16"
+					},
+					"version": "graphrefly.blueprint-delta.v1"
+				},
+				"targetDelta": {
+					"events": [],
+					"fromBlueprintVersion": "graphrefly.blueprint.v2",
+					"fromHash": {
+						"algorithm": "sha256",
+						"input": "strictCanonicalTopologyBytes",
+						"kind": "topology",
+						"value": "7c2a04e2c2f10dc39cb85cac16ea0b376b381c8ec263bffa8c00edd59d726a16"
+					},
+					"toBlueprintVersion": "graphrefly.blueprint.v2",
+					"toHash": {
+						"algorithm": "sha256",
+						"input": "strictCanonicalTopologyBytes",
+						"kind": "topology",
+						"value": "7c2a04e2c2f10dc39cb85cac16ea0b376b381c8ec263bffa8c00edd59d726a16"
+					},
+					"version": "graphrefly.blueprint-delta.v1"
+				}
+			},
+			"resultDigest": "b22ed2d4bcdadb813e3cc29ff9ad86f766a85cadc4e93ab8f44b556f2ffaec8b",
+			"schema": "graphrefly.stack.integration-result-verification.v1",
+			"status": "verified",
+			"verifierRef": "graphrefly-stack:retained-integration-result-verifier"
+		}
+	},
+	"limitations": [
+		"Structural reachability is not observed runtime occurrence or causality",
+		"Human review and external owner admission remain independent and are not granted by this proof",
+		"No-overlap-observed is scoped to declared coverage and is not an unconditional safety claim",
+		"The combined candidate exists only in isolated temporary storage and is not retained as a Git ref"
+	],
+	"llmRequired": false,
+	"projections": [
+		{
+			"blueprint": {
+				"topologyHash": "7c2a04e2c2f10dc39cb85cac16ea0b376b381c8ec263bffa8c00edd59d726a16",
+				"version": "graphrefly.blueprint.v2"
+			},
+			"changeId": "A",
+			"coverage": {
+				"bindings": "complete",
+				"declared": [
+					"AdmitRefresh",
+					"ApplyBrokerPolicy",
+					"BuildHttpRefreshOutcome",
+					"EmitSecurityAudit",
+					"EvaluateSessionPolicy",
+					"IndependentPasswordResetFlow",
+					"PersistSession",
+					"SessionStore",
+					"ValidateTokenContract"
+				],
+				"evidence": "complete"
+			},
+			"direct": [
+				{
+					"bindingRef": "60f0bd3d98ef576f201ee1d2d94931b1678d248462ee062cac1527d71eb2a9a7",
+					"nodeId": "ApplyBrokerPolicy"
+				},
+				{
+					"bindingRef": "74b51f383ae0d3c586a6c28ce5e23174951eae9219c2dcb55ad30de8159b9577",
+					"nodeId": "PersistSession"
+				}
+			],
+			"id": "d3cdcb7cf3b76b9b3406e0caa662872c5e11510b7fd55192af0f28825c6767b3",
+			"manifestId": "38862c01ecb8ea35603f72587f3dd95dd4d809f7630d467ffecf3e51cbe287e6",
+			"provenance": {
+				"authorityRefs": [
+					"graphrefly-stack:D57",
+					"graphrefly-stack:D58",
+					"graphrefly-stack:D59",
+					"graphrefly-stack:consequence-source-evidence:A",
+					"graphrefly-stack:retained-integration-result-verifier",
+					"refresh-session-fixture:A:business-test",
+					"refresh-session-fixture:A:business-verifier",
+					"refresh-session-fixture:A:policy-source"
+				],
+				"bindingRefs": [
+					"60f0bd3d98ef576f201ee1d2d94931b1678d248462ee062cac1527d71eb2a9a7",
+					"74b51f383ae0d3c586a6c28ce5e23174951eae9219c2dcb55ad30de8159b9577"
+				],
+				"manifestId": "38862c01ecb8ea35603f72587f3dd95dd4d809f7630d467ffecf3e51cbe287e6",
+				"sourceResolutionRefs": [
+					"93303f452f6aca3ec3b8c609f3e47013f9b440e0e28624c9a688ef0a767752d5",
+					"a0c844b1a99b34a6e5bc4e37a4d72d6b26a966d8a5b80011c7591d85388e8ec3"
+				]
+			},
+			"reachable": [
+				{
+					"from": "ApplyBrokerPolicy",
+					"path": [
+						"ApplyBrokerPolicy",
+						"EvaluateSessionPolicy",
+						"AdmitRefresh",
+						"BuildHttpRefreshOutcome",
+						"EmitSecurityAudit"
+					],
+					"to": "EmitSecurityAudit"
+				},
+				{
+					"from": "ApplyBrokerPolicy",
+					"path": [
+						"ApplyBrokerPolicy",
+						"EvaluateSessionPolicy",
+						"AdmitRefresh",
+						"BuildHttpRefreshOutcome"
+					],
+					"to": "BuildHttpRefreshOutcome"
+				},
+				{
+					"from": "ApplyBrokerPolicy",
+					"path": [
+						"ApplyBrokerPolicy",
+						"EvaluateSessionPolicy",
+						"AdmitRefresh",
+						"MapFailureResponse"
+					],
+					"to": "MapFailureResponse"
+				},
+				{
+					"from": "ApplyBrokerPolicy",
+					"path": [
+						"ApplyBrokerPolicy",
+						"EvaluateSessionPolicy",
+						"AdmitRefresh",
+						"UpdateSessionMetrics"
+					],
+					"to": "UpdateSessionMetrics"
+				},
+				{
+					"from": "ApplyBrokerPolicy",
+					"path": ["ApplyBrokerPolicy", "EvaluateSessionPolicy", "AdmitRefresh"],
+					"to": "AdmitRefresh"
+				},
+				{
+					"from": "ApplyBrokerPolicy",
+					"path": ["ApplyBrokerPolicy", "EvaluateSessionPolicy"],
+					"to": "EvaluateSessionPolicy"
+				},
+				{
+					"from": "PersistSession",
+					"path": [
+						"PersistSession",
+						"ApplyBrokerPolicy",
+						"EvaluateSessionPolicy",
+						"AdmitRefresh",
+						"BuildHttpRefreshOutcome",
+						"EmitSecurityAudit"
+					],
+					"to": "EmitSecurityAudit"
+				},
+				{
+					"from": "PersistSession",
+					"path": [
+						"PersistSession",
+						"ApplyBrokerPolicy",
+						"EvaluateSessionPolicy",
+						"AdmitRefresh",
+						"BuildHttpRefreshOutcome"
+					],
+					"to": "BuildHttpRefreshOutcome"
+				},
+				{
+					"from": "PersistSession",
+					"path": [
+						"PersistSession",
+						"ApplyBrokerPolicy",
+						"EvaluateSessionPolicy",
+						"AdmitRefresh",
+						"MapFailureResponse"
+					],
+					"to": "MapFailureResponse"
+				},
+				{
+					"from": "PersistSession",
+					"path": [
+						"PersistSession",
+						"ApplyBrokerPolicy",
+						"EvaluateSessionPolicy",
+						"AdmitRefresh",
+						"UpdateSessionMetrics"
+					],
+					"to": "UpdateSessionMetrics"
+				},
+				{
+					"from": "PersistSession",
+					"path": ["PersistSession", "ApplyBrokerPolicy", "EvaluateSessionPolicy", "AdmitRefresh"],
+					"to": "AdmitRefresh"
+				},
+				{
+					"from": "PersistSession",
+					"path": ["PersistSession", "ApplyBrokerPolicy", "EvaluateSessionPolicy"],
+					"to": "EvaluateSessionPolicy"
+				}
+			],
+			"readiness": {
+				"reasons": [],
+				"status": "verified"
+			},
+			"schema": "graphrefly.stack.consequence-projection.v1",
+			"sourceScope": ["ApplyBrokerPolicy", "SessionStore"],
+			"subject": {
+				"base": "f8c4d1978f9af3334105f51bcc3acff2852452f8",
+				"head": "3f7735ee97c774d56f4e2e439e1b2718919840e0",
+				"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+			},
+			"unknowns": [],
+			"verificationRequired": [
+				"AdmitRefresh",
+				"ApplyBrokerPolicy",
+				"BuildHttpRefreshOutcome",
+				"EmitSecurityAudit",
+				"EvaluateSessionPolicy",
+				"PersistSession"
+			],
+			"verifiedUnchanged": [
+				{
+					"scope": "IndependentPasswordResetFlow",
+					"verifierDigest": "8703444b2119f170cc53d3660a3d3268398247e4288ed4656c35ebadb3c101fa",
+					"verifierRef": "refresh-session-fixture:A:business-verifier"
+				},
+				{
+					"scope": "ValidateTokenContract",
+					"verifierDigest": "8703444b2119f170cc53d3660a3d3268398247e4288ed4656c35ebadb3c101fa",
+					"verifierRef": "refresh-session-fixture:A:business-verifier"
+				}
+			]
+		},
+		{
+			"blueprint": {
+				"topologyHash": "7c2a04e2c2f10dc39cb85cac16ea0b376b381c8ec263bffa8c00edd59d726a16",
+				"version": "graphrefly.blueprint.v2"
+			},
+			"changeId": "B",
+			"coverage": {
+				"bindings": "complete",
+				"declared": [
+					"AdmitRefresh",
+					"BuildHttpRefreshOutcome",
+					"EmitSecurityAudit",
+					"IndependentPasswordResetFlow",
+					"MapFailureResponse",
+					"UpdateSessionMetrics",
+					"ValidateTokenContract"
+				],
+				"evidence": "complete"
+			},
+			"direct": [
+				{
+					"bindingRef": "57c864d2b417df15b6f0eabb808961cc88d22fd9658ef7d801ee015dfe680ce1",
+					"nodeId": "AdmitRefresh"
+				},
+				{
+					"bindingRef": "e416bd8b88a1ddfb8d5d1012198d8537f7642a3e6cd03e6dde53c2ae0109be6e",
+					"nodeId": "MapFailureResponse"
+				}
+			],
+			"id": "41e76b3b8f53dfe87220b61a9164c030297a5a40de9abe872e52fa0a7184ae37",
+			"manifestId": "da01d46c41e659b317d6a0751ee55d3fe72b2bf74332d8b4558ddcfc1813a626",
+			"provenance": {
+				"authorityRefs": [
+					"graphrefly-stack:D57",
+					"graphrefly-stack:D58",
+					"graphrefly-stack:D59",
+					"graphrefly-stack:consequence-source-evidence:B",
+					"graphrefly-stack:retained-integration-result-verifier",
+					"refresh-session-fixture:B:business-test",
+					"refresh-session-fixture:B:business-verifier",
+					"refresh-session-fixture:B:policy-source"
+				],
+				"bindingRefs": [
+					"57c864d2b417df15b6f0eabb808961cc88d22fd9658ef7d801ee015dfe680ce1",
+					"e416bd8b88a1ddfb8d5d1012198d8537f7642a3e6cd03e6dde53c2ae0109be6e"
+				],
+				"manifestId": "da01d46c41e659b317d6a0751ee55d3fe72b2bf74332d8b4558ddcfc1813a626",
+				"sourceResolutionRefs": [
+					"39f5da4b51dc7e1fde1db2370ca8e2c0f7ec200c160a0870c6f8512b470ed0d6",
+					"833183542b380663e24998f2136a3e56aa5f0ed108e3f9954736c45120f13c78"
+				]
+			},
+			"reachable": [
+				{
+					"from": "AdmitRefresh",
+					"path": ["AdmitRefresh", "BuildHttpRefreshOutcome", "EmitSecurityAudit"],
+					"to": "EmitSecurityAudit"
+				},
+				{
+					"from": "AdmitRefresh",
+					"path": ["AdmitRefresh", "BuildHttpRefreshOutcome"],
+					"to": "BuildHttpRefreshOutcome"
+				},
+				{
+					"from": "AdmitRefresh",
+					"path": ["AdmitRefresh", "UpdateSessionMetrics"],
+					"to": "UpdateSessionMetrics"
+				},
+				{
+					"from": "MapFailureResponse",
+					"path": ["MapFailureResponse", "BuildHttpRefreshOutcome", "EmitSecurityAudit"],
+					"to": "EmitSecurityAudit"
+				},
+				{
+					"from": "MapFailureResponse",
+					"path": ["MapFailureResponse", "BuildHttpRefreshOutcome"],
+					"to": "BuildHttpRefreshOutcome"
+				}
+			],
+			"readiness": {
+				"reasons": [],
+				"status": "verified"
+			},
+			"schema": "graphrefly.stack.consequence-projection.v1",
+			"sourceScope": ["AdmitRefresh", "MapFailureResponse"],
+			"subject": {
+				"base": "f8c4d1978f9af3334105f51bcc3acff2852452f8",
+				"head": "6e5ad729dd005c1c92656c1d20eef2a36ba1108e",
+				"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+			},
+			"unknowns": [],
+			"verificationRequired": [
+				"AdmitRefresh",
+				"BuildHttpRefreshOutcome",
+				"EmitSecurityAudit",
+				"MapFailureResponse",
+				"UpdateSessionMetrics"
+			],
+			"verifiedUnchanged": [
+				{
+					"scope": "IndependentPasswordResetFlow",
+					"verifierDigest": "72090587feb8f40bf0e0a3c29502669c995f73b9141014fc5a18282cd5799064",
+					"verifierRef": "refresh-session-fixture:B:business-verifier"
+				},
+				{
+					"scope": "ValidateTokenContract",
+					"verifierDigest": "72090587feb8f40bf0e0a3c29502669c995f73b9141014fc5a18282cd5799064",
+					"verifierRef": "refresh-session-fixture:B:business-verifier"
+				}
+			]
+		}
+	],
+	"repository": {
+		"base": "f8c4d1978f9af3334105f51bcc3acff2852452f8",
+		"candidateTree": "02cab67eaae43cddc9ccea125392bb1cccf71841",
+		"identity": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c",
+		"left": "3f7735ee97c774d56f4e2e439e1b2718919840e0",
+		"right": "6e5ad729dd005c1c92656c1d20eef2a36ba1108e"
+	},
+	"revision": "stack-review-v1",
+	"runtime": {
+		"foundationProofId": "8392c5e2a4822fb54153365704343b688a189a437f1ea4d93f8f79b2b7390ee9",
+		"installedFilesDigest": "190a0fad710ad9c78b8c3fba369d482a8e7ac01c4de1ea8b961f7aa814fa3ecf",
+		"lockIntegrity": "sha512-5lyKrNN6wpf+P7HD4fmgO2sON66zIMmfyIYrr3ZGV2PW1Eg7PHuaswuUJNG/95971SKwDvbtjoTfrC8BDrbIlw==",
+		"name": "@graphrefly/ts",
+		"typescriptInstalledFilesDigest": "5844638bf47f116f0c928bd3ba390828a05bb44d95f5e15aa04f36e5d15e7aed",
+		"typescriptLockIntegrity": "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==",
+		"typescriptVersion": "5.9.3",
+		"version": "0.8.0"
+	},
+	"schema": "graphrefly-stack/consequence-review-proof/v1",
+	"sourceEvidence": [
+		{
+			"changeId": "A",
+			"manifest": {
+				"authorities": [
+					{
+						"bindingRefs": [
+							"60f0bd3d98ef576f201ee1d2d94931b1678d248462ee062cac1527d71eb2a9a7",
+							"74b51f383ae0d3c586a6c28ce5e23174951eae9219c2dcb55ad30de8159b9577"
+						],
+						"digest": "5f46c9b3371d023823434802fc6dbe5bf56e249e36d388ac00dcdf24aebe415c",
+						"freshness": {
+							"authorityDigest": "5f46c9b3371d023823434802fc6dbe5bf56e249e36d388ac00dcdf24aebe415c",
+							"status": "current",
+							"subject": {
+								"base": "f8c4d1978f9af3334105f51bcc3acff2852452f8",
+								"head": "3f7735ee97c774d56f4e2e439e1b2718919840e0",
+								"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+							}
+						},
+						"kind": "decision",
+						"location": {
+							"commit": "2da4a6e15e29bb94d26378a2fa5be8cb62140b9a",
+							"occurrence": null,
+							"path": "docs/decisions/decisions.jsonl",
+							"repository": "git-roots:62004a23ac7502243adc09d7633f8015279ea57a68f55931ec46f6732604f983",
+							"selector": "id=D57"
+						},
+						"owner": "graphrefly-stack",
+						"provenance": {
+							"scope": "Exact current locked Stack decision selected by id and hashed as JCS",
+							"sources": [
+								{
+									"commit": "2da4a6e15e29bb94d26378a2fa5be8cb62140b9a",
+									"occurrence": null,
+									"path": "docs/decisions/decisions.jsonl",
+									"repository": "git-roots:62004a23ac7502243adc09d7633f8015279ea57a68f55931ec46f6732604f983",
+									"selector": "id=D57"
+								}
+							],
+							"tool": "consequence-review-owner-resolver",
+							"version": "1"
+						},
+						"ref": "graphrefly-stack:D57",
+						"schema": "graphrefly-stack/decision-jsonl-record"
+					},
+					{
+						"bindingRefs": [
+							"60f0bd3d98ef576f201ee1d2d94931b1678d248462ee062cac1527d71eb2a9a7",
+							"74b51f383ae0d3c586a6c28ce5e23174951eae9219c2dcb55ad30de8159b9577"
+						],
+						"digest": "2d319bf7b23df22026a7b60e900aed761b34413c65c86f448024bc5dc5a41c8d",
+						"freshness": {
+							"authorityDigest": "2d319bf7b23df22026a7b60e900aed761b34413c65c86f448024bc5dc5a41c8d",
+							"status": "current",
+							"subject": {
+								"base": "f8c4d1978f9af3334105f51bcc3acff2852452f8",
+								"head": "3f7735ee97c774d56f4e2e439e1b2718919840e0",
+								"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+							}
+						},
+						"kind": "decision",
+						"location": {
+							"commit": "2da4a6e15e29bb94d26378a2fa5be8cb62140b9a",
+							"occurrence": null,
+							"path": "docs/decisions/decisions.jsonl",
+							"repository": "git-roots:62004a23ac7502243adc09d7633f8015279ea57a68f55931ec46f6732604f983",
+							"selector": "id=D58"
+						},
+						"owner": "graphrefly-stack",
+						"provenance": {
+							"scope": "Exact current locked Stack decision selected by id and hashed as JCS",
+							"sources": [
+								{
+									"commit": "2da4a6e15e29bb94d26378a2fa5be8cb62140b9a",
+									"occurrence": null,
+									"path": "docs/decisions/decisions.jsonl",
+									"repository": "git-roots:62004a23ac7502243adc09d7633f8015279ea57a68f55931ec46f6732604f983",
+									"selector": "id=D58"
+								}
+							],
+							"tool": "consequence-review-owner-resolver",
+							"version": "1"
+						},
+						"ref": "graphrefly-stack:D58",
+						"schema": "graphrefly-stack/decision-jsonl-record"
+					},
+					{
+						"bindingRefs": [
+							"60f0bd3d98ef576f201ee1d2d94931b1678d248462ee062cac1527d71eb2a9a7",
+							"74b51f383ae0d3c586a6c28ce5e23174951eae9219c2dcb55ad30de8159b9577"
+						],
+						"digest": "b6062b8f4e164272f2b10b9801eab3dc68d0ccfe570781ea92abecaa9787fbe8",
+						"freshness": {
+							"authorityDigest": "b6062b8f4e164272f2b10b9801eab3dc68d0ccfe570781ea92abecaa9787fbe8",
+							"status": "current",
+							"subject": {
+								"base": "f8c4d1978f9af3334105f51bcc3acff2852452f8",
+								"head": "3f7735ee97c774d56f4e2e439e1b2718919840e0",
+								"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+							}
+						},
+						"kind": "decision",
+						"location": {
+							"commit": "2da4a6e15e29bb94d26378a2fa5be8cb62140b9a",
+							"occurrence": null,
+							"path": "docs/decisions/decisions.jsonl",
+							"repository": "git-roots:62004a23ac7502243adc09d7633f8015279ea57a68f55931ec46f6732604f983",
+							"selector": "id=D59"
+						},
+						"owner": "graphrefly-stack",
+						"provenance": {
+							"scope": "Exact current locked Stack decision selected by id and hashed as JCS",
+							"sources": [
+								{
+									"commit": "2da4a6e15e29bb94d26378a2fa5be8cb62140b9a",
+									"occurrence": null,
+									"path": "docs/decisions/decisions.jsonl",
+									"repository": "git-roots:62004a23ac7502243adc09d7633f8015279ea57a68f55931ec46f6732604f983",
+									"selector": "id=D59"
+								}
+							],
+							"tool": "consequence-review-owner-resolver",
+							"version": "1"
+						},
+						"ref": "graphrefly-stack:D59",
+						"schema": "graphrefly-stack/decision-jsonl-record"
+					},
+					{
+						"bindingRefs": [
+							"60f0bd3d98ef576f201ee1d2d94931b1678d248462ee062cac1527d71eb2a9a7",
+							"74b51f383ae0d3c586a6c28ce5e23174951eae9219c2dcb55ad30de8159b9577"
+						],
+						"digest": "7b638b03baa6f7c4cca4584a57e9e669262323bbd03a01d7501bc6a7e6c5df73",
+						"freshness": {
+							"authorityDigest": "7b638b03baa6f7c4cca4584a57e9e669262323bbd03a01d7501bc6a7e6c5df73",
+							"status": "current",
+							"subject": {
+								"base": "f8c4d1978f9af3334105f51bcc3acff2852452f8",
+								"head": "3f7735ee97c774d56f4e2e439e1b2718919840e0",
+								"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+							}
+						},
+						"kind": "artifact",
+						"location": {
+							"commit": null,
+							"occurrence": "7b638b03baa6f7c4cca4584a57e9e669262323bbd03a01d7501bc6a7e6c5df73",
+							"path": "evidence/runs/consequence-review/evidence-bundle.json",
+							"repository": "graphrefly-stack:local-consequence-review",
+							"selector": "/sourceEvidence/0/sourceArtifact"
+						},
+						"owner": "graphrefly-stack",
+						"provenance": {
+							"scope": "Fresh revision-specific source anchors, resolutions and bindings; does not own fixture policy or verifier truth",
+							"sources": [
+								{
+									"commit": "3f7735ee97c774d56f4e2e439e1b2718919840e0",
+									"occurrence": null,
+									"path": "src/session-store.ts",
+									"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c",
+									"selector": null
+								}
+							],
+							"tool": "consequence-review-owner-resolver",
+							"version": "1"
+						},
+						"ref": "graphrefly-stack:consequence-source-evidence:A",
+						"schema": "graphrefly.stack.consequence-source-evidence.v1"
+					},
+					{
+						"bindingRefs": [
+							"60f0bd3d98ef576f201ee1d2d94931b1678d248462ee062cac1527d71eb2a9a7",
+							"74b51f383ae0d3c586a6c28ce5e23174951eae9219c2dcb55ad30de8159b9577"
+						],
+						"digest": "78bcb76a134bbc18710eb7d6c3b6270875d3afeeae79f1baee5eb6199172872c",
+						"freshness": {
+							"authorityDigest": "78bcb76a134bbc18710eb7d6c3b6270875d3afeeae79f1baee5eb6199172872c",
+							"status": "current",
+							"subject": {
+								"base": "f8c4d1978f9af3334105f51bcc3acff2852452f8",
+								"head": "3f7735ee97c774d56f4e2e439e1b2718919840e0",
+								"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+							}
+						},
+						"kind": "verifier",
+						"location": {
+							"commit": null,
+							"occurrence": "78bcb76a134bbc18710eb7d6c3b6270875d3afeeae79f1baee5eb6199172872c",
+							"path": "evidence/runs/consequence-review/evidence-bundle.json",
+							"repository": "graphrefly-stack:consequence-review-proof",
+							"selector": "/integration/verification"
+						},
+						"owner": "graphrefly-stack",
+						"provenance": {
+							"scope": "Exact independently recomputed IntegrationResult binding for the isolated candidate",
+							"sources": [
+								{
+									"commit": "3f7735ee97c774d56f4e2e439e1b2718919840e0",
+									"occurrence": null,
+									"path": "src/session-store.ts",
+									"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c",
+									"selector": null
+								}
+							],
+							"tool": "consequence-review-owner-resolver",
+							"version": "1"
+						},
+						"ref": "graphrefly-stack:retained-integration-result-verifier",
+						"schema": "graphrefly.stack.integration-result-verification.v1"
+					},
+					{
+						"bindingRefs": [
+							"60f0bd3d98ef576f201ee1d2d94931b1678d248462ee062cac1527d71eb2a9a7",
+							"74b51f383ae0d3c586a6c28ce5e23174951eae9219c2dcb55ad30de8159b9577"
+						],
+						"digest": "98904a645632c558b17b3edd6ae8e275ef63c089161824ff00019b7ef6426b4a",
+						"freshness": {
+							"authorityDigest": "98904a645632c558b17b3edd6ae8e275ef63c089161824ff00019b7ef6426b4a",
+							"status": "current",
+							"subject": {
+								"base": "f8c4d1978f9af3334105f51bcc3acff2852452f8",
+								"head": "3f7735ee97c774d56f4e2e439e1b2718919840e0",
+								"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+							}
+						},
+						"kind": "test",
+						"location": {
+							"commit": null,
+							"occurrence": "98904a645632c558b17b3edd6ae8e275ef63c089161824ff00019b7ef6426b4a",
+							"path": "evidence/runs/consequence-review/evidence-bundle.json",
+							"repository": "graphrefly-stack:consequence-review-proof",
+							"selector": "/sourceEvidence/0/testResult"
+						},
+						"owner": "node:test",
+						"provenance": {
+							"scope": "Exact Node test process observation, not reinterpreted as owner admission",
+							"sources": [
+								{
+									"commit": "3f7735ee97c774d56f4e2e439e1b2718919840e0",
+									"occurrence": null,
+									"path": "tests/business.test.mjs",
+									"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c",
+									"selector": null
+								},
+								{
+									"commit": "3f7735ee97c774d56f4e2e439e1b2718919840e0",
+									"occurrence": null,
+									"path": "tests/business-verifier.mjs",
+									"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c",
+									"selector": null
+								}
+							],
+							"tool": "consequence-review-owner-resolver",
+							"version": "1"
+						},
+						"ref": "refresh-session-fixture:A:business-test",
+						"schema": "node-test/process-result/v1"
+					},
+					{
+						"bindingRefs": [
+							"60f0bd3d98ef576f201ee1d2d94931b1678d248462ee062cac1527d71eb2a9a7",
+							"74b51f383ae0d3c586a6c28ce5e23174951eae9219c2dcb55ad30de8159b9577"
+						],
+						"digest": "8703444b2119f170cc53d3660a3d3268398247e4288ed4656c35ebadb3c101fa",
+						"freshness": {
+							"authorityDigest": "8703444b2119f170cc53d3660a3d3268398247e4288ed4656c35ebadb3c101fa",
+							"status": "current",
+							"subject": {
+								"base": "f8c4d1978f9af3334105f51bcc3acff2852452f8",
+								"head": "3f7735ee97c774d56f4e2e439e1b2718919840e0",
+								"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+							}
+						},
+						"kind": "verifier",
+						"location": {
+							"commit": null,
+							"occurrence": "8703444b2119f170cc53d3660a3d3268398247e4288ed4656c35ebadb3c101fa",
+							"path": "evidence/runs/consequence-review/evidence-bundle.json",
+							"repository": "graphrefly-stack:consequence-review-proof",
+							"selector": "/sourceEvidence/0/verifierResult"
+						},
+						"owner": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c",
+						"provenance": {
+							"scope": "Independently authored retained business verifier source and fresh result",
+							"sources": [
+								{
+									"commit": "3f7735ee97c774d56f4e2e439e1b2718919840e0",
+									"occurrence": null,
+									"path": "tests/business-verifier.mjs",
+									"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c",
+									"selector": null
+								},
+								{
+									"commit": "3f7735ee97c774d56f4e2e439e1b2718919840e0",
+									"occurrence": null,
+									"path": "src/session-store.ts",
+									"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c",
+									"selector": null
+								}
+							],
+							"tool": "consequence-review-owner-resolver",
+							"version": "1"
+						},
+						"ref": "refresh-session-fixture:A:business-verifier",
+						"schema": "refresh-session/business-verifier-v2"
+					},
+					{
+						"bindingRefs": [
+							"60f0bd3d98ef576f201ee1d2d94931b1678d248462ee062cac1527d71eb2a9a7",
+							"74b51f383ae0d3c586a6c28ce5e23174951eae9219c2dcb55ad30de8159b9577"
+						],
+						"digest": "ac58b0814bec492d2214895dc609320f9a05ecdb91c1bda42cc49f0746538958",
+						"freshness": {
+							"authorityDigest": "ac58b0814bec492d2214895dc609320f9a05ecdb91c1bda42cc49f0746538958",
+							"status": "current",
+							"subject": {
+								"base": "f8c4d1978f9af3334105f51bcc3acff2852452f8",
+								"head": "3f7735ee97c774d56f4e2e439e1b2718919840e0",
+								"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+							}
+						},
+						"kind": "policy",
+						"location": {
+							"commit": "3f7735ee97c774d56f4e2e439e1b2718919840e0",
+							"occurrence": null,
+							"path": "src/session-store.ts",
+							"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c",
+							"selector": null
+						},
+						"owner": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c",
+						"provenance": {
+							"scope": "Retained fixture policy source; repository-owned and not approval authority",
+							"sources": [
+								{
+									"commit": "3f7735ee97c774d56f4e2e439e1b2718919840e0",
+									"occurrence": null,
+									"path": "src/session-store.ts",
+									"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c",
+									"selector": null
+								}
+							],
+							"tool": "consequence-review-owner-resolver",
+							"version": "1"
+						},
+						"ref": "refresh-session-fixture:A:policy-source",
+						"schema": "typescript/5.9.3-source"
+					}
+				],
+				"bindingRefs": [
+					"60f0bd3d98ef576f201ee1d2d94931b1678d248462ee062cac1527d71eb2a9a7",
+					"74b51f383ae0d3c586a6c28ce5e23174951eae9219c2dcb55ad30de8159b9577"
+				],
+				"blueprint": {
+					"topologyHash": "7c2a04e2c2f10dc39cb85cac16ea0b376b381c8ec263bffa8c00edd59d726a16",
+					"version": "graphrefly.blueprint.v2"
+				},
+				"coverage": {
+					"runtimeOccurrence": "absent",
+					"scope": "retained-refresh-session-required-linkage-only"
+				},
+				"id": "38862c01ecb8ea35603f72587f3dd95dd4d809f7630d467ffecf3e51cbe287e6",
+				"schema": "graphrefly.stack.evidence-manifest.v1",
+				"subject": {
+					"base": "f8c4d1978f9af3334105f51bcc3acff2852452f8",
+					"head": "3f7735ee97c774d56f4e2e439e1b2718919840e0",
+					"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+				}
+			},
+			"sourceArtifact": {
+				"anchors": [
+					{
+						"candidate": {
+							"authoritative": true,
+							"end": 233,
+							"fingerprint": {
+								"algorithm": "typescript-5.9.3-printer-v1",
+								"digest": "ff37f7b587a6a7779790e338d27cfcc3f73841f9266382f807724e77c3db7828"
+							},
+							"path": "src/session-store.ts",
+							"sourceDigest": "ac58b0814bec492d2214895dc609320f9a05ecdb91c1bda42cc49f0746538958",
+							"start": 84,
+							"symbol": {
+								"kind": "const",
+								"name": "SessionStore"
+							}
+						},
+						"coordinate": {
+							"commit": "3f7735ee97c774d56f4e2e439e1b2718919840e0",
+							"overlayDigest": null,
+							"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+						},
+						"id": "813cf04ae7e86bdee9872dc1c73e4c8f184f993d2e7dd9064a71fcd5e49ff01e",
+						"language": "typescript",
+						"provenance": {
+							"tool": "retained-typescript-declarations",
+							"version": "1/ts-5.9.3"
+						},
+						"schema": "graphrefly.stack.source-anchor.v1"
+					},
+					{
+						"candidate": {
+							"authoritative": true,
+							"end": 402,
+							"fingerprint": {
+								"algorithm": "typescript-5.9.3-printer-v1",
+								"digest": "c7fd23f8015fe8abdd2e14ed057e33355a60e65da818c40293b61eb676ffa302"
+							},
+							"path": "src/session-store.ts",
+							"sourceDigest": "ac58b0814bec492d2214895dc609320f9a05ecdb91c1bda42cc49f0746538958",
+							"start": 234,
+							"symbol": {
+								"kind": "const",
+								"name": "ApplyBrokerPolicy"
+							}
+						},
+						"coordinate": {
+							"commit": "3f7735ee97c774d56f4e2e439e1b2718919840e0",
+							"overlayDigest": null,
+							"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+						},
+						"id": "5c1be1f365a0f2cffebbf539f7949ba08c7f188e9378b9e69bc2c5b103dd762f",
+						"language": "typescript",
+						"provenance": {
+							"tool": "retained-typescript-declarations",
+							"version": "1/ts-5.9.3"
+						},
+						"schema": "graphrefly.stack.source-anchor.v1"
+					}
+				],
+				"bindings": [
+					{
+						"anchorId": "813cf04ae7e86bdee9872dc1c73e4c8f184f993d2e7dd9064a71fcd5e49ff01e",
+						"blueprintVersion": "graphrefly.blueprint.v2",
+						"coordinate": {
+							"commit": "3f7735ee97c774d56f4e2e439e1b2718919840e0",
+							"overlayDigest": null,
+							"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+						},
+						"id": "74b51f383ae0d3c586a6c28ce5e23174951eae9219c2dcb55ad30de8159b9577",
+						"method": "retained-export-runtime-identity-v1",
+						"nodeId": "PersistSession",
+						"provenance": {
+							"tool": "consequence-review-retained-runtime",
+							"version": "1/@graphrefly/ts-0.8.0"
+						},
+						"schema": "graphrefly.stack.graph-source-binding.v1",
+						"topologyHash": "7c2a04e2c2f10dc39cb85cac16ea0b376b381c8ec263bffa8c00edd59d726a16"
+					},
+					{
+						"anchorId": "5c1be1f365a0f2cffebbf539f7949ba08c7f188e9378b9e69bc2c5b103dd762f",
+						"blueprintVersion": "graphrefly.blueprint.v2",
+						"coordinate": {
+							"commit": "3f7735ee97c774d56f4e2e439e1b2718919840e0",
+							"overlayDigest": null,
+							"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+						},
+						"id": "60f0bd3d98ef576f201ee1d2d94931b1678d248462ee062cac1527d71eb2a9a7",
+						"method": "retained-export-runtime-identity-v1",
+						"nodeId": "ApplyBrokerPolicy",
+						"provenance": {
+							"tool": "consequence-review-retained-runtime",
+							"version": "1/@graphrefly/ts-0.8.0"
+						},
+						"schema": "graphrefly.stack.graph-source-binding.v1",
+						"topologyHash": "7c2a04e2c2f10dc39cb85cac16ea0b376b381c8ec263bffa8c00edd59d726a16"
+					}
+				],
+				"blueprint": {
+					"topologyHash": "7c2a04e2c2f10dc39cb85cac16ea0b376b381c8ec263bffa8c00edd59d726a16",
+					"version": "graphrefly.blueprint.v2"
+				},
+				"changeId": "A",
+				"id": "7b638b03baa6f7c4cca4584a57e9e669262323bbd03a01d7501bc6a7e6c5df73",
+				"resolutions": [
+					{
+						"anchorId": "813cf04ae7e86bdee9872dc1c73e4c8f184f993d2e7dd9064a71fcd5e49ff01e",
+						"candidates": [
+							{
+								"authoritative": true,
+								"end": 233,
+								"fingerprint": {
+									"algorithm": "typescript-5.9.3-printer-v1",
+									"digest": "ff37f7b587a6a7779790e338d27cfcc3f73841f9266382f807724e77c3db7828"
+								},
+								"path": "src/session-store.ts",
+								"sourceDigest": "ac58b0814bec492d2214895dc609320f9a05ecdb91c1bda42cc49f0746538958",
+								"start": 84,
+								"symbol": {
+									"kind": "const",
+									"name": "SessionStore"
+								}
+							}
+						],
+						"diagnostics": [],
+						"disposition": "exact",
+						"evidenceDigest": "0211f806ec8dfb3e612182f91392cc349090004451012e82077ea7659c4f0077",
+						"freshness": "current",
+						"id": "93303f452f6aca3ec3b8c609f3e47013f9b440e0e28624c9a688ef0a767752d5",
+						"resolver": {
+							"tool": "retained-typescript-declarations",
+							"version": "1/ts-5.9.3"
+						},
+						"schema": "graphrefly.stack.source-resolution.v1",
+						"target": {
+							"commit": "3f7735ee97c774d56f4e2e439e1b2718919840e0",
+							"overlayDigest": null,
+							"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+						}
+					},
+					{
+						"anchorId": "5c1be1f365a0f2cffebbf539f7949ba08c7f188e9378b9e69bc2c5b103dd762f",
+						"candidates": [
+							{
+								"authoritative": true,
+								"end": 402,
+								"fingerprint": {
+									"algorithm": "typescript-5.9.3-printer-v1",
+									"digest": "c7fd23f8015fe8abdd2e14ed057e33355a60e65da818c40293b61eb676ffa302"
+								},
+								"path": "src/session-store.ts",
+								"sourceDigest": "ac58b0814bec492d2214895dc609320f9a05ecdb91c1bda42cc49f0746538958",
+								"start": 234,
+								"symbol": {
+									"kind": "const",
+									"name": "ApplyBrokerPolicy"
+								}
+							}
+						],
+						"diagnostics": [],
+						"disposition": "exact",
+						"evidenceDigest": "5da2d794de5d51588320c15895ebae166a15a77343f7057c41925e841df0c118",
+						"freshness": "current",
+						"id": "a0c844b1a99b34a6e5bc4e37a4d72d6b26a966d8a5b80011c7591d85388e8ec3",
+						"resolver": {
+							"tool": "retained-typescript-declarations",
+							"version": "1/ts-5.9.3"
+						},
+						"schema": "graphrefly.stack.source-resolution.v1",
+						"target": {
+							"commit": "3f7735ee97c774d56f4e2e439e1b2718919840e0",
+							"overlayDigest": null,
+							"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+						}
+					}
+				],
+				"schema": "graphrefly.stack.consequence-source-evidence.v1",
+				"subject": {
+					"base": "f8c4d1978f9af3334105f51bcc3acff2852452f8",
+					"head": "3f7735ee97c774d56f4e2e439e1b2718919840e0",
+					"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+				},
+				"topology": {
+					"edges": [
+						{
+							"from": "AdmitRefresh",
+							"to": "BuildHttpRefreshOutcome"
+						},
+						{
+							"from": "AdmitRefresh",
+							"to": "MapFailureResponse"
+						},
+						{
+							"from": "AdmitRefresh",
+							"to": "UpdateSessionMetrics"
+						},
+						{
+							"from": "ApplyBrokerPolicy",
+							"to": "EvaluateSessionPolicy"
+						},
+						{
+							"from": "BuildHttpRefreshOutcome",
+							"to": "EmitSecurityAudit"
+						},
+						{
+							"from": "EvaluateSessionPolicy",
+							"to": "AdmitRefresh"
+						},
+						{
+							"from": "EvaluateSessionPolicy",
+							"to": "EmitSecurityAudit"
+						},
+						{
+							"from": "LoadTenantPolicy",
+							"to": "ApplyBrokerPolicy"
+						},
+						{
+							"from": "MapFailureResponse",
+							"to": "BuildHttpRefreshOutcome"
+						},
+						{
+							"from": "ParseRefreshRequest",
+							"to": "LoadTenantPolicy"
+						},
+						{
+							"from": "ParseRefreshRequest",
+							"to": "MapFailureResponse"
+						},
+						{
+							"from": "ParseRefreshRequest",
+							"to": "ResolveSession"
+						},
+						{
+							"from": "ParseRefreshRequest",
+							"to": "ValidateTokenContract"
+						},
+						{
+							"from": "PasswordResetInput",
+							"to": "IndependentPasswordResetFlow"
+						},
+						{
+							"from": "PersistSession",
+							"to": "ApplyBrokerPolicy"
+						},
+						{
+							"from": "RequestInput",
+							"to": "ParseRefreshRequest"
+						},
+						{
+							"from": "ResolveSession",
+							"to": "PersistSession"
+						},
+						{
+							"from": "ValidateTokenContract",
+							"to": "AdmitRefresh"
+						},
+						{
+							"from": "ValidateTokenContract",
+							"to": "EmitSecurityAudit"
+						},
+						{
+							"from": "ValidateTokenContract",
+							"to": "MapFailureResponse"
+						},
+						{
+							"from": "ValidateTokenContract",
+							"to": "ResolveSession"
+						}
+					],
+					"name": "RefreshSession",
+					"nodes": [
+						{
+							"deps": ["ValidateTokenContract", "EvaluateSessionPolicy"],
+							"factory": "derived",
+							"id": "AdmitRefresh",
+							"name": "AdmitRefresh"
+						},
+						{
+							"deps": ["PersistSession", "LoadTenantPolicy"],
+							"factory": "derived",
+							"id": "ApplyBrokerPolicy",
+							"name": "ApplyBrokerPolicy"
+						},
+						{
+							"deps": ["MapFailureResponse", "AdmitRefresh"],
+							"factory": "derived",
+							"id": "BuildHttpRefreshOutcome",
+							"name": "BuildHttpRefreshOutcome"
+						},
+						{
+							"deps": ["ValidateTokenContract", "EvaluateSessionPolicy", "BuildHttpRefreshOutcome"],
+							"factory": "derived",
+							"id": "EmitSecurityAudit",
+							"name": "EmitSecurityAudit"
+						},
+						{
+							"deps": ["ApplyBrokerPolicy"],
+							"factory": "derived",
+							"id": "EvaluateSessionPolicy",
+							"name": "EvaluateSessionPolicy"
+						},
+						{
+							"deps": ["PasswordResetInput"],
+							"factory": "derived",
+							"id": "IndependentPasswordResetFlow",
+							"name": "IndependentPasswordResetFlow"
+						},
+						{
+							"deps": ["ParseRefreshRequest"],
+							"factory": "derived",
+							"id": "LoadTenantPolicy",
+							"name": "LoadTenantPolicy"
+						},
+						{
+							"deps": ["ParseRefreshRequest", "ValidateTokenContract", "AdmitRefresh"],
+							"factory": "derived",
+							"id": "MapFailureResponse",
+							"name": "MapFailureResponse"
+						},
+						{
+							"deps": ["RequestInput"],
+							"factory": "derived",
+							"id": "ParseRefreshRequest",
+							"name": "ParseRefreshRequest"
+						},
+						{
+							"deps": [],
+							"factory": "state",
+							"id": "PasswordResetInput",
+							"name": "PasswordResetInput"
+						},
+						{
+							"deps": ["ResolveSession"],
+							"factory": "derived",
+							"id": "PersistSession",
+							"name": "PersistSession"
+						},
+						{
+							"deps": [],
+							"factory": "state",
+							"id": "RequestInput",
+							"name": "RequestInput"
+						},
+						{
+							"deps": ["ParseRefreshRequest", "ValidateTokenContract"],
+							"factory": "derived",
+							"id": "ResolveSession",
+							"name": "ResolveSession"
+						},
+						{
+							"deps": ["AdmitRefresh"],
+							"factory": "derived",
+							"id": "UpdateSessionMetrics",
+							"name": "UpdateSessionMetrics"
+						},
+						{
+							"deps": ["ParseRefreshRequest"],
+							"factory": "derived",
+							"id": "ValidateTokenContract",
+							"name": "ValidateTokenContract"
+						}
+					]
+				}
+			},
+			"testResult": {
+				"command": ["--test", "--test-reporter=dot", "tests/business.test.mjs"],
+				"exitCode": 0,
+				"nodeVersion": "v26.4.0",
+				"schema": "node-test/process-result/v1",
+				"stderr": "",
+				"stdout": ".\n",
+				"subject": {
+					"base": "f8c4d1978f9af3334105f51bcc3acff2852452f8",
+					"head": "3f7735ee97c774d56f4e2e439e1b2718919840e0",
+					"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+				}
+			},
+			"verifierObservation": {
+				"attestation": {
+					"coverage": {
+						"required": [
+							"AdmitRefresh",
+							"ApplyBrokerPolicy",
+							"BuildHttpRefreshOutcome",
+							"EmitSecurityAudit",
+							"EvaluateSessionPolicy",
+							"PersistSession"
+						],
+						"unchangedControls": ["IndependentPasswordResetFlow", "ValidateTokenContract"]
+					},
+					"result": {
+						"cases": [
+							"valid refresh",
+							"missing token",
+							"invalid token",
+							"disabled tenant",
+							"inactive session",
+							"age boundary",
+							"expired session"
+						],
+						"controls": ["ValidateTokenContract", "IndependentPasswordResetFlow"],
+						"oracle": "independent expected HTTP, audit, metrics, persisted policy version and password-reset business outputs",
+						"status": "passed"
+					},
+					"schema": "refresh-session/business-verifier-observation/v1",
+					"sourceDigest": "0830d0206025dfe074b223bea320a5eb78c28f11fb560876550d08c05f2a9fd0",
+					"subject": {
+						"base": "f8c4d1978f9af3334105f51bcc3acff2852452f8",
+						"head": "3f7735ee97c774d56f4e2e439e1b2718919840e0",
+						"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+					},
+					"topologyHash": "7c2a04e2c2f10dc39cb85cac16ea0b376b381c8ec263bffa8c00edd59d726a16"
+				},
+				"authorityDigest": "8703444b2119f170cc53d3660a3d3268398247e4288ed4656c35ebadb3c101fa",
+				"authorityRef": "refresh-session-fixture:A:business-verifier",
+				"coverage": [
+					"AdmitRefresh",
+					"ApplyBrokerPolicy",
+					"BuildHttpRefreshOutcome",
+					"EmitSecurityAudit",
+					"EvaluateSessionPolicy",
+					"IndependentPasswordResetFlow",
+					"PersistSession",
+					"ValidateTokenContract"
+				],
+				"freshness": "current",
+				"result": "passed",
+				"resultDigest": "8703444b2119f170cc53d3660a3d3268398247e4288ed4656c35ebadb3c101fa",
+				"subject": {
+					"base": "f8c4d1978f9af3334105f51bcc3acff2852452f8",
+					"head": "3f7735ee97c774d56f4e2e439e1b2718919840e0",
+					"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+				},
+				"topologyHash": "7c2a04e2c2f10dc39cb85cac16ea0b376b381c8ec263bffa8c00edd59d726a16"
+			},
+			"verifierResult": {
+				"coverage": {
+					"required": [
+						"AdmitRefresh",
+						"ApplyBrokerPolicy",
+						"BuildHttpRefreshOutcome",
+						"EmitSecurityAudit",
+						"EvaluateSessionPolicy",
+						"PersistSession"
+					],
+					"unchangedControls": ["IndependentPasswordResetFlow", "ValidateTokenContract"]
+				},
+				"result": {
+					"cases": [
+						"valid refresh",
+						"missing token",
+						"invalid token",
+						"disabled tenant",
+						"inactive session",
+						"age boundary",
+						"expired session"
+					],
+					"controls": ["ValidateTokenContract", "IndependentPasswordResetFlow"],
+					"oracle": "independent expected HTTP, audit, metrics, persisted policy version and password-reset business outputs",
+					"status": "passed"
+				},
+				"schema": "refresh-session/business-verifier-observation/v1",
+				"sourceDigest": "0830d0206025dfe074b223bea320a5eb78c28f11fb560876550d08c05f2a9fd0",
+				"subject": {
+					"base": "f8c4d1978f9af3334105f51bcc3acff2852452f8",
+					"head": "3f7735ee97c774d56f4e2e439e1b2718919840e0",
+					"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+				},
+				"topologyHash": "7c2a04e2c2f10dc39cb85cac16ea0b376b381c8ec263bffa8c00edd59d726a16"
+			}
+		},
+		{
+			"changeId": "B",
+			"manifest": {
+				"authorities": [
+					{
+						"bindingRefs": [
+							"57c864d2b417df15b6f0eabb808961cc88d22fd9658ef7d801ee015dfe680ce1",
+							"e416bd8b88a1ddfb8d5d1012198d8537f7642a3e6cd03e6dde53c2ae0109be6e"
+						],
+						"digest": "5f46c9b3371d023823434802fc6dbe5bf56e249e36d388ac00dcdf24aebe415c",
+						"freshness": {
+							"authorityDigest": "5f46c9b3371d023823434802fc6dbe5bf56e249e36d388ac00dcdf24aebe415c",
+							"status": "current",
+							"subject": {
+								"base": "f8c4d1978f9af3334105f51bcc3acff2852452f8",
+								"head": "6e5ad729dd005c1c92656c1d20eef2a36ba1108e",
+								"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+							}
+						},
+						"kind": "decision",
+						"location": {
+							"commit": "2da4a6e15e29bb94d26378a2fa5be8cb62140b9a",
+							"occurrence": null,
+							"path": "docs/decisions/decisions.jsonl",
+							"repository": "git-roots:62004a23ac7502243adc09d7633f8015279ea57a68f55931ec46f6732604f983",
+							"selector": "id=D57"
+						},
+						"owner": "graphrefly-stack",
+						"provenance": {
+							"scope": "Exact current locked Stack decision selected by id and hashed as JCS",
+							"sources": [
+								{
+									"commit": "2da4a6e15e29bb94d26378a2fa5be8cb62140b9a",
+									"occurrence": null,
+									"path": "docs/decisions/decisions.jsonl",
+									"repository": "git-roots:62004a23ac7502243adc09d7633f8015279ea57a68f55931ec46f6732604f983",
+									"selector": "id=D57"
+								}
+							],
+							"tool": "consequence-review-owner-resolver",
+							"version": "1"
+						},
+						"ref": "graphrefly-stack:D57",
+						"schema": "graphrefly-stack/decision-jsonl-record"
+					},
+					{
+						"bindingRefs": [
+							"57c864d2b417df15b6f0eabb808961cc88d22fd9658ef7d801ee015dfe680ce1",
+							"e416bd8b88a1ddfb8d5d1012198d8537f7642a3e6cd03e6dde53c2ae0109be6e"
+						],
+						"digest": "2d319bf7b23df22026a7b60e900aed761b34413c65c86f448024bc5dc5a41c8d",
+						"freshness": {
+							"authorityDigest": "2d319bf7b23df22026a7b60e900aed761b34413c65c86f448024bc5dc5a41c8d",
+							"status": "current",
+							"subject": {
+								"base": "f8c4d1978f9af3334105f51bcc3acff2852452f8",
+								"head": "6e5ad729dd005c1c92656c1d20eef2a36ba1108e",
+								"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+							}
+						},
+						"kind": "decision",
+						"location": {
+							"commit": "2da4a6e15e29bb94d26378a2fa5be8cb62140b9a",
+							"occurrence": null,
+							"path": "docs/decisions/decisions.jsonl",
+							"repository": "git-roots:62004a23ac7502243adc09d7633f8015279ea57a68f55931ec46f6732604f983",
+							"selector": "id=D58"
+						},
+						"owner": "graphrefly-stack",
+						"provenance": {
+							"scope": "Exact current locked Stack decision selected by id and hashed as JCS",
+							"sources": [
+								{
+									"commit": "2da4a6e15e29bb94d26378a2fa5be8cb62140b9a",
+									"occurrence": null,
+									"path": "docs/decisions/decisions.jsonl",
+									"repository": "git-roots:62004a23ac7502243adc09d7633f8015279ea57a68f55931ec46f6732604f983",
+									"selector": "id=D58"
+								}
+							],
+							"tool": "consequence-review-owner-resolver",
+							"version": "1"
+						},
+						"ref": "graphrefly-stack:D58",
+						"schema": "graphrefly-stack/decision-jsonl-record"
+					},
+					{
+						"bindingRefs": [
+							"57c864d2b417df15b6f0eabb808961cc88d22fd9658ef7d801ee015dfe680ce1",
+							"e416bd8b88a1ddfb8d5d1012198d8537f7642a3e6cd03e6dde53c2ae0109be6e"
+						],
+						"digest": "b6062b8f4e164272f2b10b9801eab3dc68d0ccfe570781ea92abecaa9787fbe8",
+						"freshness": {
+							"authorityDigest": "b6062b8f4e164272f2b10b9801eab3dc68d0ccfe570781ea92abecaa9787fbe8",
+							"status": "current",
+							"subject": {
+								"base": "f8c4d1978f9af3334105f51bcc3acff2852452f8",
+								"head": "6e5ad729dd005c1c92656c1d20eef2a36ba1108e",
+								"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+							}
+						},
+						"kind": "decision",
+						"location": {
+							"commit": "2da4a6e15e29bb94d26378a2fa5be8cb62140b9a",
+							"occurrence": null,
+							"path": "docs/decisions/decisions.jsonl",
+							"repository": "git-roots:62004a23ac7502243adc09d7633f8015279ea57a68f55931ec46f6732604f983",
+							"selector": "id=D59"
+						},
+						"owner": "graphrefly-stack",
+						"provenance": {
+							"scope": "Exact current locked Stack decision selected by id and hashed as JCS",
+							"sources": [
+								{
+									"commit": "2da4a6e15e29bb94d26378a2fa5be8cb62140b9a",
+									"occurrence": null,
+									"path": "docs/decisions/decisions.jsonl",
+									"repository": "git-roots:62004a23ac7502243adc09d7633f8015279ea57a68f55931ec46f6732604f983",
+									"selector": "id=D59"
+								}
+							],
+							"tool": "consequence-review-owner-resolver",
+							"version": "1"
+						},
+						"ref": "graphrefly-stack:D59",
+						"schema": "graphrefly-stack/decision-jsonl-record"
+					},
+					{
+						"bindingRefs": [
+							"57c864d2b417df15b6f0eabb808961cc88d22fd9658ef7d801ee015dfe680ce1",
+							"e416bd8b88a1ddfb8d5d1012198d8537f7642a3e6cd03e6dde53c2ae0109be6e"
+						],
+						"digest": "4a83c634645abf951766340f79029313fdfbe809dec6ebf0ca6dc9e65b2a374c",
+						"freshness": {
+							"authorityDigest": "4a83c634645abf951766340f79029313fdfbe809dec6ebf0ca6dc9e65b2a374c",
+							"status": "current",
+							"subject": {
+								"base": "f8c4d1978f9af3334105f51bcc3acff2852452f8",
+								"head": "6e5ad729dd005c1c92656c1d20eef2a36ba1108e",
+								"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+							}
+						},
+						"kind": "artifact",
+						"location": {
+							"commit": null,
+							"occurrence": "4a83c634645abf951766340f79029313fdfbe809dec6ebf0ca6dc9e65b2a374c",
+							"path": "evidence/runs/consequence-review/evidence-bundle.json",
+							"repository": "graphrefly-stack:local-consequence-review",
+							"selector": "/sourceEvidence/1/sourceArtifact"
+						},
+						"owner": "graphrefly-stack",
+						"provenance": {
+							"scope": "Fresh revision-specific source anchors, resolutions and bindings; does not own fixture policy or verifier truth",
+							"sources": [
+								{
+									"commit": "6e5ad729dd005c1c92656c1d20eef2a36ba1108e",
+									"occurrence": null,
+									"path": "src/response-mapping.ts",
+									"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c",
+									"selector": null
+								}
+							],
+							"tool": "consequence-review-owner-resolver",
+							"version": "1"
+						},
+						"ref": "graphrefly-stack:consequence-source-evidence:B",
+						"schema": "graphrefly.stack.consequence-source-evidence.v1"
+					},
+					{
+						"bindingRefs": [
+							"57c864d2b417df15b6f0eabb808961cc88d22fd9658ef7d801ee015dfe680ce1",
+							"e416bd8b88a1ddfb8d5d1012198d8537f7642a3e6cd03e6dde53c2ae0109be6e"
+						],
+						"digest": "78bcb76a134bbc18710eb7d6c3b6270875d3afeeae79f1baee5eb6199172872c",
+						"freshness": {
+							"authorityDigest": "78bcb76a134bbc18710eb7d6c3b6270875d3afeeae79f1baee5eb6199172872c",
+							"status": "current",
+							"subject": {
+								"base": "f8c4d1978f9af3334105f51bcc3acff2852452f8",
+								"head": "6e5ad729dd005c1c92656c1d20eef2a36ba1108e",
+								"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+							}
+						},
+						"kind": "verifier",
+						"location": {
+							"commit": null,
+							"occurrence": "78bcb76a134bbc18710eb7d6c3b6270875d3afeeae79f1baee5eb6199172872c",
+							"path": "evidence/runs/consequence-review/evidence-bundle.json",
+							"repository": "graphrefly-stack:consequence-review-proof",
+							"selector": "/integration/verification"
+						},
+						"owner": "graphrefly-stack",
+						"provenance": {
+							"scope": "Exact independently recomputed IntegrationResult binding for the isolated candidate",
+							"sources": [
+								{
+									"commit": "6e5ad729dd005c1c92656c1d20eef2a36ba1108e",
+									"occurrence": null,
+									"path": "src/response-mapping.ts",
+									"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c",
+									"selector": null
+								}
+							],
+							"tool": "consequence-review-owner-resolver",
+							"version": "1"
+						},
+						"ref": "graphrefly-stack:retained-integration-result-verifier",
+						"schema": "graphrefly.stack.integration-result-verification.v1"
+					},
+					{
+						"bindingRefs": [
+							"57c864d2b417df15b6f0eabb808961cc88d22fd9658ef7d801ee015dfe680ce1",
+							"e416bd8b88a1ddfb8d5d1012198d8537f7642a3e6cd03e6dde53c2ae0109be6e"
+						],
+						"digest": "a2242c2e94e332f72b29aad26a1381840b68a8442758d7e91b93a476262e2fd7",
+						"freshness": {
+							"authorityDigest": "a2242c2e94e332f72b29aad26a1381840b68a8442758d7e91b93a476262e2fd7",
+							"status": "current",
+							"subject": {
+								"base": "f8c4d1978f9af3334105f51bcc3acff2852452f8",
+								"head": "6e5ad729dd005c1c92656c1d20eef2a36ba1108e",
+								"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+							}
+						},
+						"kind": "test",
+						"location": {
+							"commit": null,
+							"occurrence": "a2242c2e94e332f72b29aad26a1381840b68a8442758d7e91b93a476262e2fd7",
+							"path": "evidence/runs/consequence-review/evidence-bundle.json",
+							"repository": "graphrefly-stack:consequence-review-proof",
+							"selector": "/sourceEvidence/1/testResult"
+						},
+						"owner": "node:test",
+						"provenance": {
+							"scope": "Exact Node test process observation, not reinterpreted as owner admission",
+							"sources": [
+								{
+									"commit": "6e5ad729dd005c1c92656c1d20eef2a36ba1108e",
+									"occurrence": null,
+									"path": "tests/business.test.mjs",
+									"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c",
+									"selector": null
+								},
+								{
+									"commit": "6e5ad729dd005c1c92656c1d20eef2a36ba1108e",
+									"occurrence": null,
+									"path": "tests/business-verifier.mjs",
+									"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c",
+									"selector": null
+								}
+							],
+							"tool": "consequence-review-owner-resolver",
+							"version": "1"
+						},
+						"ref": "refresh-session-fixture:B:business-test",
+						"schema": "node-test/process-result/v1"
+					},
+					{
+						"bindingRefs": [
+							"57c864d2b417df15b6f0eabb808961cc88d22fd9658ef7d801ee015dfe680ce1",
+							"e416bd8b88a1ddfb8d5d1012198d8537f7642a3e6cd03e6dde53c2ae0109be6e"
+						],
+						"digest": "72090587feb8f40bf0e0a3c29502669c995f73b9141014fc5a18282cd5799064",
+						"freshness": {
+							"authorityDigest": "72090587feb8f40bf0e0a3c29502669c995f73b9141014fc5a18282cd5799064",
+							"status": "current",
+							"subject": {
+								"base": "f8c4d1978f9af3334105f51bcc3acff2852452f8",
+								"head": "6e5ad729dd005c1c92656c1d20eef2a36ba1108e",
+								"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+							}
+						},
+						"kind": "verifier",
+						"location": {
+							"commit": null,
+							"occurrence": "72090587feb8f40bf0e0a3c29502669c995f73b9141014fc5a18282cd5799064",
+							"path": "evidence/runs/consequence-review/evidence-bundle.json",
+							"repository": "graphrefly-stack:consequence-review-proof",
+							"selector": "/sourceEvidence/1/verifierResult"
+						},
+						"owner": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c",
+						"provenance": {
+							"scope": "Independently authored retained business verifier source and fresh result",
+							"sources": [
+								{
+									"commit": "6e5ad729dd005c1c92656c1d20eef2a36ba1108e",
+									"occurrence": null,
+									"path": "tests/business-verifier.mjs",
+									"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c",
+									"selector": null
+								},
+								{
+									"commit": "6e5ad729dd005c1c92656c1d20eef2a36ba1108e",
+									"occurrence": null,
+									"path": "src/response-mapping.ts",
+									"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c",
+									"selector": null
+								}
+							],
+							"tool": "consequence-review-owner-resolver",
+							"version": "1"
+						},
+						"ref": "refresh-session-fixture:B:business-verifier",
+						"schema": "refresh-session/business-verifier-v2"
+					},
+					{
+						"bindingRefs": [
+							"57c864d2b417df15b6f0eabb808961cc88d22fd9658ef7d801ee015dfe680ce1",
+							"e416bd8b88a1ddfb8d5d1012198d8537f7642a3e6cd03e6dde53c2ae0109be6e"
+						],
+						"digest": "2a7a87b63b35f917020d90f9218418a5bd9bd8cbed1cf0a7f316a87c13c54872",
+						"freshness": {
+							"authorityDigest": "2a7a87b63b35f917020d90f9218418a5bd9bd8cbed1cf0a7f316a87c13c54872",
+							"status": "current",
+							"subject": {
+								"base": "f8c4d1978f9af3334105f51bcc3acff2852452f8",
+								"head": "6e5ad729dd005c1c92656c1d20eef2a36ba1108e",
+								"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+							}
+						},
+						"kind": "policy",
+						"location": {
+							"commit": "6e5ad729dd005c1c92656c1d20eef2a36ba1108e",
+							"occurrence": null,
+							"path": "src/response-mapping.ts",
+							"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c",
+							"selector": null
+						},
+						"owner": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c",
+						"provenance": {
+							"scope": "Retained fixture policy source; repository-owned and not approval authority",
+							"sources": [
+								{
+									"commit": "6e5ad729dd005c1c92656c1d20eef2a36ba1108e",
+									"occurrence": null,
+									"path": "src/response-mapping.ts",
+									"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c",
+									"selector": null
+								}
+							],
+							"tool": "consequence-review-owner-resolver",
+							"version": "1"
+						},
+						"ref": "refresh-session-fixture:B:policy-source",
+						"schema": "typescript/5.9.3-source"
+					}
+				],
+				"bindingRefs": [
+					"57c864d2b417df15b6f0eabb808961cc88d22fd9658ef7d801ee015dfe680ce1",
+					"e416bd8b88a1ddfb8d5d1012198d8537f7642a3e6cd03e6dde53c2ae0109be6e"
+				],
+				"blueprint": {
+					"topologyHash": "7c2a04e2c2f10dc39cb85cac16ea0b376b381c8ec263bffa8c00edd59d726a16",
+					"version": "graphrefly.blueprint.v2"
+				},
+				"coverage": {
+					"runtimeOccurrence": "absent",
+					"scope": "retained-refresh-session-required-linkage-only"
+				},
+				"id": "da01d46c41e659b317d6a0751ee55d3fe72b2bf74332d8b4558ddcfc1813a626",
+				"schema": "graphrefly.stack.evidence-manifest.v1",
+				"subject": {
+					"base": "f8c4d1978f9af3334105f51bcc3acff2852452f8",
+					"head": "6e5ad729dd005c1c92656c1d20eef2a36ba1108e",
+					"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+				}
+			},
+			"sourceArtifact": {
+				"anchors": [
+					{
+						"candidate": {
+							"authoritative": true,
+							"end": 326,
+							"fingerprint": {
+								"algorithm": "typescript-5.9.3-printer-v1",
+								"digest": "bfc84b36ffd62fb221570e540bb24a63dbce733dd73c0f4515e3a5456547d959"
+							},
+							"path": "src/response-mapping.ts",
+							"sourceDigest": "2a7a87b63b35f917020d90f9218418a5bd9bd8cbed1cf0a7f316a87c13c54872",
+							"start": 154,
+							"symbol": {
+								"kind": "const",
+								"name": "AdmitRefresh"
+							}
+						},
+						"coordinate": {
+							"commit": "6e5ad729dd005c1c92656c1d20eef2a36ba1108e",
+							"overlayDigest": null,
+							"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+						},
+						"id": "beaee8de5ca41540a22a91dba1a3aaf0ad8980fbb8b7ea79ad2a70c9082a6ece",
+						"language": "typescript",
+						"provenance": {
+							"tool": "retained-typescript-declarations",
+							"version": "1/ts-5.9.3"
+						},
+						"schema": "graphrefly.stack.source-anchor.v1"
+					},
+					{
+						"candidate": {
+							"authoritative": true,
+							"end": 568,
+							"fingerprint": {
+								"algorithm": "typescript-5.9.3-printer-v1",
+								"digest": "ee7d666ca3f79778d73ca3c6f378bba6e9c340ede6b4886150811b1668b6bcf5"
+							},
+							"path": "src/response-mapping.ts",
+							"sourceDigest": "2a7a87b63b35f917020d90f9218418a5bd9bd8cbed1cf0a7f316a87c13c54872",
+							"start": 327,
+							"symbol": {
+								"kind": "const",
+								"name": "MapFailureResponse"
+							}
+						},
+						"coordinate": {
+							"commit": "6e5ad729dd005c1c92656c1d20eef2a36ba1108e",
+							"overlayDigest": null,
+							"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+						},
+						"id": "56eeb803c367de749ea689821d428d9d3c85daf85cd27651b77a281869de4c63",
+						"language": "typescript",
+						"provenance": {
+							"tool": "retained-typescript-declarations",
+							"version": "1/ts-5.9.3"
+						},
+						"schema": "graphrefly.stack.source-anchor.v1"
+					}
+				],
+				"bindings": [
+					{
+						"anchorId": "beaee8de5ca41540a22a91dba1a3aaf0ad8980fbb8b7ea79ad2a70c9082a6ece",
+						"blueprintVersion": "graphrefly.blueprint.v2",
+						"coordinate": {
+							"commit": "6e5ad729dd005c1c92656c1d20eef2a36ba1108e",
+							"overlayDigest": null,
+							"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+						},
+						"id": "57c864d2b417df15b6f0eabb808961cc88d22fd9658ef7d801ee015dfe680ce1",
+						"method": "retained-export-runtime-identity-v1",
+						"nodeId": "AdmitRefresh",
+						"provenance": {
+							"tool": "consequence-review-retained-runtime",
+							"version": "1/@graphrefly/ts-0.8.0"
+						},
+						"schema": "graphrefly.stack.graph-source-binding.v1",
+						"topologyHash": "7c2a04e2c2f10dc39cb85cac16ea0b376b381c8ec263bffa8c00edd59d726a16"
+					},
+					{
+						"anchorId": "56eeb803c367de749ea689821d428d9d3c85daf85cd27651b77a281869de4c63",
+						"blueprintVersion": "graphrefly.blueprint.v2",
+						"coordinate": {
+							"commit": "6e5ad729dd005c1c92656c1d20eef2a36ba1108e",
+							"overlayDigest": null,
+							"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+						},
+						"id": "e416bd8b88a1ddfb8d5d1012198d8537f7642a3e6cd03e6dde53c2ae0109be6e",
+						"method": "retained-export-runtime-identity-v1",
+						"nodeId": "MapFailureResponse",
+						"provenance": {
+							"tool": "consequence-review-retained-runtime",
+							"version": "1/@graphrefly/ts-0.8.0"
+						},
+						"schema": "graphrefly.stack.graph-source-binding.v1",
+						"topologyHash": "7c2a04e2c2f10dc39cb85cac16ea0b376b381c8ec263bffa8c00edd59d726a16"
+					}
+				],
+				"blueprint": {
+					"topologyHash": "7c2a04e2c2f10dc39cb85cac16ea0b376b381c8ec263bffa8c00edd59d726a16",
+					"version": "graphrefly.blueprint.v2"
+				},
+				"changeId": "B",
+				"id": "4a83c634645abf951766340f79029313fdfbe809dec6ebf0ca6dc9e65b2a374c",
+				"resolutions": [
+					{
+						"anchorId": "beaee8de5ca41540a22a91dba1a3aaf0ad8980fbb8b7ea79ad2a70c9082a6ece",
+						"candidates": [
+							{
+								"authoritative": true,
+								"end": 326,
+								"fingerprint": {
+									"algorithm": "typescript-5.9.3-printer-v1",
+									"digest": "bfc84b36ffd62fb221570e540bb24a63dbce733dd73c0f4515e3a5456547d959"
+								},
+								"path": "src/response-mapping.ts",
+								"sourceDigest": "2a7a87b63b35f917020d90f9218418a5bd9bd8cbed1cf0a7f316a87c13c54872",
+								"start": 154,
+								"symbol": {
+									"kind": "const",
+									"name": "AdmitRefresh"
+								}
+							}
+						],
+						"diagnostics": [],
+						"disposition": "exact",
+						"evidenceDigest": "1156f019a627e36dfe2890c912c70ad3626ca6e14dd854785e740401e57fc5ac",
+						"freshness": "current",
+						"id": "833183542b380663e24998f2136a3e56aa5f0ed108e3f9954736c45120f13c78",
+						"resolver": {
+							"tool": "retained-typescript-declarations",
+							"version": "1/ts-5.9.3"
+						},
+						"schema": "graphrefly.stack.source-resolution.v1",
+						"target": {
+							"commit": "6e5ad729dd005c1c92656c1d20eef2a36ba1108e",
+							"overlayDigest": null,
+							"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+						}
+					},
+					{
+						"anchorId": "56eeb803c367de749ea689821d428d9d3c85daf85cd27651b77a281869de4c63",
+						"candidates": [
+							{
+								"authoritative": true,
+								"end": 568,
+								"fingerprint": {
+									"algorithm": "typescript-5.9.3-printer-v1",
+									"digest": "ee7d666ca3f79778d73ca3c6f378bba6e9c340ede6b4886150811b1668b6bcf5"
+								},
+								"path": "src/response-mapping.ts",
+								"sourceDigest": "2a7a87b63b35f917020d90f9218418a5bd9bd8cbed1cf0a7f316a87c13c54872",
+								"start": 327,
+								"symbol": {
+									"kind": "const",
+									"name": "MapFailureResponse"
+								}
+							}
+						],
+						"diagnostics": [],
+						"disposition": "exact",
+						"evidenceDigest": "e612888d355a453bfa8b07ab5f17796cd5818d8b0ed17160c7295c0d5b1acabc",
+						"freshness": "current",
+						"id": "39f5da4b51dc7e1fde1db2370ca8e2c0f7ec200c160a0870c6f8512b470ed0d6",
+						"resolver": {
+							"tool": "retained-typescript-declarations",
+							"version": "1/ts-5.9.3"
+						},
+						"schema": "graphrefly.stack.source-resolution.v1",
+						"target": {
+							"commit": "6e5ad729dd005c1c92656c1d20eef2a36ba1108e",
+							"overlayDigest": null,
+							"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+						}
+					}
+				],
+				"schema": "graphrefly.stack.consequence-source-evidence.v1",
+				"subject": {
+					"base": "f8c4d1978f9af3334105f51bcc3acff2852452f8",
+					"head": "6e5ad729dd005c1c92656c1d20eef2a36ba1108e",
+					"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+				},
+				"topology": {
+					"edges": [
+						{
+							"from": "AdmitRefresh",
+							"to": "BuildHttpRefreshOutcome"
+						},
+						{
+							"from": "AdmitRefresh",
+							"to": "MapFailureResponse"
+						},
+						{
+							"from": "AdmitRefresh",
+							"to": "UpdateSessionMetrics"
+						},
+						{
+							"from": "ApplyBrokerPolicy",
+							"to": "EvaluateSessionPolicy"
+						},
+						{
+							"from": "BuildHttpRefreshOutcome",
+							"to": "EmitSecurityAudit"
+						},
+						{
+							"from": "EvaluateSessionPolicy",
+							"to": "AdmitRefresh"
+						},
+						{
+							"from": "EvaluateSessionPolicy",
+							"to": "EmitSecurityAudit"
+						},
+						{
+							"from": "LoadTenantPolicy",
+							"to": "ApplyBrokerPolicy"
+						},
+						{
+							"from": "MapFailureResponse",
+							"to": "BuildHttpRefreshOutcome"
+						},
+						{
+							"from": "ParseRefreshRequest",
+							"to": "LoadTenantPolicy"
+						},
+						{
+							"from": "ParseRefreshRequest",
+							"to": "MapFailureResponse"
+						},
+						{
+							"from": "ParseRefreshRequest",
+							"to": "ResolveSession"
+						},
+						{
+							"from": "ParseRefreshRequest",
+							"to": "ValidateTokenContract"
+						},
+						{
+							"from": "PasswordResetInput",
+							"to": "IndependentPasswordResetFlow"
+						},
+						{
+							"from": "PersistSession",
+							"to": "ApplyBrokerPolicy"
+						},
+						{
+							"from": "RequestInput",
+							"to": "ParseRefreshRequest"
+						},
+						{
+							"from": "ResolveSession",
+							"to": "PersistSession"
+						},
+						{
+							"from": "ValidateTokenContract",
+							"to": "AdmitRefresh"
+						},
+						{
+							"from": "ValidateTokenContract",
+							"to": "EmitSecurityAudit"
+						},
+						{
+							"from": "ValidateTokenContract",
+							"to": "MapFailureResponse"
+						},
+						{
+							"from": "ValidateTokenContract",
+							"to": "ResolveSession"
+						}
+					],
+					"name": "RefreshSession",
+					"nodes": [
+						{
+							"deps": ["ValidateTokenContract", "EvaluateSessionPolicy"],
+							"factory": "derived",
+							"id": "AdmitRefresh",
+							"name": "AdmitRefresh"
+						},
+						{
+							"deps": ["PersistSession", "LoadTenantPolicy"],
+							"factory": "derived",
+							"id": "ApplyBrokerPolicy",
+							"name": "ApplyBrokerPolicy"
+						},
+						{
+							"deps": ["MapFailureResponse", "AdmitRefresh"],
+							"factory": "derived",
+							"id": "BuildHttpRefreshOutcome",
+							"name": "BuildHttpRefreshOutcome"
+						},
+						{
+							"deps": ["ValidateTokenContract", "EvaluateSessionPolicy", "BuildHttpRefreshOutcome"],
+							"factory": "derived",
+							"id": "EmitSecurityAudit",
+							"name": "EmitSecurityAudit"
+						},
+						{
+							"deps": ["ApplyBrokerPolicy"],
+							"factory": "derived",
+							"id": "EvaluateSessionPolicy",
+							"name": "EvaluateSessionPolicy"
+						},
+						{
+							"deps": ["PasswordResetInput"],
+							"factory": "derived",
+							"id": "IndependentPasswordResetFlow",
+							"name": "IndependentPasswordResetFlow"
+						},
+						{
+							"deps": ["ParseRefreshRequest"],
+							"factory": "derived",
+							"id": "LoadTenantPolicy",
+							"name": "LoadTenantPolicy"
+						},
+						{
+							"deps": ["ParseRefreshRequest", "ValidateTokenContract", "AdmitRefresh"],
+							"factory": "derived",
+							"id": "MapFailureResponse",
+							"name": "MapFailureResponse"
+						},
+						{
+							"deps": ["RequestInput"],
+							"factory": "derived",
+							"id": "ParseRefreshRequest",
+							"name": "ParseRefreshRequest"
+						},
+						{
+							"deps": [],
+							"factory": "state",
+							"id": "PasswordResetInput",
+							"name": "PasswordResetInput"
+						},
+						{
+							"deps": ["ResolveSession"],
+							"factory": "derived",
+							"id": "PersistSession",
+							"name": "PersistSession"
+						},
+						{
+							"deps": [],
+							"factory": "state",
+							"id": "RequestInput",
+							"name": "RequestInput"
+						},
+						{
+							"deps": ["ParseRefreshRequest", "ValidateTokenContract"],
+							"factory": "derived",
+							"id": "ResolveSession",
+							"name": "ResolveSession"
+						},
+						{
+							"deps": ["AdmitRefresh"],
+							"factory": "derived",
+							"id": "UpdateSessionMetrics",
+							"name": "UpdateSessionMetrics"
+						},
+						{
+							"deps": ["ParseRefreshRequest"],
+							"factory": "derived",
+							"id": "ValidateTokenContract",
+							"name": "ValidateTokenContract"
+						}
+					]
+				}
+			},
+			"testResult": {
+				"command": ["--test", "--test-reporter=dot", "tests/business.test.mjs"],
+				"exitCode": 0,
+				"nodeVersion": "v26.4.0",
+				"schema": "node-test/process-result/v1",
+				"stderr": "",
+				"stdout": ".\n",
+				"subject": {
+					"base": "f8c4d1978f9af3334105f51bcc3acff2852452f8",
+					"head": "6e5ad729dd005c1c92656c1d20eef2a36ba1108e",
+					"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+				}
+			},
+			"verifierObservation": {
+				"attestation": {
+					"coverage": {
+						"required": [
+							"AdmitRefresh",
+							"BuildHttpRefreshOutcome",
+							"EmitSecurityAudit",
+							"MapFailureResponse",
+							"UpdateSessionMetrics"
+						],
+						"unchangedControls": ["IndependentPasswordResetFlow", "ValidateTokenContract"]
+					},
+					"result": {
+						"cases": [
+							"valid refresh",
+							"missing token",
+							"invalid token",
+							"disabled tenant",
+							"inactive session",
+							"age boundary",
+							"expired session"
+						],
+						"controls": ["ValidateTokenContract", "IndependentPasswordResetFlow"],
+						"oracle": "independent expected HTTP, audit, metrics, persisted policy version and password-reset business outputs",
+						"status": "passed"
+					},
+					"schema": "refresh-session/business-verifier-observation/v1",
+					"sourceDigest": "6bf0295435cd368b373c57aa84b2a2cad51d6dd34d00d613345d0b13fab2f495",
+					"subject": {
+						"base": "f8c4d1978f9af3334105f51bcc3acff2852452f8",
+						"head": "6e5ad729dd005c1c92656c1d20eef2a36ba1108e",
+						"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+					},
+					"topologyHash": "7c2a04e2c2f10dc39cb85cac16ea0b376b381c8ec263bffa8c00edd59d726a16"
+				},
+				"authorityDigest": "72090587feb8f40bf0e0a3c29502669c995f73b9141014fc5a18282cd5799064",
+				"authorityRef": "refresh-session-fixture:B:business-verifier",
+				"coverage": [
+					"AdmitRefresh",
+					"BuildHttpRefreshOutcome",
+					"EmitSecurityAudit",
+					"IndependentPasswordResetFlow",
+					"MapFailureResponse",
+					"UpdateSessionMetrics",
+					"ValidateTokenContract"
+				],
+				"freshness": "current",
+				"result": "passed",
+				"resultDigest": "72090587feb8f40bf0e0a3c29502669c995f73b9141014fc5a18282cd5799064",
+				"subject": {
+					"base": "f8c4d1978f9af3334105f51bcc3acff2852452f8",
+					"head": "6e5ad729dd005c1c92656c1d20eef2a36ba1108e",
+					"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+				},
+				"topologyHash": "7c2a04e2c2f10dc39cb85cac16ea0b376b381c8ec263bffa8c00edd59d726a16"
+			},
+			"verifierResult": {
+				"coverage": {
+					"required": [
+						"AdmitRefresh",
+						"BuildHttpRefreshOutcome",
+						"EmitSecurityAudit",
+						"MapFailureResponse",
+						"UpdateSessionMetrics"
+					],
+					"unchangedControls": ["IndependentPasswordResetFlow", "ValidateTokenContract"]
+				},
+				"result": {
+					"cases": [
+						"valid refresh",
+						"missing token",
+						"invalid token",
+						"disabled tenant",
+						"inactive session",
+						"age boundary",
+						"expired session"
+					],
+					"controls": ["ValidateTokenContract", "IndependentPasswordResetFlow"],
+					"oracle": "independent expected HTTP, audit, metrics, persisted policy version and password-reset business outputs",
+					"status": "passed"
+				},
+				"schema": "refresh-session/business-verifier-observation/v1",
+				"sourceDigest": "6bf0295435cd368b373c57aa84b2a2cad51d6dd34d00d613345d0b13fab2f495",
+				"subject": {
+					"base": "f8c4d1978f9af3334105f51bcc3acff2852452f8",
+					"head": "6e5ad729dd005c1c92656c1d20eef2a36ba1108e",
+					"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+				},
+				"topologyHash": "7c2a04e2c2f10dc39cb85cac16ea0b376b381c8ec263bffa8c00edd59d726a16"
+			}
+		}
+	]
+}

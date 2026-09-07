@@ -1,0 +1,27 @@
+{
+	"artifact_ref": "graphrefly-stack:consequence-review-proof",
+	"compression": {
+		"available": 43,
+		"reviewed": 10,
+		"unit": "distinct decision-surface entries / bound technical records"
+	},
+	"guidanceId": "3e5e96201c2c8bb334b9cec046c48a8a04f71efb885dc7aa5c805270b02f46aa",
+	"guidanceStatus": "overlap-observed",
+	"id": "bd5f6add00337ca3edf7ab81d30acb1a34565d06ae5c5ec7a32c93a1aca9c909",
+	"integrationOutcome": "compatible",
+	"integrationResultDigest": "b22ed2d4bcdadb813e3cc29ff9ad86f766a85cadc4e93ab8f44b556f2ffaec8b",
+	"llmRequired": false,
+	"projectionIds": [
+		"d3cdcb7cf3b76b9b3406e0caa662872c5e11510b7fd55192af0f28825c6767b3",
+		"41e76b3b8f53dfe87220b61a9164c030297a5a40de9abe872e52fa0a7184ae37"
+	],
+	"repository": {
+		"base": "f8c4d1978f9af3334105f51bcc3acff2852452f8",
+		"candidateTree": "02cab67eaae43cddc9ccea125392bb1cccf71841",
+		"identity": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c",
+		"left": "3f7735ee97c774d56f4e2e439e1b2718919840e0",
+		"right": "6e5ad729dd005c1c92656c1d20eef2a36ba1108e"
+	},
+	"revision": "stack-review-v1",
+	"schema": "graphrefly-stack/consequence-review-proof/v1"
+}

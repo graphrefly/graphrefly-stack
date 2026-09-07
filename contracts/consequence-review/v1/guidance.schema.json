@@ -1,0 +1,72 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "urn:graphrefly-stack:schema:consequence-guidance:v1",
+	"type": "object",
+	"additionalProperties": false,
+	"required": [
+		"schema",
+		"id",
+		"leftProjectionId",
+		"rightProjectionId",
+		"status",
+		"coverage",
+		"witnesses",
+		"integration"
+	],
+	"properties": {
+		"schema": { "const": "graphrefly.stack.consequence-guidance.v1" },
+		"id": { "$ref": "#/definitions/Digest" },
+		"leftProjectionId": { "$ref": "#/definitions/Digest" },
+		"rightProjectionId": { "$ref": "#/definitions/Digest" },
+		"status": { "enum": ["no-overlap-observed", "overlap-observed", "incompatible", "unknown"] },
+		"coverage": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["complete", "scope"],
+			"properties": {
+				"complete": { "type": "boolean" },
+				"scope": {
+					"type": "array",
+					"uniqueItems": true,
+					"maxItems": 256,
+					"items": { "$ref": "#/definitions/Label" }
+				}
+			}
+		},
+		"witnesses": {
+			"type": "array",
+			"uniqueItems": true,
+			"maxItems": 256,
+			"items": { "$ref": "#/definitions/Witness" }
+		},
+		"integration": {
+			"oneOf": [
+				{ "type": "null" },
+				{
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["candidateDigest", "resultDigest", "verifierDigest", "outcome"],
+					"properties": {
+						"candidateDigest": { "$ref": "#/definitions/Digest" },
+						"resultDigest": { "$ref": "#/definitions/Digest" },
+						"verifierDigest": { "$ref": "#/definitions/Digest" },
+						"outcome": { "enum": ["compatible", "conflict"] }
+					}
+				}
+			]
+		}
+	},
+	"definitions": {
+		"Digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+		"Label": { "type": "string", "minLength": 1, "maxLength": 500, "pattern": "^[^\\x00-\\x1f]+$" },
+		"Witness": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["kind", "value"],
+			"properties": {
+				"kind": { "enum": ["source", "graph", "authority", "invalidated-evidence"] },
+				"value": { "$ref": "#/definitions/Label" }
+			}
+		}
+	}
+}
