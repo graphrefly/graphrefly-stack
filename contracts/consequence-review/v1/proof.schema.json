@@ -261,7 +261,7 @@
 				"verifierObservation"
 			],
 			"properties": {
-				"changeId": { "$ref": "#/definitions/Label" },
+				"changeId": { "$ref": "#/definitions/Digest" },
 				"manifest": { "type": "object" },
 				"sourceArtifact": {
 					"type": "object",
@@ -280,7 +280,7 @@
 					"properties": {
 						"schema": { "const": "graphrefly.stack.consequence-source-evidence.v1" },
 						"id": { "$ref": "#/definitions/Digest" },
-						"changeId": { "$ref": "#/definitions/Label" },
+						"changeId": { "$ref": "#/definitions/Digest" },
 						"subject": { "type": "object" },
 						"blueprint": { "type": "object" },
 						"topology": { "type": "object" },

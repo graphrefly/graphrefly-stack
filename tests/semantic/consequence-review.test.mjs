@@ -262,6 +262,28 @@ test("source and evidence failure matrix is explicit with blocked/stale/unknown 
 	const incomplete = options();
 	incomplete.sourceScope.push("MissingSource");
 	assert.equal(deriveConsequenceProjection(incomplete).readiness.status, "unknown");
+	const omittedManifestSource = options();
+	omittedManifestSource.sourceScope.pop();
+	omittedManifestSource.sources.pop();
+	omittedManifestSource.bindings.pop();
+	const omittedProjection = deriveConsequenceProjection(omittedManifestSource);
+	assert.equal(omittedProjection.readiness.status, "unknown");
+	assert.equal(omittedProjection.coverage.bindings, "incomplete");
+	assert(
+		omittedProjection.unknowns.some(
+			(entry) => entry.code === "INCOMPLETE_COVERAGE" && entry.subject === "manifest-binding-set",
+		),
+	);
+	const requiredAsUnchanged = options();
+	requiredAsUnchanged.unchangedControls = ["AdmitRefresh"];
+	const unchangedProjection = deriveConsequenceProjection(requiredAsUnchanged);
+	assert.equal(unchangedProjection.readiness.status, "unknown");
+	assert.equal(unchangedProjection.verifiedUnchanged.length, 0);
+	assert(
+		unchangedProjection.unknowns.some(
+			(entry) => entry.code === "MISSING_EVIDENCE" && entry.subject === "AdmitRefresh",
+		),
+	);
 	const unrelatedStale = options();
 	unrelatedStale.verifierObservations.push({
 		...unrelatedStale.verifierObservations[0],

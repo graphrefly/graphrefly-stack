@@ -190,6 +190,33 @@ function authority(
 
 function buildChange(changeId, base, head, runtime, integrationVerification) {
 	const subject = { repository: coordinate(retainedRoot, head).repository, base, head };
+	const rawChange = git(retainedRoot, [
+		"diff-tree",
+		"--no-commit-id",
+		"--raw",
+		"-r",
+		"-z",
+		"--no-renames",
+		base,
+		head,
+	]);
+	const changedPaths = git(retainedRoot, ["diff", "--name-only", "-z", "--no-renames", base, head])
+		.split("\0")
+		.filter(Boolean)
+		.sort();
+	const declaredPaths = [...new Set(sourceByChange[changeId].map(([path]) => path))].sort();
+	if (
+		declaredPaths.some((path) => !changedPaths.includes(path)) ||
+		changedPaths.some(
+			(path) => !declaredPaths.includes(path) && path !== "tests/business-verifier.mjs",
+		)
+	)
+		throw new Error("CONSEQUENCE_CHANGE_SCOPE");
+	const exactChangeId = sha256Jcs({
+		schema: "graphrefly.stack.git-change-set.v1",
+		subject,
+		rawDiffDigest: hashBytes(rawChange),
+	});
 	const blueprint = {
 		version: runtime.blueprint.version,
 		topologyHash: runtime.blueprint.hash.value,
@@ -219,7 +246,7 @@ function buildChange(changeId, base, head, runtime, integrationVerification) {
 	const bindingRefs = bindings.map((value) => value.id).sort();
 	const sourceArtifactBody = {
 		schema: "graphrefly.stack.consequence-source-evidence.v1",
-		changeId,
+		changeId: exactChangeId,
 		subject,
 		blueprint,
 		topology: runtime.blueprint.topology,
@@ -355,7 +382,7 @@ function buildChange(changeId, base, head, runtime, integrationVerification) {
 		attestation: structuredClone(verifierResult),
 	};
 	const projection = deriveConsequenceProjection({
-		changeId,
+		changeId: exactChangeId,
 		subject,
 		blueprint,
 		manifest,
@@ -369,7 +396,7 @@ function buildChange(changeId, base, head, runtime, integrationVerification) {
 	});
 	return {
 		sourceEvidence: {
-			changeId,
+			changeId: exactChangeId,
 			manifest,
 			sourceArtifact,
 			testResult,

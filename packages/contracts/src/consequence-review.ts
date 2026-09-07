@@ -206,6 +206,48 @@ function orderedUnique(values: unknown[]): boolean {
 		(value, index) => index === 0 || canonicalize(values[index - 1]) < canonicalize(value),
 	);
 }
+function same(left: unknown, right: unknown): boolean {
+	return canonicalize(left) === canonicalize(right);
+}
+function uniqueSorted<T>(values: T[]): T[] {
+	return [...new Map(values.map((value) => [canonicalize(value), value])).values()].sort((a, b) => {
+		const left = canonicalize(a);
+		const right = canonicalize(b);
+		return left < right ? -1 : left > right ? 1 : 0;
+	});
+}
+function structuralPaths(
+	origin: string,
+	topology: { nodes: { id: string; deps: string[] }[] },
+): ConsequenceProjection["reachable"] {
+	const outgoing = new Map<string, string[]>();
+	for (const node of topology.nodes) {
+		for (const dependency of node.deps) {
+			const values = outgoing.get(dependency) ?? [];
+			values.push(node.id);
+			outgoing.set(dependency, uniqueSorted(values));
+		}
+	}
+	const result: ConsequenceProjection["reachable"] = [];
+	const queue: string[][] = [[origin]];
+	const shortest = new Map<string, string>([[origin, canonicalize([origin])]]);
+	while (queue.length > 0) {
+		const path = queue.shift() as string[];
+		const tail = path[path.length - 1] as string;
+		for (const next of outgoing.get(tail) ?? []) {
+			if (path.includes(next)) continue;
+			const candidate = [...path, next];
+			const bytes = canonicalize(candidate);
+			const previous = shortest.get(next);
+			if (previous !== undefined && previous <= bytes) continue;
+			shortest.set(next, bytes);
+			result.splice(0, result.length, ...result.filter((entry) => entry.to !== next));
+			result.push({ from: origin, to: next, path: candidate });
+			queue.push(candidate);
+		}
+	}
+	return result;
+}
 export function consequenceDigest(
 	value: Omit<ConsequenceProjection, "id"> | ConsequenceProjection,
 ): string {
@@ -339,6 +381,104 @@ export function assertConsequenceProof(value: unknown): void {
 			integrationAuthority.digest !== proof.integration.verification.id
 		)
 			throw new Error("CONSEQUENCE_PROOF_SOURCE_EVIDENCE");
+		const projection = proof.projections[index];
+		if (projection === undefined) throw new Error("CONSEQUENCE_PROOF_SOURCE_EVIDENCE");
+		const anchorById = new Map(
+			evidence.sourceArtifact.anchors.map((anchor) => [anchor.id, anchor]),
+		);
+		const resolutionByAnchor = new Map<string, ResolutionResult[]>();
+		for (const resolution of evidence.sourceArtifact.resolutions) {
+			const values = resolutionByAnchor.get(resolution.anchorId) ?? [];
+			values.push(resolution);
+			resolutionByAnchor.set(resolution.anchorId, values);
+		}
+		const bindingByAnchor = new Map<string, GraphSourceBinding[]>();
+		for (const binding of evidence.sourceArtifact.bindings) {
+			const values = bindingByAnchor.get(binding.anchorId) ?? [];
+			values.push(binding);
+			bindingByAnchor.set(binding.anchorId, values);
+		}
+		if (
+			anchorById.size !== evidence.sourceArtifact.anchors.length ||
+			evidence.sourceArtifact.anchors.some((anchor) => {
+				const resolutions = resolutionByAnchor.get(anchor.id) ?? [];
+				const bindings = bindingByAnchor.get(anchor.id) ?? [];
+				return (
+					resolutions.length !== 1 ||
+					bindings.length !== 1 ||
+					resolutions[0]?.disposition !== "exact" ||
+					resolutions[0]?.freshness !== "current" ||
+					!same(resolutions[0]?.candidates[0], anchor.candidate) ||
+					!bindings[0] ||
+					!same(bindings[0].coordinate, anchor.coordinate) ||
+					bindings[0].topologyHash !== evidence.sourceArtifact.blueprint.topologyHash
+				);
+			})
+		)
+			throw new Error("CONSEQUENCE_PROOF_SOURCE_EVIDENCE");
+		const expectedSourceScope = uniqueSorted(
+			evidence.sourceArtifact.anchors.map((anchor) => anchor.candidate.symbol.name),
+		);
+		const expectedBindingRefs = uniqueSorted(
+			evidence.sourceArtifact.bindings.map((binding) => binding.id),
+		);
+		const expectedDirect = uniqueSorted(
+			evidence.sourceArtifact.bindings.map((binding) => ({
+				nodeId: binding.nodeId,
+				bindingRef: binding.id,
+			})),
+		);
+		const directNodes = new Set(expectedDirect.map((entry) => entry.nodeId));
+		const expectedReachable = uniqueSorted(
+			expectedDirect
+				.flatMap((entry) =>
+					structuralPaths(
+						entry.nodeId,
+						evidence.sourceArtifact.topology as { nodes: { id: string; deps: string[] }[] },
+					),
+				)
+				.filter((entry) => !directNodes.has(entry.to)),
+		);
+		const expectedRequired = uniqueSorted(evidence.verifierResult.coverage.required);
+		const expectedUnchanged = uniqueSorted(
+			evidence.verifierResult.coverage.unchangedControls.map((scope) => ({
+				scope,
+				verifierRef: evidence.verifierObservation.authorityRef,
+				verifierDigest: evidence.verifierObservation.resultDigest,
+			})),
+		);
+		const expectedDeclared = uniqueSorted([
+			...expectedSourceScope,
+			...expectedRequired,
+			...evidence.verifierResult.coverage.unchangedControls,
+		]);
+		if (
+			!same(projection.sourceScope, expectedSourceScope) ||
+			!same(projection.direct, expectedDirect) ||
+			!same(projection.reachable, expectedReachable) ||
+			!same(projection.verificationRequired, expectedRequired) ||
+			!same(projection.verifiedUnchanged, expectedUnchanged) ||
+			!same(projection.unknowns, []) ||
+			!same(projection.coverage, {
+				bindings: "complete",
+				evidence: "complete",
+				declared: expectedDeclared,
+			}) ||
+			!same(
+				projection.provenance.sourceResolutionRefs,
+				uniqueSorted(evidence.sourceArtifact.resolutions.map((resolution) => resolution.id)),
+			) ||
+			!same(projection.provenance.bindingRefs, expectedBindingRefs) ||
+			!same(
+				projection.provenance.authorityRefs,
+				uniqueSorted(evidence.manifest.authorities.map((authority) => authority.ref)),
+			) ||
+			!same(projection.readiness, { status: "verified", reasons: [] }) ||
+			evidence.verifierObservation.freshness !== "current" ||
+			evidence.verifierObservation.result !== "passed" ||
+			!same(expectedBindingRefs, uniqueSorted(evidence.manifest.bindingRefs))
+		)
+			throw new Error("CONSEQUENCE_PROOF_SOURCE_EVIDENCE");
 	}
 	assertConsequenceIntegration(proof.integration.candidate, proof.integration.result);
 	if (proof.integration.resultDigest !== sha256Jcs(proof.integration.result))
@@ -388,6 +528,55 @@ export function assertConsequenceProof(value: unknown): void {
 		proof.guidance.integration?.outcome !== result.outcome
 	)
 		throw new Error("CONSEQUENCE_PROOF_CROSS_BINDING");
+	const intersection = (left: string[], right: string[]) =>
+		left.filter((entry) => right.includes(entry));
+	const leftGraph = uniqueSorted([
+		...proof.projections[0].direct.map((entry) => entry.nodeId),
+		...proof.projections[0].reachable.map((entry) => entry.to),
+	]);
+	const rightGraph = uniqueSorted([
+		...proof.projections[1].direct.map((entry) => entry.nodeId),
+		...proof.projections[1].reachable.map((entry) => entry.to),
+	]);
+	const frameworkAuthorityRefs = new Set([
+		"graphrefly-stack:D57",
+		"graphrefly-stack:D58",
+		"graphrefly-stack:D59",
+	]);
+	const relevantAuthorities = (projection: ConsequenceProjection) =>
+		projection.provenance.authorityRefs.filter(
+			(ref) =>
+				ref !== proof.integration.verification.verifierRef && !frameworkAuthorityRefs.has(ref),
+		);
+	const expectedWitnesses: ConsequenceGuidance["witnesses"] = uniqueSorted([
+		...intersection(
+			proof.projections[0].provenance.sourceResolutionRefs,
+			proof.projections[1].provenance.sourceResolutionRefs,
+		).map((value) => ({ kind: "source" as const, value })),
+		...intersection(leftGraph, rightGraph).map((value) => ({ kind: "graph" as const, value })),
+		...intersection(
+			relevantAuthorities(proof.projections[0]),
+			relevantAuthorities(proof.projections[1]),
+		).map((value) => ({ kind: "authority" as const, value })),
+	]);
+	const expectedGuidanceStatus =
+		result.outcome === "conflict"
+			? "incompatible"
+			: expectedWitnesses.length > 0
+				? "overlap-observed"
+				: "no-overlap-observed";
+	if (
+		proof.guidance.status !== expectedGuidanceStatus ||
+		!same(proof.guidance.witnesses, expectedWitnesses) ||
+		!same(proof.guidance.coverage, {
+			complete: true,
+			scope: uniqueSorted([
+				...proof.projections[0].coverage.declared,
+				...proof.projections[1].coverage.declared,
+			]),
+		})
+	)
+		throw new Error("CONSEQUENCE_PROOF_GUIDANCE_DERIVATION");
 	if (
 		proof.axes.length !== proof.projections.length ||
 		proof.axes.some(

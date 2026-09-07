@@ -8,6 +8,7 @@ import {
 	consequenceDigest,
 	guidanceDigest,
 	sealConsequenceGuidance,
+	sealConsequenceProjection,
 } from "../../packages/contracts/dist/consequence-review.js";
 import { sha256Jcs } from "../../packages/contracts/dist/jcs.js";
 
@@ -55,6 +56,23 @@ test("proof cross-bindings reject internally valid coordinate, guidance, axes an
 	attestation.sourceEvidence[0].verifierObservation.coverage.push("UnattestedScope");
 	attestation.sourceEvidence[0].verifierObservation.coverage.sort();
 	assert.throws(() => assertConsequenceProof(resealProof(attestation)), /SOURCE_EVIDENCE/);
+
+	const emptied = structuredClone(proof);
+	const projectionBody = structuredClone(emptied.projections[0]);
+	delete projectionBody.id;
+	projectionBody.sourceScope = [];
+	projectionBody.direct = [];
+	projectionBody.reachable = [];
+	projectionBody.provenance.bindingRefs = [];
+	projectionBody.provenance.sourceResolutionRefs = [];
+	emptied.projections[0] = sealConsequenceProjection(projectionBody);
+	const emptiedGuidanceBody = structuredClone(emptied.guidance);
+	delete emptiedGuidanceBody.id;
+	emptiedGuidanceBody.leftProjectionId = emptied.projections[0].id;
+	emptied.guidance = sealConsequenceGuidance(emptiedGuidanceBody);
+	emptied.axes[0].evidence = structuredClone(emptied.projections[0].readiness);
+	emptied.axes[0].human.targetDigest = emptied.projections[0].id;
+	assert.throws(() => assertConsequenceProof(resealProof(emptied)), /SOURCE_EVIDENCE/);
 });
 
 test("schemas and nested integrity reject extra fields, reordered sets and tamper after rehash", () => {

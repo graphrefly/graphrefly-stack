@@ -166,6 +166,8 @@ export function deriveConsequenceProjection(
 	if (sha256Jcs(options.topology) !== options.blueprint.topologyHash)
 		throw new Error("CONSEQUENCE_TOPOLOGY_HASH");
 	const sourceScope = uniqueSorted(options.sourceScope);
+	const suppliedBindingRefs = uniqueSorted(options.bindings.map((binding) => binding.id));
+	const manifestBindingRefs = uniqueSorted(options.manifest.bindingRefs);
 	const topologyNodes = new Set(options.topology.nodes.map((node) => node.id));
 	const bindingByAnchor = new Map<string, GraphSourceBinding[]>();
 	for (const binding of options.bindings) {
@@ -178,6 +180,16 @@ export function deriveConsequenceProjection(
 	const unknowns: ConsequenceProjection["unknowns"] = [];
 	const resolutionRefs: string[] = [];
 	const observedScope = new Map<string, number>();
+	if (
+		options.sourceScope.length !== sourceScope.length ||
+		!same(
+			sourceScope,
+			uniqueSorted(options.sources.map((source) => source.anchor.candidate.symbol.name)),
+		)
+	)
+		unknowns.push({ code: "INCOMPLETE_COVERAGE", subject: "source-scope" });
+	if (!same(suppliedBindingRefs, manifestBindingRefs))
+		unknowns.push({ code: "INCOMPLETE_COVERAGE", subject: "manifest-binding-set" });
 	for (const source of options.sources) {
 		assertSourceRecord(source.anchor);
 		assertSourceRecord(source.resolution);
@@ -263,7 +275,7 @@ export function deriveConsequenceProjection(
 				observationMatches(options, observation) &&
 				observation.freshness === "current" &&
 				observation.result === "passed" &&
-				observation.coverage.includes(scope),
+				observation.attestation.coverage.unchangedControls.includes(scope),
 		);
 		if (matches.length === 0) unknowns.push({ code: "MISSING_EVIDENCE", subject: scope });
 		else {

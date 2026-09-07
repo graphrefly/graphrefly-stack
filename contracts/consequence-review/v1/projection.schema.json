@@ -26,7 +26,7 @@
 		"subject": { "$ref": "#/definitions/Subject" },
 		"blueprint": { "$ref": "#/definitions/Blueprint" },
 		"manifestId": { "$ref": "#/definitions/Digest" },
-		"changeId": { "$ref": "#/definitions/Label" },
+		"changeId": { "$ref": "#/definitions/Digest" },
 		"sourceScope": { "$ref": "#/definitions/Labels" },
 		"direct": {
 			"type": "array",
