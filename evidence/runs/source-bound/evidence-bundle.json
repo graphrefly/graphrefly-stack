@@ -1,0 +1,1005 @@
+{
+	"adapter": {
+		"sourceDigest": "94f13cb2b1e1a32188f687e8fc05b3f5cb4e11b8366ec4a22d3374648468d3ef",
+		"tool": "source-bound-report",
+		"version": "1"
+	},
+	"anchors": [
+		{
+			"candidate": {
+				"authoritative": true,
+				"end": 1530,
+				"fingerprint": {
+					"algorithm": "typescript-5.9.3-printer-v1",
+					"digest": "00067c54a551342f6fb85c33636a978f4930bd90384db38766c27f206f6a1615"
+				},
+				"path": "src/refresh-session.ts",
+				"sourceDigest": "f9cb3390b7fc4f1867e3ec3bb69abbabd618959d85ca2659d128282be4a99e73",
+				"start": 1361,
+				"symbol": { "kind": "const", "name": "AdmitRefresh" }
+			},
+			"coordinate": {
+				"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+				"overlayDigest": null,
+				"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+			},
+			"id": "4209edb27c90f73443bdbac68e37c0630d77606981a6318e6dcfbe99d794e8e0",
+			"language": "typescript",
+			"provenance": { "tool": "retained-typescript-declarations", "version": "1/ts-5.9.3" },
+			"schema": "graphrefly.stack.source-anchor.v1"
+		},
+		{
+			"candidate": {
+				"authoritative": true,
+				"end": 1828,
+				"fingerprint": {
+					"algorithm": "typescript-5.9.3-printer-v1",
+					"digest": "2a72a6de0b8efe28304ed4683d32ad6aa872a08cebd935ea511c29f6513fb2c2"
+				},
+				"path": "src/refresh-session.ts",
+				"sourceDigest": "f9cb3390b7fc4f1867e3ec3bb69abbabd618959d85ca2659d128282be4a99e73",
+				"start": 1531,
+				"symbol": { "kind": "const", "name": "BuildHttpRefreshOutcome" }
+			},
+			"coordinate": {
+				"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+				"overlayDigest": null,
+				"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+			},
+			"id": "4e6603c6e5bbb282ae2d1bd2529891dd27cf48735d038edb497e1f15fb51e7b7",
+			"language": "typescript",
+			"provenance": { "tool": "retained-typescript-declarations", "version": "1/ts-5.9.3" },
+			"schema": "graphrefly.stack.source-anchor.v1"
+		},
+		{
+			"candidate": {
+				"authoritative": true,
+				"end": 2088,
+				"fingerprint": {
+					"algorithm": "typescript-5.9.3-printer-v1",
+					"digest": "e57dce5f4e91baa2935f91358ce2f199de0c27e43cfe37731ffa318fde0ee8df"
+				},
+				"path": "src/refresh-session.ts",
+				"sourceDigest": "f9cb3390b7fc4f1867e3ec3bb69abbabd618959d85ca2659d128282be4a99e73",
+				"start": 1829,
+				"symbol": { "kind": "const", "name": "EmitSecurityAudit" }
+			},
+			"coordinate": {
+				"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+				"overlayDigest": null,
+				"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+			},
+			"id": "300fa597189c281aa20775615327a226b5d3cf62a76ccd12d5fe5ad2e89a2e44",
+			"language": "typescript",
+			"provenance": { "tool": "retained-typescript-declarations", "version": "1/ts-5.9.3" },
+			"schema": "graphrefly.stack.source-anchor.v1"
+		},
+		{
+			"candidate": {
+				"authoritative": true,
+				"end": 1360,
+				"fingerprint": {
+					"algorithm": "typescript-5.9.3-printer-v1",
+					"digest": "e16eb3662bd0b0493ac1df6c13fb99fe07e7b6cdda7e70cca99e4b69846bbde2"
+				},
+				"path": "src/refresh-session.ts",
+				"sourceDigest": "f9cb3390b7fc4f1867e3ec3bb69abbabd618959d85ca2659d128282be4a99e73",
+				"start": 1117,
+				"symbol": { "kind": "const", "name": "EvaluateSessionPolicy" }
+			},
+			"coordinate": {
+				"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+				"overlayDigest": null,
+				"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+			},
+			"id": "51f21b091f92896ac4c09675c7362df121e77c82be52c3ee876adf6bd00f1605",
+			"language": "typescript",
+			"provenance": { "tool": "retained-typescript-declarations", "version": "1/ts-5.9.3" },
+			"schema": "graphrefly.stack.source-anchor.v1"
+		},
+		{
+			"candidate": {
+				"authoritative": true,
+				"end": 2579,
+				"fingerprint": {
+					"algorithm": "typescript-5.9.3-printer-v1",
+					"digest": "e120fd659a21cacf18928a8da69b51e6255a33bf7e887eed44cc6a3e0cdbf5dd"
+				},
+				"path": "src/refresh-session.ts",
+				"sourceDigest": "f9cb3390b7fc4f1867e3ec3bb69abbabd618959d85ca2659d128282be4a99e73",
+				"start": 2396,
+				"symbol": { "kind": "const", "name": "IndependentPasswordResetFlow" }
+			},
+			"coordinate": {
+				"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+				"overlayDigest": null,
+				"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+			},
+			"id": "1aadafd1aa850cfc3444645836469bc8904542fd82a689933b284f7308f1df07",
+			"language": "typescript",
+			"provenance": { "tool": "retained-typescript-declarations", "version": "1/ts-5.9.3" },
+			"schema": "graphrefly.stack.source-anchor.v1"
+		},
+		{
+			"candidate": {
+				"authoritative": true,
+				"end": 713,
+				"fingerprint": {
+					"algorithm": "typescript-5.9.3-printer-v1",
+					"digest": "68790b66e99184de4c935d5bcb9d9dec9c5fea16d5c88997347e1005b176bed9"
+				},
+				"path": "src/refresh-session.ts",
+				"sourceDigest": "f9cb3390b7fc4f1867e3ec3bb69abbabd618959d85ca2659d128282be4a99e73",
+				"start": 532,
+				"symbol": { "kind": "const", "name": "LoadTenantPolicy" }
+			},
+			"coordinate": {
+				"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+				"overlayDigest": null,
+				"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+			},
+			"id": "19e1d4f3bd885e949d39e7f1f82f0f09785ad522c0da5a12bd0b7c44c0667938",
+			"language": "typescript",
+			"provenance": { "tool": "retained-typescript-declarations", "version": "1/ts-5.9.3" },
+			"schema": "graphrefly.stack.source-anchor.v1"
+		},
+		{
+			"candidate": {
+				"authoritative": true,
+				"end": 531,
+				"fingerprint": {
+					"algorithm": "typescript-5.9.3-printer-v1",
+					"digest": "95a3d11a0f87ca4df592670c771e177fa70226067399563f5b3ddba82c02a4df"
+				},
+				"path": "src/refresh-session.ts",
+				"sourceDigest": "f9cb3390b7fc4f1867e3ec3bb69abbabd618959d85ca2659d128282be4a99e73",
+				"start": 341,
+				"symbol": { "kind": "const", "name": "ParseRefreshRequest" }
+			},
+			"coordinate": {
+				"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+				"overlayDigest": null,
+				"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+			},
+			"id": "3184422e965bae2199c42c103fe4a84742690ff797162527b1d053f7189c63c3",
+			"language": "typescript",
+			"provenance": { "tool": "retained-typescript-declarations", "version": "1/ts-5.9.3" },
+			"schema": "graphrefly.stack.source-anchor.v1"
+		},
+		{
+			"candidate": {
+				"authoritative": true,
+				"end": 2395,
+				"fingerprint": {
+					"algorithm": "typescript-5.9.3-printer-v1",
+					"digest": "4e3b67f04541916fe49c56aed01d0913a092c5fe1e37c073ada3dd73fd53845b"
+				},
+				"path": "src/refresh-session.ts",
+				"sourceDigest": "f9cb3390b7fc4f1867e3ec3bb69abbabd618959d85ca2659d128282be4a99e73",
+				"start": 2281,
+				"symbol": { "kind": "const", "name": "PasswordResetInput" }
+			},
+			"coordinate": {
+				"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+				"overlayDigest": null,
+				"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+			},
+			"id": "166b3886639e55d6a5e941c8287572ff6618383adce247a1b9676529abc00014",
+			"language": "typescript",
+			"provenance": { "tool": "retained-typescript-declarations", "version": "1/ts-5.9.3" },
+			"schema": "graphrefly.stack.source-anchor.v1"
+		},
+		{
+			"candidate": {
+				"authoritative": true,
+				"end": 340,
+				"fingerprint": {
+					"algorithm": "typescript-5.9.3-printer-v1",
+					"digest": "f62b59ffe9b60ebfa92d12a42029a96b911735f0a9122f6918c24ffdadb356e7"
+				},
+				"path": "src/refresh-session.ts",
+				"sourceDigest": "f9cb3390b7fc4f1867e3ec3bb69abbabd618959d85ca2659d128282be4a99e73",
+				"start": 193,
+				"symbol": { "kind": "const", "name": "RequestInput" }
+			},
+			"coordinate": {
+				"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+				"overlayDigest": null,
+				"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+			},
+			"id": "b819922dbe3ad309ecea515b76377e11a0e13ac5e041d1d302f53ca12b07fdd1",
+			"language": "typescript",
+			"provenance": { "tool": "retained-typescript-declarations", "version": "1/ts-5.9.3" },
+			"schema": "graphrefly.stack.source-anchor.v1"
+		},
+		{
+			"candidate": {
+				"authoritative": true,
+				"end": 1116,
+				"fingerprint": {
+					"algorithm": "typescript-5.9.3-printer-v1",
+					"digest": "45bfc99988860423e4c64675af6804a1f2763a18431719a007602d2098905ab0"
+				},
+				"path": "src/refresh-session.ts",
+				"sourceDigest": "f9cb3390b7fc4f1867e3ec3bb69abbabd618959d85ca2659d128282be4a99e73",
+				"start": 901,
+				"symbol": { "kind": "const", "name": "ResolveSession" }
+			},
+			"coordinate": {
+				"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+				"overlayDigest": null,
+				"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+			},
+			"id": "797495eddade931929cf3720cd2bc149f31ac8fc49ae6fa43f4b03fd53bb5bee",
+			"language": "typescript",
+			"provenance": { "tool": "retained-typescript-declarations", "version": "1/ts-5.9.3" },
+			"schema": "graphrefly.stack.source-anchor.v1"
+		},
+		{
+			"candidate": {
+				"authoritative": true,
+				"end": 2280,
+				"fingerprint": {
+					"algorithm": "typescript-5.9.3-printer-v1",
+					"digest": "1f14f6f4666851d5359fae6e363d6e17eb44dff5c6395141bf5f5896db0aea12"
+				},
+				"path": "src/refresh-session.ts",
+				"sourceDigest": "f9cb3390b7fc4f1867e3ec3bb69abbabd618959d85ca2659d128282be4a99e73",
+				"start": 2089,
+				"symbol": { "kind": "const", "name": "UpdateSessionMetrics" }
+			},
+			"coordinate": {
+				"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+				"overlayDigest": null,
+				"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+			},
+			"id": "87a2601f653a563081a8fdb15bc7647c2dd247abdb17f970efcaa518578f4643",
+			"language": "typescript",
+			"provenance": { "tool": "retained-typescript-declarations", "version": "1/ts-5.9.3" },
+			"schema": "graphrefly.stack.source-anchor.v1"
+		},
+		{
+			"candidate": {
+				"authoritative": true,
+				"end": 900,
+				"fingerprint": {
+					"algorithm": "typescript-5.9.3-printer-v1",
+					"digest": "aad36563d5c2346287e39b31223e8b55eecb770401b151d0a9d1b7cdce396827"
+				},
+				"path": "src/refresh-session.ts",
+				"sourceDigest": "f9cb3390b7fc4f1867e3ec3bb69abbabd618959d85ca2659d128282be4a99e73",
+				"start": 714,
+				"symbol": { "kind": "const", "name": "ValidateTokenContract" }
+			},
+			"coordinate": {
+				"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+				"overlayDigest": null,
+				"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+			},
+			"id": "3609edc053c84de43b26b9c68d70f035353b5ac8508524a3840c2673b19e385c",
+			"language": "typescript",
+			"provenance": { "tool": "retained-typescript-declarations", "version": "1/ts-5.9.3" },
+			"schema": "graphrefly.stack.source-anchor.v1"
+		}
+	],
+	"artifact_ref": "graphrefly-stack:source-binding-proof",
+	"bindings": [
+		{
+			"anchorId": "4209edb27c90f73443bdbac68e37c0630d77606981a6318e6dcfbe99d794e8e0",
+			"blueprintVersion": "graphrefly.blueprint.v2",
+			"coordinate": {
+				"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+				"overlayDigest": null,
+				"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+			},
+			"id": "a7aa3cb02a08977d7311709c44e4a7123f756532a4a6cb3c0e75771559316d68",
+			"method": "retained-export-runtime-identity-v1",
+			"nodeId": "AdmitRefresh",
+			"provenance": {
+				"tool": "retained-export-runtime-identity",
+				"version": "1/@graphrefly/ts-0.8.0"
+			},
+			"schema": "graphrefly.stack.graph-source-binding.v1",
+			"topologyHash": "61b8cb4bd6e2ae3bb4d1ee5553c4deb2a25ccb2975288cff8beabecb11bf6977"
+		},
+		{
+			"anchorId": "4e6603c6e5bbb282ae2d1bd2529891dd27cf48735d038edb497e1f15fb51e7b7",
+			"blueprintVersion": "graphrefly.blueprint.v2",
+			"coordinate": {
+				"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+				"overlayDigest": null,
+				"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+			},
+			"id": "add54c47d7e6c081a8352aad9cc6023e41e1b14452a29e2aa9e9f086d220c135",
+			"method": "retained-export-runtime-identity-v1",
+			"nodeId": "BuildHttpRefreshOutcome",
+			"provenance": {
+				"tool": "retained-export-runtime-identity",
+				"version": "1/@graphrefly/ts-0.8.0"
+			},
+			"schema": "graphrefly.stack.graph-source-binding.v1",
+			"topologyHash": "61b8cb4bd6e2ae3bb4d1ee5553c4deb2a25ccb2975288cff8beabecb11bf6977"
+		},
+		{
+			"anchorId": "300fa597189c281aa20775615327a226b5d3cf62a76ccd12d5fe5ad2e89a2e44",
+			"blueprintVersion": "graphrefly.blueprint.v2",
+			"coordinate": {
+				"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+				"overlayDigest": null,
+				"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+			},
+			"id": "6a0dceb721255487a04ec3371bbe4d3cdffc3350bf3b90f3ebc76872daf963f2",
+			"method": "retained-export-runtime-identity-v1",
+			"nodeId": "EmitSecurityAudit",
+			"provenance": {
+				"tool": "retained-export-runtime-identity",
+				"version": "1/@graphrefly/ts-0.8.0"
+			},
+			"schema": "graphrefly.stack.graph-source-binding.v1",
+			"topologyHash": "61b8cb4bd6e2ae3bb4d1ee5553c4deb2a25ccb2975288cff8beabecb11bf6977"
+		},
+		{
+			"anchorId": "51f21b091f92896ac4c09675c7362df121e77c82be52c3ee876adf6bd00f1605",
+			"blueprintVersion": "graphrefly.blueprint.v2",
+			"coordinate": {
+				"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+				"overlayDigest": null,
+				"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+			},
+			"id": "0c63cb5d2cd30ea708942e17e89fab42dfb2db3cf1e678ce96b9f15e84147e2b",
+			"method": "retained-export-runtime-identity-v1",
+			"nodeId": "EvaluateSessionPolicy",
+			"provenance": {
+				"tool": "retained-export-runtime-identity",
+				"version": "1/@graphrefly/ts-0.8.0"
+			},
+			"schema": "graphrefly.stack.graph-source-binding.v1",
+			"topologyHash": "61b8cb4bd6e2ae3bb4d1ee5553c4deb2a25ccb2975288cff8beabecb11bf6977"
+		},
+		{
+			"anchorId": "1aadafd1aa850cfc3444645836469bc8904542fd82a689933b284f7308f1df07",
+			"blueprintVersion": "graphrefly.blueprint.v2",
+			"coordinate": {
+				"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+				"overlayDigest": null,
+				"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+			},
+			"id": "d45c77147fe93b9e8782cf6d3338ac1245b03db8c93bc1863e634e7005e77fc4",
+			"method": "retained-export-runtime-identity-v1",
+			"nodeId": "IndependentPasswordResetFlow",
+			"provenance": {
+				"tool": "retained-export-runtime-identity",
+				"version": "1/@graphrefly/ts-0.8.0"
+			},
+			"schema": "graphrefly.stack.graph-source-binding.v1",
+			"topologyHash": "61b8cb4bd6e2ae3bb4d1ee5553c4deb2a25ccb2975288cff8beabecb11bf6977"
+		},
+		{
+			"anchorId": "19e1d4f3bd885e949d39e7f1f82f0f09785ad522c0da5a12bd0b7c44c0667938",
+			"blueprintVersion": "graphrefly.blueprint.v2",
+			"coordinate": {
+				"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+				"overlayDigest": null,
+				"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+			},
+			"id": "1ccb39e759a07a270dee60d1b93575e0c4d192efe3cb5443957062682a6ee48b",
+			"method": "retained-export-runtime-identity-v1",
+			"nodeId": "LoadTenantPolicy",
+			"provenance": {
+				"tool": "retained-export-runtime-identity",
+				"version": "1/@graphrefly/ts-0.8.0"
+			},
+			"schema": "graphrefly.stack.graph-source-binding.v1",
+			"topologyHash": "61b8cb4bd6e2ae3bb4d1ee5553c4deb2a25ccb2975288cff8beabecb11bf6977"
+		},
+		{
+			"anchorId": "3184422e965bae2199c42c103fe4a84742690ff797162527b1d053f7189c63c3",
+			"blueprintVersion": "graphrefly.blueprint.v2",
+			"coordinate": {
+				"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+				"overlayDigest": null,
+				"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+			},
+			"id": "f7a6501a7db81d4576a444527d7c34ce910c375a0e829263fdfd9125e0fb0378",
+			"method": "retained-export-runtime-identity-v1",
+			"nodeId": "ParseRefreshRequest",
+			"provenance": {
+				"tool": "retained-export-runtime-identity",
+				"version": "1/@graphrefly/ts-0.8.0"
+			},
+			"schema": "graphrefly.stack.graph-source-binding.v1",
+			"topologyHash": "61b8cb4bd6e2ae3bb4d1ee5553c4deb2a25ccb2975288cff8beabecb11bf6977"
+		},
+		{
+			"anchorId": "166b3886639e55d6a5e941c8287572ff6618383adce247a1b9676529abc00014",
+			"blueprintVersion": "graphrefly.blueprint.v2",
+			"coordinate": {
+				"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+				"overlayDigest": null,
+				"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+			},
+			"id": "f7efd74335dff91d9cd8c166a83a9ca4db5d0e64b6badf7c07b0cb64e199564c",
+			"method": "retained-export-runtime-identity-v1",
+			"nodeId": "PasswordResetInput",
+			"provenance": {
+				"tool": "retained-export-runtime-identity",
+				"version": "1/@graphrefly/ts-0.8.0"
+			},
+			"schema": "graphrefly.stack.graph-source-binding.v1",
+			"topologyHash": "61b8cb4bd6e2ae3bb4d1ee5553c4deb2a25ccb2975288cff8beabecb11bf6977"
+		},
+		{
+			"anchorId": "b819922dbe3ad309ecea515b76377e11a0e13ac5e041d1d302f53ca12b07fdd1",
+			"blueprintVersion": "graphrefly.blueprint.v2",
+			"coordinate": {
+				"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+				"overlayDigest": null,
+				"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+			},
+			"id": "b0beed1599b7645543045f7d2a67a3b5d6dc87485606cb7d8af43868dc316883",
+			"method": "retained-export-runtime-identity-v1",
+			"nodeId": "RequestInput",
+			"provenance": {
+				"tool": "retained-export-runtime-identity",
+				"version": "1/@graphrefly/ts-0.8.0"
+			},
+			"schema": "graphrefly.stack.graph-source-binding.v1",
+			"topologyHash": "61b8cb4bd6e2ae3bb4d1ee5553c4deb2a25ccb2975288cff8beabecb11bf6977"
+		},
+		{
+			"anchorId": "797495eddade931929cf3720cd2bc149f31ac8fc49ae6fa43f4b03fd53bb5bee",
+			"blueprintVersion": "graphrefly.blueprint.v2",
+			"coordinate": {
+				"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+				"overlayDigest": null,
+				"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+			},
+			"id": "b48f801bf57653035619add5e718a1a45687053a8b9ee5149c763fa5d969d00d",
+			"method": "retained-export-runtime-identity-v1",
+			"nodeId": "ResolveSession",
+			"provenance": {
+				"tool": "retained-export-runtime-identity",
+				"version": "1/@graphrefly/ts-0.8.0"
+			},
+			"schema": "graphrefly.stack.graph-source-binding.v1",
+			"topologyHash": "61b8cb4bd6e2ae3bb4d1ee5553c4deb2a25ccb2975288cff8beabecb11bf6977"
+		},
+		{
+			"anchorId": "87a2601f653a563081a8fdb15bc7647c2dd247abdb17f970efcaa518578f4643",
+			"blueprintVersion": "graphrefly.blueprint.v2",
+			"coordinate": {
+				"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+				"overlayDigest": null,
+				"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+			},
+			"id": "627a8fe91e6e9f63686cd5113b766d2fada8853da67057da98fe68bd2ab5b0ba",
+			"method": "retained-export-runtime-identity-v1",
+			"nodeId": "UpdateSessionMetrics",
+			"provenance": {
+				"tool": "retained-export-runtime-identity",
+				"version": "1/@graphrefly/ts-0.8.0"
+			},
+			"schema": "graphrefly.stack.graph-source-binding.v1",
+			"topologyHash": "61b8cb4bd6e2ae3bb4d1ee5553c4deb2a25ccb2975288cff8beabecb11bf6977"
+		},
+		{
+			"anchorId": "3609edc053c84de43b26b9c68d70f035353b5ac8508524a3840c2673b19e385c",
+			"blueprintVersion": "graphrefly.blueprint.v2",
+			"coordinate": {
+				"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+				"overlayDigest": null,
+				"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+			},
+			"id": "8598ff3587042aafd97ed0d658a6dce48ceb749168cf5f4c58ba9d69d9907dd9",
+			"method": "retained-export-runtime-identity-v1",
+			"nodeId": "ValidateTokenContract",
+			"provenance": {
+				"tool": "retained-export-runtime-identity",
+				"version": "1/@graphrefly/ts-0.8.0"
+			},
+			"schema": "graphrefly.stack.graph-source-binding.v1",
+			"topologyHash": "61b8cb4bd6e2ae3bb4d1ee5553c4deb2a25ccb2975288cff8beabecb11bf6977"
+		}
+	],
+	"blueprint": {
+		"hash": {
+			"algorithm": "sha256",
+			"input": "strictCanonicalTopologyBytes",
+			"kind": "topology",
+			"value": "61b8cb4bd6e2ae3bb4d1ee5553c4deb2a25ccb2975288cff8beabecb11bf6977"
+		},
+		"topology": {
+			"edges": [
+				{ "from": "AdmitRefresh", "to": "BuildHttpRefreshOutcome" },
+				{ "from": "AdmitRefresh", "to": "UpdateSessionMetrics" },
+				{ "from": "BuildHttpRefreshOutcome", "to": "EmitSecurityAudit" },
+				{ "from": "EvaluateSessionPolicy", "to": "AdmitRefresh" },
+				{ "from": "EvaluateSessionPolicy", "to": "EmitSecurityAudit" },
+				{ "from": "LoadTenantPolicy", "to": "EvaluateSessionPolicy" },
+				{ "from": "ParseRefreshRequest", "to": "BuildHttpRefreshOutcome" },
+				{ "from": "ParseRefreshRequest", "to": "LoadTenantPolicy" },
+				{ "from": "ParseRefreshRequest", "to": "ResolveSession" },
+				{ "from": "ParseRefreshRequest", "to": "ValidateTokenContract" },
+				{ "from": "PasswordResetInput", "to": "IndependentPasswordResetFlow" },
+				{ "from": "RequestInput", "to": "ParseRefreshRequest" },
+				{ "from": "ResolveSession", "to": "EvaluateSessionPolicy" },
+				{ "from": "ValidateTokenContract", "to": "AdmitRefresh" },
+				{ "from": "ValidateTokenContract", "to": "BuildHttpRefreshOutcome" },
+				{ "from": "ValidateTokenContract", "to": "EmitSecurityAudit" },
+				{ "from": "ValidateTokenContract", "to": "ResolveSession" }
+			],
+			"name": "RefreshSession",
+			"nodes": [
+				{
+					"deps": ["ValidateTokenContract", "EvaluateSessionPolicy"],
+					"factory": "derived",
+					"id": "AdmitRefresh",
+					"name": "AdmitRefresh"
+				},
+				{
+					"deps": ["ParseRefreshRequest", "ValidateTokenContract", "AdmitRefresh"],
+					"factory": "derived",
+					"id": "BuildHttpRefreshOutcome",
+					"name": "BuildHttpRefreshOutcome"
+				},
+				{
+					"deps": ["ValidateTokenContract", "EvaluateSessionPolicy", "BuildHttpRefreshOutcome"],
+					"factory": "derived",
+					"id": "EmitSecurityAudit",
+					"name": "EmitSecurityAudit"
+				},
+				{
+					"deps": ["ResolveSession", "LoadTenantPolicy"],
+					"factory": "derived",
+					"id": "EvaluateSessionPolicy",
+					"name": "EvaluateSessionPolicy"
+				},
+				{
+					"deps": ["PasswordResetInput"],
+					"factory": "derived",
+					"id": "IndependentPasswordResetFlow",
+					"name": "IndependentPasswordResetFlow"
+				},
+				{
+					"deps": ["ParseRefreshRequest"],
+					"factory": "derived",
+					"id": "LoadTenantPolicy",
+					"name": "LoadTenantPolicy"
+				},
+				{
+					"deps": ["RequestInput"],
+					"factory": "derived",
+					"id": "ParseRefreshRequest",
+					"name": "ParseRefreshRequest"
+				},
+				{
+					"deps": [],
+					"factory": "state",
+					"id": "PasswordResetInput",
+					"name": "PasswordResetInput"
+				},
+				{ "deps": [], "factory": "state", "id": "RequestInput", "name": "RequestInput" },
+				{
+					"deps": ["ParseRefreshRequest", "ValidateTokenContract"],
+					"factory": "derived",
+					"id": "ResolveSession",
+					"name": "ResolveSession"
+				},
+				{
+					"deps": ["AdmitRefresh"],
+					"factory": "derived",
+					"id": "UpdateSessionMetrics",
+					"name": "UpdateSessionMetrics"
+				},
+				{
+					"deps": ["ParseRefreshRequest"],
+					"factory": "derived",
+					"id": "ValidateTokenContract",
+					"name": "ValidateTokenContract"
+				}
+			]
+		},
+		"version": "graphrefly.blueprint.v2"
+	},
+	"coverage": {
+		"boundNodes": 12,
+		"limits": [
+			"128 Git entries, 1 MiB source, 64 candidates and diagnostics",
+			"No source edge bindings, generic resolver, runtime causality, consequence review or whole E22 completion",
+			"Runtime execution is restricted to the retained trusted example; arbitrary target revisions resolve without execution",
+			"Dependency install required before offline reruns; npm lock integrity and installed bytes are reported"
+		],
+		"scope": "Top-level TypeScript const/function declarations under src; exact exported node handles in retained RefreshSession only",
+		"totalNodes": 12
+	},
+	"id": "8392c5e2a4822fb54153365704343b688a189a437f1ea4d93f8f79b2b7390ee9",
+	"llmRequired": false,
+	"repository": {
+		"base": "1560839a7e25a6c0733970d76714d12244e4b929",
+		"coordinate": {
+			"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+			"overlayDigest": null,
+			"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+		},
+		"head": "ce9d4bb8a0eea299f4279354d33353c341b2c89a"
+	},
+	"resolutions": [
+		{
+			"anchorId": "4209edb27c90f73443bdbac68e37c0630d77606981a6318e6dcfbe99d794e8e0",
+			"candidates": [
+				{
+					"authoritative": true,
+					"end": 1530,
+					"fingerprint": {
+						"algorithm": "typescript-5.9.3-printer-v1",
+						"digest": "00067c54a551342f6fb85c33636a978f4930bd90384db38766c27f206f6a1615"
+					},
+					"path": "src/refresh-session.ts",
+					"sourceDigest": "f9cb3390b7fc4f1867e3ec3bb69abbabd618959d85ca2659d128282be4a99e73",
+					"start": 1361,
+					"symbol": { "kind": "const", "name": "AdmitRefresh" }
+				}
+			],
+			"diagnostics": [],
+			"disposition": "exact",
+			"evidenceDigest": "e1428df84cd5ecad553cccc03aaca275d842101caf734e12c1e834a909b144d6",
+			"freshness": "current",
+			"id": "4a7e4fd08912af146865d6a7a6881e2cc09213c417a8211a2df82e808d265b39",
+			"resolver": { "tool": "retained-typescript-declarations", "version": "1/ts-5.9.3" },
+			"schema": "graphrefly.stack.source-resolution.v1",
+			"target": {
+				"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+				"overlayDigest": null,
+				"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+			}
+		},
+		{
+			"anchorId": "4e6603c6e5bbb282ae2d1bd2529891dd27cf48735d038edb497e1f15fb51e7b7",
+			"candidates": [
+				{
+					"authoritative": true,
+					"end": 1828,
+					"fingerprint": {
+						"algorithm": "typescript-5.9.3-printer-v1",
+						"digest": "2a72a6de0b8efe28304ed4683d32ad6aa872a08cebd935ea511c29f6513fb2c2"
+					},
+					"path": "src/refresh-session.ts",
+					"sourceDigest": "f9cb3390b7fc4f1867e3ec3bb69abbabd618959d85ca2659d128282be4a99e73",
+					"start": 1531,
+					"symbol": { "kind": "const", "name": "BuildHttpRefreshOutcome" }
+				}
+			],
+			"diagnostics": [],
+			"disposition": "exact",
+			"evidenceDigest": "d7c30fac4ab6aa1a3ff78a1aee05c46a191707c56538fe44d10b8f0562c0db18",
+			"freshness": "current",
+			"id": "7de61e0b5b4071be4116a6da886e6f039f176bfa83c8302862cac65244b41877",
+			"resolver": { "tool": "retained-typescript-declarations", "version": "1/ts-5.9.3" },
+			"schema": "graphrefly.stack.source-resolution.v1",
+			"target": {
+				"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+				"overlayDigest": null,
+				"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+			}
+		},
+		{
+			"anchorId": "300fa597189c281aa20775615327a226b5d3cf62a76ccd12d5fe5ad2e89a2e44",
+			"candidates": [
+				{
+					"authoritative": true,
+					"end": 2088,
+					"fingerprint": {
+						"algorithm": "typescript-5.9.3-printer-v1",
+						"digest": "e57dce5f4e91baa2935f91358ce2f199de0c27e43cfe37731ffa318fde0ee8df"
+					},
+					"path": "src/refresh-session.ts",
+					"sourceDigest": "f9cb3390b7fc4f1867e3ec3bb69abbabd618959d85ca2659d128282be4a99e73",
+					"start": 1829,
+					"symbol": { "kind": "const", "name": "EmitSecurityAudit" }
+				}
+			],
+			"diagnostics": [],
+			"disposition": "exact",
+			"evidenceDigest": "d9c7f90128e29f346bb45d8d49f4c09754464f2ade750dec162ea86e01708ab4",
+			"freshness": "current",
+			"id": "089835496d74884f96cef4b9f3c52909dce4aaa021d5f6e1f9a5037b8b4b5fea",
+			"resolver": { "tool": "retained-typescript-declarations", "version": "1/ts-5.9.3" },
+			"schema": "graphrefly.stack.source-resolution.v1",
+			"target": {
+				"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+				"overlayDigest": null,
+				"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+			}
+		},
+		{
+			"anchorId": "51f21b091f92896ac4c09675c7362df121e77c82be52c3ee876adf6bd00f1605",
+			"candidates": [
+				{
+					"authoritative": true,
+					"end": 1360,
+					"fingerprint": {
+						"algorithm": "typescript-5.9.3-printer-v1",
+						"digest": "e16eb3662bd0b0493ac1df6c13fb99fe07e7b6cdda7e70cca99e4b69846bbde2"
+					},
+					"path": "src/refresh-session.ts",
+					"sourceDigest": "f9cb3390b7fc4f1867e3ec3bb69abbabd618959d85ca2659d128282be4a99e73",
+					"start": 1117,
+					"symbol": { "kind": "const", "name": "EvaluateSessionPolicy" }
+				}
+			],
+			"diagnostics": [],
+			"disposition": "exact",
+			"evidenceDigest": "15db6dbf1bc391caa24ae219c85ad9a2499b6c924295d3bb528acffa3f7071f0",
+			"freshness": "current",
+			"id": "bb1baf1f8d16fadc660a62eed86c4bcf97dc4a3871be37c1deea6c870c8474a3",
+			"resolver": { "tool": "retained-typescript-declarations", "version": "1/ts-5.9.3" },
+			"schema": "graphrefly.stack.source-resolution.v1",
+			"target": {
+				"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+				"overlayDigest": null,
+				"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+			}
+		},
+		{
+			"anchorId": "1aadafd1aa850cfc3444645836469bc8904542fd82a689933b284f7308f1df07",
+			"candidates": [
+				{
+					"authoritative": true,
+					"end": 2579,
+					"fingerprint": {
+						"algorithm": "typescript-5.9.3-printer-v1",
+						"digest": "e120fd659a21cacf18928a8da69b51e6255a33bf7e887eed44cc6a3e0cdbf5dd"
+					},
+					"path": "src/refresh-session.ts",
+					"sourceDigest": "f9cb3390b7fc4f1867e3ec3bb69abbabd618959d85ca2659d128282be4a99e73",
+					"start": 2396,
+					"symbol": { "kind": "const", "name": "IndependentPasswordResetFlow" }
+				}
+			],
+			"diagnostics": [],
+			"disposition": "exact",
+			"evidenceDigest": "d8d9566e92b7a6d51b8e1ccdd0561475fe670c611996c41eb82e7f9f0ff36885",
+			"freshness": "current",
+			"id": "c7fa2a96780c6cfc39845eea8193ceb8b3f931d217e03bee7d6096a7189a9220",
+			"resolver": { "tool": "retained-typescript-declarations", "version": "1/ts-5.9.3" },
+			"schema": "graphrefly.stack.source-resolution.v1",
+			"target": {
+				"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+				"overlayDigest": null,
+				"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+			}
+		},
+		{
+			"anchorId": "19e1d4f3bd885e949d39e7f1f82f0f09785ad522c0da5a12bd0b7c44c0667938",
+			"candidates": [
+				{
+					"authoritative": true,
+					"end": 713,
+					"fingerprint": {
+						"algorithm": "typescript-5.9.3-printer-v1",
+						"digest": "68790b66e99184de4c935d5bcb9d9dec9c5fea16d5c88997347e1005b176bed9"
+					},
+					"path": "src/refresh-session.ts",
+					"sourceDigest": "f9cb3390b7fc4f1867e3ec3bb69abbabd618959d85ca2659d128282be4a99e73",
+					"start": 532,
+					"symbol": { "kind": "const", "name": "LoadTenantPolicy" }
+				}
+			],
+			"diagnostics": [],
+			"disposition": "exact",
+			"evidenceDigest": "e34e62e1e1a60dbbc2b82f0b06230c66cd33e3eaedd015841aa40acbacc19f24",
+			"freshness": "current",
+			"id": "7f25e468d24c34f31ce121c8d47577b4d31735916060782df6e904d662c09c94",
+			"resolver": { "tool": "retained-typescript-declarations", "version": "1/ts-5.9.3" },
+			"schema": "graphrefly.stack.source-resolution.v1",
+			"target": {
+				"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+				"overlayDigest": null,
+				"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+			}
+		},
+		{
+			"anchorId": "3184422e965bae2199c42c103fe4a84742690ff797162527b1d053f7189c63c3",
+			"candidates": [
+				{
+					"authoritative": true,
+					"end": 531,
+					"fingerprint": {
+						"algorithm": "typescript-5.9.3-printer-v1",
+						"digest": "95a3d11a0f87ca4df592670c771e177fa70226067399563f5b3ddba82c02a4df"
+					},
+					"path": "src/refresh-session.ts",
+					"sourceDigest": "f9cb3390b7fc4f1867e3ec3bb69abbabd618959d85ca2659d128282be4a99e73",
+					"start": 341,
+					"symbol": { "kind": "const", "name": "ParseRefreshRequest" }
+				}
+			],
+			"diagnostics": [],
+			"disposition": "exact",
+			"evidenceDigest": "a559ecbe27fe1ac9490cd7a9ddbb59e3b868a5cb2daa81f44e4501de1189bc29",
+			"freshness": "current",
+			"id": "15c1d162552af4782030aa1f01403d1cb89242436bae6ff29d74810acc72d735",
+			"resolver": { "tool": "retained-typescript-declarations", "version": "1/ts-5.9.3" },
+			"schema": "graphrefly.stack.source-resolution.v1",
+			"target": {
+				"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+				"overlayDigest": null,
+				"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+			}
+		},
+		{
+			"anchorId": "166b3886639e55d6a5e941c8287572ff6618383adce247a1b9676529abc00014",
+			"candidates": [
+				{
+					"authoritative": true,
+					"end": 2395,
+					"fingerprint": {
+						"algorithm": "typescript-5.9.3-printer-v1",
+						"digest": "4e3b67f04541916fe49c56aed01d0913a092c5fe1e37c073ada3dd73fd53845b"
+					},
+					"path": "src/refresh-session.ts",
+					"sourceDigest": "f9cb3390b7fc4f1867e3ec3bb69abbabd618959d85ca2659d128282be4a99e73",
+					"start": 2281,
+					"symbol": { "kind": "const", "name": "PasswordResetInput" }
+				}
+			],
+			"diagnostics": [],
+			"disposition": "exact",
+			"evidenceDigest": "c970f0197a7af17b764fd756214d4ee96016c14f686a96208c52ecdc0f282d74",
+			"freshness": "current",
+			"id": "e6af1c8186d260e79bb0258cda7d93d834a0fa8d2ba1b7dc7e58426857567ecc",
+			"resolver": { "tool": "retained-typescript-declarations", "version": "1/ts-5.9.3" },
+			"schema": "graphrefly.stack.source-resolution.v1",
+			"target": {
+				"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+				"overlayDigest": null,
+				"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+			}
+		},
+		{
+			"anchorId": "b819922dbe3ad309ecea515b76377e11a0e13ac5e041d1d302f53ca12b07fdd1",
+			"candidates": [
+				{
+					"authoritative": true,
+					"end": 340,
+					"fingerprint": {
+						"algorithm": "typescript-5.9.3-printer-v1",
+						"digest": "f62b59ffe9b60ebfa92d12a42029a96b911735f0a9122f6918c24ffdadb356e7"
+					},
+					"path": "src/refresh-session.ts",
+					"sourceDigest": "f9cb3390b7fc4f1867e3ec3bb69abbabd618959d85ca2659d128282be4a99e73",
+					"start": 193,
+					"symbol": { "kind": "const", "name": "RequestInput" }
+				}
+			],
+			"diagnostics": [],
+			"disposition": "exact",
+			"evidenceDigest": "c12da86160c50318e0b407474e67704ac0e425256a87ccd3002925ce68448f87",
+			"freshness": "current",
+			"id": "c771f3eeb8ad5cd772437fe30af5d27665683829524f1934cfbe87130217dca6",
+			"resolver": { "tool": "retained-typescript-declarations", "version": "1/ts-5.9.3" },
+			"schema": "graphrefly.stack.source-resolution.v1",
+			"target": {
+				"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+				"overlayDigest": null,
+				"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+			}
+		},
+		{
+			"anchorId": "797495eddade931929cf3720cd2bc149f31ac8fc49ae6fa43f4b03fd53bb5bee",
+			"candidates": [
+				{
+					"authoritative": true,
+					"end": 1116,
+					"fingerprint": {
+						"algorithm": "typescript-5.9.3-printer-v1",
+						"digest": "45bfc99988860423e4c64675af6804a1f2763a18431719a007602d2098905ab0"
+					},
+					"path": "src/refresh-session.ts",
+					"sourceDigest": "f9cb3390b7fc4f1867e3ec3bb69abbabd618959d85ca2659d128282be4a99e73",
+					"start": 901,
+					"symbol": { "kind": "const", "name": "ResolveSession" }
+				}
+			],
+			"diagnostics": [],
+			"disposition": "exact",
+			"evidenceDigest": "29387bdfb730a91a3fb6e13f579801764112dc44ad84e006558b86f5999851b3",
+			"freshness": "current",
+			"id": "56ec1c61797ef861b63330a566f75d7a426ea5b9068e927e9cd74bb1ee0d1474",
+			"resolver": { "tool": "retained-typescript-declarations", "version": "1/ts-5.9.3" },
+			"schema": "graphrefly.stack.source-resolution.v1",
+			"target": {
+				"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+				"overlayDigest": null,
+				"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+			}
+		},
+		{
+			"anchorId": "87a2601f653a563081a8fdb15bc7647c2dd247abdb17f970efcaa518578f4643",
+			"candidates": [
+				{
+					"authoritative": true,
+					"end": 2280,
+					"fingerprint": {
+						"algorithm": "typescript-5.9.3-printer-v1",
+						"digest": "1f14f6f4666851d5359fae6e363d6e17eb44dff5c6395141bf5f5896db0aea12"
+					},
+					"path": "src/refresh-session.ts",
+					"sourceDigest": "f9cb3390b7fc4f1867e3ec3bb69abbabd618959d85ca2659d128282be4a99e73",
+					"start": 2089,
+					"symbol": { "kind": "const", "name": "UpdateSessionMetrics" }
+				}
+			],
+			"diagnostics": [],
+			"disposition": "exact",
+			"evidenceDigest": "4a0d8bb3c7994c1fe843fb1900a127951106902fb0ec397aef43a1468ca2bca8",
+			"freshness": "current",
+			"id": "a91527779989487b0fb1384f804737d470b61a01d3cf894d0cd0dd5b945ceb9b",
+			"resolver": { "tool": "retained-typescript-declarations", "version": "1/ts-5.9.3" },
+			"schema": "graphrefly.stack.source-resolution.v1",
+			"target": {
+				"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+				"overlayDigest": null,
+				"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+			}
+		},
+		{
+			"anchorId": "3609edc053c84de43b26b9c68d70f035353b5ac8508524a3840c2673b19e385c",
+			"candidates": [
+				{
+					"authoritative": true,
+					"end": 900,
+					"fingerprint": {
+						"algorithm": "typescript-5.9.3-printer-v1",
+						"digest": "aad36563d5c2346287e39b31223e8b55eecb770401b151d0a9d1b7cdce396827"
+					},
+					"path": "src/refresh-session.ts",
+					"sourceDigest": "f9cb3390b7fc4f1867e3ec3bb69abbabd618959d85ca2659d128282be4a99e73",
+					"start": 714,
+					"symbol": { "kind": "const", "name": "ValidateTokenContract" }
+				}
+			],
+			"diagnostics": [],
+			"disposition": "exact",
+			"evidenceDigest": "f3542e20000e8cbd9e91677e62060290c242d99e7d10c0419ec3489b499d735f",
+			"freshness": "current",
+			"id": "45a72d32c972817d573094cdee39c9ed24c839d0b0e33ebe0388974bc0400fa3",
+			"resolver": { "tool": "retained-typescript-declarations", "version": "1/ts-5.9.3" },
+			"schema": "graphrefly.stack.source-resolution.v1",
+			"target": {
+				"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+				"overlayDigest": null,
+				"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+			}
+		}
+	],
+	"revision": "stack-source-v1",
+	"runtime": {
+		"installedFilesDigest": "190a0fad710ad9c78b8c3fba369d482a8e7ac01c4de1ea8b961f7aa814fa3ecf",
+		"lockIntegrity": "sha512-5lyKrNN6wpf+P7HD4fmgO2sON66zIMmfyIYrr3ZGV2PW1Eg7PHuaswuUJNG/95971SKwDvbtjoTfrC8BDrbIlw==",
+		"name": "@graphrefly/ts",
+		"version": "0.8.0"
+	},
+	"schema": "graphrefly-stack/source-binding-proof/v1",
+	"verifier": {
+		"cases": [
+			"valid refresh",
+			"missing token",
+			"invalid token",
+			"disabled tenant",
+			"inactive session",
+			"age boundary",
+			"expired session"
+		],
+		"coordinate": {
+			"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+			"overlayDigest": null,
+			"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+		},
+		"freshness": "current",
+		"oracle": "independent expected HTTP, audit, metrics and password-reset business outputs",
+		"path": "tests/business-verifier.mjs",
+		"sourceDigest": "8ecf8229f3d9c9cc0bd48156c15797f6fd4448c491b386f170deb7f7a39eb82c",
+		"status": "passed"
+	}
+}

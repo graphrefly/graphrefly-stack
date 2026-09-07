@@ -1,0 +1,26 @@
+{
+	"kind": "source-bound-phase-evidence",
+	"work_ref": "graphrefly-stack:STACK-SOURCE-BOUND",
+	"source_commit": "c70930acd73bbfcb98d2707ec99317cbcb93a9c2",
+	"origin_trial_commit": "5a13eedc81d35b42da945475d4c0c06b91a06d2e",
+	"origin_run_id": "20260906-191804-56c9",
+	"report_path": "evidence/runs/source-bound/evidence-bundle.json",
+	"report_digest": "sha256:6cc3310be1569a399533d802e3c571854f24db270138cbb3b1d4682a666feb59",
+	"report_id": "8392c5e2a4822fb54153365704343b688a189a437f1ea4d93f8f79b2b7390ee9",
+	"runtime": {
+		"installedFilesDigest": "190a0fad710ad9c78b8c3fba369d482a8e7ac01c4de1ea8b961f7aa814fa3ecf",
+		"lockIntegrity": "sha512-5lyKrNN6wpf+P7HD4fmgO2sON66zIMmfyIYrr3ZGV2PW1Eg7PHuaswuUJNG/95971SKwDvbtjoTfrC8BDrbIlw==",
+		"name": "@graphrefly/ts",
+		"version": "0.8.0"
+	},
+	"retained_repository": ".private/source-bound-consumer",
+	"base": "1560839a7e25a6c0733970d76714d12244e4b929",
+	"head": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+	"bound_nodes": 12,
+	"independent_business_cases": 7,
+	"trial_full_check": "passed, including 118 product tests; exact code tree verified before import",
+	"integration_check": "passed: pnpm check exit 0 and 118 product tests; regenerated report --verify exit 0; exact match with final reviewed path-patch report",
+	"scope": "Source Bound only; no Evidence Manifest, consequence, Canvas, observed causality or whole E22 completion claim",
+	"integration_log_sha256": "71ec76da236cb1aa8143e0fedc4e659476432204617067a1b96ee54f6ce8aa7c",
+	"archive_correction": "The original trial source-bound-report.json was intermediate. Current proof equals final source-bound-report-path-patch.json; both historical and current reports remain retained."
+}
