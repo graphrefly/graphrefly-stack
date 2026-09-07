@@ -48,7 +48,8 @@
 		"format:check": "biome format .",
 		"prepack": "pnpm build:package",
 		"release": "changeset publish",
-		"version-packages": "changeset version"
+		"version-packages": "changeset version",
+		"setup:source-bound": "npm --prefix examples/refresh-session-source-bound ci --ignore-scripts --no-audit --no-fund"
 	},
 	"dependencies": {
 		"@openai/codex-sdk": "0.143.0"

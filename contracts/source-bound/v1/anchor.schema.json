@@ -1,0 +1,126 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["schema", "id", "coordinate", "language", "candidate", "provenance"],
+	"properties": {
+		"schema": {
+			"const": "graphrefly.stack.source-anchor.v1"
+		},
+		"id": {
+			"type": "string",
+			"pattern": "^[a-f0-9]{64}$"
+		},
+		"coordinate": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["repository", "commit", "overlayDigest"],
+			"properties": {
+				"repository": {
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 500
+				},
+				"commit": {
+					"type": "string",
+					"pattern": "^([a-f0-9]{40}|[a-f0-9]{64})$"
+				},
+				"overlayDigest": {
+					"anyOf": [
+						{
+							"type": "string",
+							"pattern": "^[a-f0-9]{64}$"
+						},
+						{
+							"type": "null"
+						}
+					]
+				}
+			}
+		},
+		"language": {
+			"const": "typescript"
+		},
+		"candidate": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"path",
+				"symbol",
+				"fingerprint",
+				"sourceDigest",
+				"start",
+				"end",
+				"authoritative"
+			],
+			"properties": {
+				"path": {
+					"type": "string",
+					"pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\).+\\.ts$",
+					"maxLength": 500
+				},
+				"symbol": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["name", "kind"],
+					"properties": {
+						"name": {
+							"type": "string",
+							"minLength": 1,
+							"maxLength": 500
+						},
+						"kind": {
+							"enum": ["const", "function"]
+						}
+					}
+				},
+				"fingerprint": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["algorithm", "digest"],
+					"properties": {
+						"algorithm": {
+							"const": "typescript-5.9.3-printer-v1"
+						},
+						"digest": {
+							"type": "string",
+							"pattern": "^[a-f0-9]{64}$"
+						}
+					}
+				},
+				"sourceDigest": {
+					"type": "string",
+					"pattern": "^[a-f0-9]{64}$"
+				},
+				"start": {
+					"type": "integer",
+					"minimum": 0
+				},
+				"end": {
+					"type": "integer",
+					"minimum": 1
+				},
+				"authoritative": {
+					"type": "boolean"
+				}
+			}
+		},
+		"provenance": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["tool", "version"],
+			"properties": {
+				"tool": {
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 500
+				},
+				"version": {
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 500
+				}
+			}
+		}
+	}
+}

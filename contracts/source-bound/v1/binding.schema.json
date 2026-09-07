@@ -1,0 +1,88 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"type": "object",
+	"additionalProperties": false,
+	"required": [
+		"schema",
+		"id",
+		"anchorId",
+		"coordinate",
+		"nodeId",
+		"blueprintVersion",
+		"topologyHash",
+		"method",
+		"provenance"
+	],
+	"properties": {
+		"schema": {
+			"const": "graphrefly.stack.graph-source-binding.v1"
+		},
+		"id": {
+			"type": "string",
+			"pattern": "^[a-f0-9]{64}$"
+		},
+		"anchorId": {
+			"type": "string",
+			"pattern": "^[a-f0-9]{64}$"
+		},
+		"coordinate": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["repository", "commit", "overlayDigest"],
+			"properties": {
+				"repository": {
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 500
+				},
+				"commit": {
+					"type": "string",
+					"pattern": "^([a-f0-9]{40}|[a-f0-9]{64})$"
+				},
+				"overlayDigest": {
+					"anyOf": [
+						{
+							"type": "string",
+							"pattern": "^[a-f0-9]{64}$"
+						},
+						{
+							"type": "null"
+						}
+					]
+				}
+			}
+		},
+		"nodeId": {
+			"type": "string",
+			"minLength": 1,
+			"maxLength": 500
+		},
+		"blueprintVersion": {
+			"const": "graphrefly.blueprint.v2"
+		},
+		"topologyHash": {
+			"type": "string",
+			"pattern": "^[a-f0-9]{64}$"
+		},
+		"method": {
+			"const": "retained-export-runtime-identity-v1"
+		},
+		"provenance": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["tool", "version"],
+			"properties": {
+				"tool": {
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 500
+				},
+				"version": {
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 500
+				}
+			}
+		}
+	}
+}

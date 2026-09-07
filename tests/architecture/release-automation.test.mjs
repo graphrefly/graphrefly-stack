@@ -3,6 +3,7 @@ import { execFileSync } from "node:child_process";
 import {
 	cpSync,
 	existsSync,
+	lstatSync,
 	mkdtempSync,
 	readdirSync,
 	readFileSync,
@@ -90,7 +91,7 @@ test("a synthetic root changeset produces the next patch and changelog in isolat
 	try {
 		cpSync(repositoryRoot, temporaryRoot, {
 			recursive: true,
-			filter: (source) => !skippedNames.has(basename(source)),
+			filter: (source) => !skippedNames.has(basename(source)) && !lstatSync(source).isSocket(),
 		});
 
 		const changesetDirectory = join(temporaryRoot, ".changeset");

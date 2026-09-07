@@ -34,7 +34,9 @@ jobs:
           package-manager-cache: false
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm setup:source-bound
 
       - name: Provision deny-network check sandbox
         run: |

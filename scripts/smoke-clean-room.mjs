@@ -36,6 +36,7 @@ try {
 	}
 
 	run("corepack", ["pnpm", "install", "--frozen-lockfile"]);
+	run("corepack", ["pnpm", "setup:source-bound"]);
 	run("corepack", ["pnpm", "check"]);
 	run("corepack", ["pnpm", "cli", "fixture", "create", "--force", "--json"]);
 	run("corepack", ["pnpm", "cli", "gate", "--case", "current-valid", "--json"]);
