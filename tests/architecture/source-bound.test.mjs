@@ -56,7 +56,10 @@ test("private source linkage cannot enter generic public runner or public core e
 		"packages/cli/src/cli.ts",
 		"scripts/build-package.mjs",
 	])
-		assert.doesNotMatch(readFileSync(resolve(root, path), "utf8"), /source-bound/);
+		assert.doesNotMatch(
+			readFileSync(resolve(root, path), "utf8"),
+			/(?:source-bound|evidence-manifest)/,
+		);
 	const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 	assert.equal(pkg.peerDependencies["@graphrefly/ts"], ">=0.3.0 <0.4.0");
 	assert.equal(pkg.devDependencies["@graphrefly/ts"], "0.3.0");
@@ -104,4 +107,25 @@ test("fresh bootstrap, CI, release and clean-room smoke install the independent 
 		"utf8",
 	);
 	assert.ok(readme.indexOf("mkdir -p .pilot/evidence") < readme.indexOf("> .pilot/evidence"));
+});
+
+test("evidence manifest pure core has only private contracts and its adapter remains local", () => {
+	assert.deepEqual(imports("packages/core/src/evidence-manifest.ts").sort(), [
+		"@graphrefly-stack/contracts/evidence-manifest",
+		"@graphrefly-stack/contracts/jcs",
+		"@graphrefly-stack/contracts/source-bound",
+	]);
+	assert.ok(
+		imports("scripts/evidence-manifest/report.mjs").includes(
+			"../../packages/core/dist/evidence-manifest.js",
+		),
+	);
+	for (const path of [
+		"scripts/evidence-manifest/report.mjs",
+		"scripts/evidence-manifest/owners.mjs",
+	])
+		assert.doesNotMatch(
+			readFileSync(resolve(root, path), "utf8"),
+			/(?:codex-sdk|openai|fetch\(|https?:|GateResult\s*=|ReviewDecision\s*=)/,
+		);
 });

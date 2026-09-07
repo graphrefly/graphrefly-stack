@@ -1,0 +1,430 @@
+{
+	"adapter": {
+		"sourceDigest": "161f07b6d6cafaa37d499dcbfd94cb35226b023ce1aae0d5f35eb9067293db70",
+		"tool": "evidence-manifest-report",
+		"version": "1"
+	},
+	"artifact_ref": "graphrefly-stack:evidence-manifest-proof",
+	"id": "438373993e8825912359be1363bb94299f5154a2889b888b80253057a0815e46",
+	"llmRequired": false,
+	"manifest": {
+		"authorities": [
+			{
+				"bindingRefs": [
+					"0c63cb5d2cd30ea708942e17e89fab42dfb2db3cf1e678ce96b9f15e84147e2b",
+					"1ccb39e759a07a270dee60d1b93575e0c4d192efe3cb5443957062682a6ee48b",
+					"627a8fe91e6e9f63686cd5113b766d2fada8853da67057da98fe68bd2ab5b0ba",
+					"6a0dceb721255487a04ec3371bbe4d3cdffc3350bf3b90f3ebc76872daf963f2",
+					"8598ff3587042aafd97ed0d658a6dce48ceb749168cf5f4c58ba9d69d9907dd9",
+					"a7aa3cb02a08977d7311709c44e4a7123f756532a4a6cb3c0e75771559316d68",
+					"add54c47d7e6c081a8352aad9cc6023e41e1b14452a29e2aa9e9f086d220c135",
+					"b0beed1599b7645543045f7d2a67a3b5d6dc87485606cb7d8af43868dc316883",
+					"b48f801bf57653035619add5e718a1a45687053a8b9ee5149c763fa5d969d00d",
+					"d45c77147fe93b9e8782cf6d3338ac1245b03db8c93bc1863e634e7005e77fc4",
+					"f7a6501a7db81d4576a444527d7c34ce910c375a0e829263fdfd9125e0fb0378",
+					"f7efd74335dff91d9cd8c166a83a9ca4db5d0e64b6badf7c07b0cb64e199564c"
+				],
+				"digest": "575588460efe92af14c9affdf6b7a0dd9c61c6d6b36e43450fa1790b04da7665",
+				"freshness": {
+					"authorityDigest": "575588460efe92af14c9affdf6b7a0dd9c61c6d6b36e43450fa1790b04da7665",
+					"status": "current",
+					"subject": {
+						"base": "1560839a7e25a6c0733970d76714d12244e4b929",
+						"head": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+						"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+					}
+				},
+				"kind": "decision",
+				"location": {
+					"commit": "2da4a6e15e29bb94d26378a2fa5be8cb62140b9a",
+					"occurrence": null,
+					"path": "docs/decisions/decisions.jsonl",
+					"repository": "git-roots:62004a23ac7502243adc09d7633f8015279ea57a68f55931ec46f6732604f983",
+					"selector": "id=D54"
+				},
+				"owner": "graphrefly-stack",
+				"provenance": {
+					"scope": "Current locked Stack linkage and retained flagship decisions; JSONL record selected by exact id, digest over JCS record",
+					"sources": [
+						{
+							"commit": "2da4a6e15e29bb94d26378a2fa5be8cb62140b9a",
+							"occurrence": null,
+							"path": "docs/decisions/decisions.jsonl",
+							"repository": "git-roots:62004a23ac7502243adc09d7633f8015279ea57a68f55931ec46f6732604f983",
+							"selector": "id=D54"
+						}
+					],
+					"tool": "retained-evidence-owner-resolver",
+					"version": "1"
+				},
+				"ref": "graphrefly-stack:D54",
+				"schema": "graphrefly-stack/decision-jsonl-record"
+			},
+			{
+				"bindingRefs": [
+					"0c63cb5d2cd30ea708942e17e89fab42dfb2db3cf1e678ce96b9f15e84147e2b",
+					"1ccb39e759a07a270dee60d1b93575e0c4d192efe3cb5443957062682a6ee48b",
+					"627a8fe91e6e9f63686cd5113b766d2fada8853da67057da98fe68bd2ab5b0ba",
+					"6a0dceb721255487a04ec3371bbe4d3cdffc3350bf3b90f3ebc76872daf963f2",
+					"8598ff3587042aafd97ed0d658a6dce48ceb749168cf5f4c58ba9d69d9907dd9",
+					"a7aa3cb02a08977d7311709c44e4a7123f756532a4a6cb3c0e75771559316d68",
+					"add54c47d7e6c081a8352aad9cc6023e41e1b14452a29e2aa9e9f086d220c135",
+					"b0beed1599b7645543045f7d2a67a3b5d6dc87485606cb7d8af43868dc316883",
+					"b48f801bf57653035619add5e718a1a45687053a8b9ee5149c763fa5d969d00d",
+					"d45c77147fe93b9e8782cf6d3338ac1245b03db8c93bc1863e634e7005e77fc4",
+					"f7a6501a7db81d4576a444527d7c34ce910c375a0e829263fdfd9125e0fb0378",
+					"f7efd74335dff91d9cd8c166a83a9ca4db5d0e64b6badf7c07b0cb64e199564c"
+				],
+				"digest": "a28179f6373d81665b8e0c105ab2f9d88e3f6fe3d3919b8945d1dad674f577cf",
+				"freshness": {
+					"authorityDigest": "a28179f6373d81665b8e0c105ab2f9d88e3f6fe3d3919b8945d1dad674f577cf",
+					"status": "current",
+					"subject": {
+						"base": "1560839a7e25a6c0733970d76714d12244e4b929",
+						"head": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+						"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+					}
+				},
+				"kind": "decision",
+				"location": {
+					"commit": "2da4a6e15e29bb94d26378a2fa5be8cb62140b9a",
+					"occurrence": null,
+					"path": "docs/decisions/decisions.jsonl",
+					"repository": "git-roots:62004a23ac7502243adc09d7633f8015279ea57a68f55931ec46f6732604f983",
+					"selector": "id=D56"
+				},
+				"owner": "graphrefly-stack",
+				"provenance": {
+					"scope": "Current locked Stack linkage and retained flagship decisions; JSONL record selected by exact id, digest over JCS record",
+					"sources": [
+						{
+							"commit": "2da4a6e15e29bb94d26378a2fa5be8cb62140b9a",
+							"occurrence": null,
+							"path": "docs/decisions/decisions.jsonl",
+							"repository": "git-roots:62004a23ac7502243adc09d7633f8015279ea57a68f55931ec46f6732604f983",
+							"selector": "id=D56"
+						}
+					],
+					"tool": "retained-evidence-owner-resolver",
+					"version": "1"
+				},
+				"ref": "graphrefly-stack:D56",
+				"schema": "graphrefly-stack/decision-jsonl-record"
+			},
+			{
+				"bindingRefs": [
+					"0c63cb5d2cd30ea708942e17e89fab42dfb2db3cf1e678ce96b9f15e84147e2b",
+					"1ccb39e759a07a270dee60d1b93575e0c4d192efe3cb5443957062682a6ee48b",
+					"627a8fe91e6e9f63686cd5113b766d2fada8853da67057da98fe68bd2ab5b0ba",
+					"6a0dceb721255487a04ec3371bbe4d3cdffc3350bf3b90f3ebc76872daf963f2",
+					"8598ff3587042aafd97ed0d658a6dce48ceb749168cf5f4c58ba9d69d9907dd9",
+					"a7aa3cb02a08977d7311709c44e4a7123f756532a4a6cb3c0e75771559316d68",
+					"add54c47d7e6c081a8352aad9cc6023e41e1b14452a29e2aa9e9f086d220c135",
+					"b0beed1599b7645543045f7d2a67a3b5d6dc87485606cb7d8af43868dc316883",
+					"b48f801bf57653035619add5e718a1a45687053a8b9ee5149c763fa5d969d00d",
+					"d45c77147fe93b9e8782cf6d3338ac1245b03db8c93bc1863e634e7005e77fc4",
+					"f7a6501a7db81d4576a444527d7c34ce910c375a0e829263fdfd9125e0fb0378",
+					"f7efd74335dff91d9cd8c166a83a9ca4db5d0e64b6badf7c07b0cb64e199564c"
+				],
+				"digest": "b6062b8f4e164272f2b10b9801eab3dc68d0ccfe570781ea92abecaa9787fbe8",
+				"freshness": {
+					"authorityDigest": "b6062b8f4e164272f2b10b9801eab3dc68d0ccfe570781ea92abecaa9787fbe8",
+					"status": "current",
+					"subject": {
+						"base": "1560839a7e25a6c0733970d76714d12244e4b929",
+						"head": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+						"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+					}
+				},
+				"kind": "decision",
+				"location": {
+					"commit": "2da4a6e15e29bb94d26378a2fa5be8cb62140b9a",
+					"occurrence": null,
+					"path": "docs/decisions/decisions.jsonl",
+					"repository": "git-roots:62004a23ac7502243adc09d7633f8015279ea57a68f55931ec46f6732604f983",
+					"selector": "id=D59"
+				},
+				"owner": "graphrefly-stack",
+				"provenance": {
+					"scope": "Current locked Stack linkage and retained flagship decisions; JSONL record selected by exact id, digest over JCS record",
+					"sources": [
+						{
+							"commit": "2da4a6e15e29bb94d26378a2fa5be8cb62140b9a",
+							"occurrence": null,
+							"path": "docs/decisions/decisions.jsonl",
+							"repository": "git-roots:62004a23ac7502243adc09d7633f8015279ea57a68f55931ec46f6732604f983",
+							"selector": "id=D59"
+						}
+					],
+					"tool": "retained-evidence-owner-resolver",
+					"version": "1"
+				},
+				"ref": "graphrefly-stack:D59",
+				"schema": "graphrefly-stack/decision-jsonl-record"
+			},
+			{
+				"bindingRefs": [
+					"0c63cb5d2cd30ea708942e17e89fab42dfb2db3cf1e678ce96b9f15e84147e2b",
+					"1ccb39e759a07a270dee60d1b93575e0c4d192efe3cb5443957062682a6ee48b",
+					"627a8fe91e6e9f63686cd5113b766d2fada8853da67057da98fe68bd2ab5b0ba",
+					"6a0dceb721255487a04ec3371bbe4d3cdffc3350bf3b90f3ebc76872daf963f2",
+					"8598ff3587042aafd97ed0d658a6dce48ceb749168cf5f4c58ba9d69d9907dd9",
+					"a7aa3cb02a08977d7311709c44e4a7123f756532a4a6cb3c0e75771559316d68",
+					"add54c47d7e6c081a8352aad9cc6023e41e1b14452a29e2aa9e9f086d220c135",
+					"b0beed1599b7645543045f7d2a67a3b5d6dc87485606cb7d8af43868dc316883",
+					"b48f801bf57653035619add5e718a1a45687053a8b9ee5149c763fa5d969d00d",
+					"d45c77147fe93b9e8782cf6d3338ac1245b03db8c93bc1863e634e7005e77fc4",
+					"f7a6501a7db81d4576a444527d7c34ce910c375a0e829263fdfd9125e0fb0378",
+					"f7efd74335dff91d9cd8c166a83a9ca4db5d0e64b6badf7c07b0cb64e199564c"
+				],
+				"digest": "6cc3310be1569a399533d802e3c571854f24db270138cbb3b1d4682a666feb59",
+				"freshness": {
+					"authorityDigest": "6cc3310be1569a399533d802e3c571854f24db270138cbb3b1d4682a666feb59",
+					"status": "current",
+					"subject": {
+						"base": "1560839a7e25a6c0733970d76714d12244e4b929",
+						"head": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+						"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+					}
+				},
+				"kind": "artifact",
+				"location": {
+					"commit": "9649bd7f99da3afdb1113b1b6ed618dd81ae3e00",
+					"occurrence": null,
+					"path": "evidence/runs/source-bound/evidence-bundle.json",
+					"repository": "git-roots:62004a23ac7502243adc09d7633f8015279ea57a68f55931ec46f6732604f983",
+					"selector": null
+				},
+				"owner": "graphrefly-stack",
+				"provenance": {
+					"scope": "Exact prior source-bound proof bytes, independently verified against current execution",
+					"sources": [
+						{
+							"commit": "9649bd7f99da3afdb1113b1b6ed618dd81ae3e00",
+							"occurrence": null,
+							"path": "evidence/runs/source-bound/evidence-bundle.json",
+							"repository": "git-roots:62004a23ac7502243adc09d7633f8015279ea57a68f55931ec46f6732604f983",
+							"selector": null
+						}
+					],
+					"tool": "retained-evidence-owner-resolver",
+					"version": "1"
+				},
+				"ref": "graphrefly-stack:source-binding-proof",
+				"schema": "graphrefly-stack/source-binding-proof/v1"
+			},
+			{
+				"bindingRefs": [
+					"0c63cb5d2cd30ea708942e17e89fab42dfb2db3cf1e678ce96b9f15e84147e2b",
+					"1ccb39e759a07a270dee60d1b93575e0c4d192efe3cb5443957062682a6ee48b",
+					"627a8fe91e6e9f63686cd5113b766d2fada8853da67057da98fe68bd2ab5b0ba",
+					"6a0dceb721255487a04ec3371bbe4d3cdffc3350bf3b90f3ebc76872daf963f2",
+					"8598ff3587042aafd97ed0d658a6dce48ceb749168cf5f4c58ba9d69d9907dd9",
+					"a7aa3cb02a08977d7311709c44e4a7123f756532a4a6cb3c0e75771559316d68",
+					"add54c47d7e6c081a8352aad9cc6023e41e1b14452a29e2aa9e9f086d220c135",
+					"b0beed1599b7645543045f7d2a67a3b5d6dc87485606cb7d8af43868dc316883",
+					"b48f801bf57653035619add5e718a1a45687053a8b9ee5149c763fa5d969d00d",
+					"d45c77147fe93b9e8782cf6d3338ac1245b03db8c93bc1863e634e7005e77fc4",
+					"f7a6501a7db81d4576a444527d7c34ce910c375a0e829263fdfd9125e0fb0378",
+					"f7efd74335dff91d9cd8c166a83a9ca4db5d0e64b6badf7c07b0cb64e199564c"
+				],
+				"digest": "3a2d3e472fcdf93fab24c0ee92ec5ec5676667b75b81ba43d33ae588274a9c98",
+				"freshness": {
+					"authorityDigest": "3a2d3e472fcdf93fab24c0ee92ec5ec5676667b75b81ba43d33ae588274a9c98",
+					"status": "current",
+					"subject": {
+						"base": "1560839a7e25a6c0733970d76714d12244e4b929",
+						"head": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+						"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+					}
+				},
+				"kind": "test",
+				"location": {
+					"commit": null,
+					"occurrence": "fa577d621e57ebe53606729d11f8a0a5e1f40bfc6523ebce439fcec8478d14e2",
+					"path": ".private/evidence-manifest/node-test.json",
+					"repository": "graphrefly-stack:local-node-test",
+					"selector": null
+				},
+				"owner": "node:test",
+				"provenance": {
+					"scope": "Node test process observation; exit code and dot reporter bytes remain at this occurrence, without Stack readiness translation",
+					"sources": [
+						{
+							"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+							"occurrence": null,
+							"path": "tests/business.test.mjs",
+							"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c",
+							"selector": null
+						},
+						{
+							"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+							"occurrence": null,
+							"path": "tests/business-verifier.mjs",
+							"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c",
+							"selector": null
+						},
+						{
+							"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+							"occurrence": null,
+							"path": "src/refresh-session.ts",
+							"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c",
+							"selector": null
+						}
+					],
+					"tool": "retained-evidence-owner-resolver",
+					"version": "1"
+				},
+				"ref": "refresh-session-fixture:business-test",
+				"schema": "node-test/process-result/v1"
+			},
+			{
+				"bindingRefs": [
+					"0c63cb5d2cd30ea708942e17e89fab42dfb2db3cf1e678ce96b9f15e84147e2b",
+					"1ccb39e759a07a270dee60d1b93575e0c4d192efe3cb5443957062682a6ee48b",
+					"627a8fe91e6e9f63686cd5113b766d2fada8853da67057da98fe68bd2ab5b0ba",
+					"6a0dceb721255487a04ec3371bbe4d3cdffc3350bf3b90f3ebc76872daf963f2",
+					"8598ff3587042aafd97ed0d658a6dce48ceb749168cf5f4c58ba9d69d9907dd9",
+					"a7aa3cb02a08977d7311709c44e4a7123f756532a4a6cb3c0e75771559316d68",
+					"add54c47d7e6c081a8352aad9cc6023e41e1b14452a29e2aa9e9f086d220c135",
+					"b0beed1599b7645543045f7d2a67a3b5d6dc87485606cb7d8af43868dc316883",
+					"b48f801bf57653035619add5e718a1a45687053a8b9ee5149c763fa5d969d00d",
+					"d45c77147fe93b9e8782cf6d3338ac1245b03db8c93bc1863e634e7005e77fc4",
+					"f7a6501a7db81d4576a444527d7c34ce910c375a0e829263fdfd9125e0fb0378",
+					"f7efd74335dff91d9cd8c166a83a9ca4db5d0e64b6badf7c07b0cb64e199564c"
+				],
+				"digest": "7beeb865448ecb9c32d339aa6f1e467a0f594cf24586261197ee9416b7bf9003",
+				"freshness": {
+					"authorityDigest": "7beeb865448ecb9c32d339aa6f1e467a0f594cf24586261197ee9416b7bf9003",
+					"status": "current",
+					"subject": {
+						"base": "1560839a7e25a6c0733970d76714d12244e4b929",
+						"head": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+						"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+					}
+				},
+				"kind": "verifier",
+				"location": {
+					"commit": "9649bd7f99da3afdb1113b1b6ed618dd81ae3e00",
+					"occurrence": null,
+					"path": "evidence/runs/source-bound/evidence-bundle.json",
+					"repository": "git-roots:62004a23ac7502243adc09d7633f8015279ea57a68f55931ec46f6732604f983",
+					"selector": "/verifier"
+				},
+				"owner": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c",
+				"provenance": {
+					"scope": "Unmodified independently authored verifier result selected from verified retained source proof; digest over JCS result",
+					"sources": [
+						{
+							"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+							"occurrence": null,
+							"path": "tests/business-verifier.mjs",
+							"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c",
+							"selector": null
+						},
+						{
+							"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+							"occurrence": null,
+							"path": "src/refresh-session.ts",
+							"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c",
+							"selector": null
+						},
+						{
+							"commit": "9649bd7f99da3afdb1113b1b6ed618dd81ae3e00",
+							"occurrence": null,
+							"path": "evidence/runs/source-bound/evidence-bundle.json",
+							"repository": "git-roots:62004a23ac7502243adc09d7633f8015279ea57a68f55931ec46f6732604f983",
+							"selector": null
+						}
+					],
+					"tool": "retained-evidence-owner-resolver",
+					"version": "1"
+				},
+				"ref": "refresh-session-fixture:business-verifier",
+				"schema": "refresh-session/business-verifier-result"
+			},
+			{
+				"bindingRefs": [
+					"0c63cb5d2cd30ea708942e17e89fab42dfb2db3cf1e678ce96b9f15e84147e2b",
+					"1ccb39e759a07a270dee60d1b93575e0c4d192efe3cb5443957062682a6ee48b",
+					"627a8fe91e6e9f63686cd5113b766d2fada8853da67057da98fe68bd2ab5b0ba",
+					"6a0dceb721255487a04ec3371bbe4d3cdffc3350bf3b90f3ebc76872daf963f2",
+					"8598ff3587042aafd97ed0d658a6dce48ceb749168cf5f4c58ba9d69d9907dd9",
+					"a7aa3cb02a08977d7311709c44e4a7123f756532a4a6cb3c0e75771559316d68",
+					"add54c47d7e6c081a8352aad9cc6023e41e1b14452a29e2aa9e9f086d220c135",
+					"b0beed1599b7645543045f7d2a67a3b5d6dc87485606cb7d8af43868dc316883",
+					"b48f801bf57653035619add5e718a1a45687053a8b9ee5149c763fa5d969d00d",
+					"d45c77147fe93b9e8782cf6d3338ac1245b03db8c93bc1863e634e7005e77fc4",
+					"f7a6501a7db81d4576a444527d7c34ce910c375a0e829263fdfd9125e0fb0378",
+					"f7efd74335dff91d9cd8c166a83a9ca4db5d0e64b6badf7c07b0cb64e199564c"
+				],
+				"digest": "f9cb3390b7fc4f1867e3ec3bb69abbabd618959d85ca2659d128282be4a99e73",
+				"freshness": {
+					"authorityDigest": "f9cb3390b7fc4f1867e3ec3bb69abbabd618959d85ca2659d128282be4a99e73",
+					"status": "current",
+					"subject": {
+						"base": "1560839a7e25a6c0733970d76714d12244e4b929",
+						"head": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+						"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+					}
+				},
+				"kind": "policy",
+				"location": {
+					"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+					"occurrence": null,
+					"path": "src/refresh-session.ts",
+					"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c",
+					"selector": null
+				},
+				"owner": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c",
+				"provenance": {
+					"scope": "Test-fixture policy only: LoadTenantPolicy, EvaluateSessionPolicy and HTTP mapping in retained source; no production policy or approval",
+					"sources": [
+						{
+							"commit": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+							"occurrence": null,
+							"path": "src/refresh-session.ts",
+							"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c",
+							"selector": null
+						}
+					],
+					"tool": "retained-evidence-owner-resolver",
+					"version": "1"
+				},
+				"ref": "refresh-session-fixture:policy-source",
+				"schema": "typescript/5.9.3-source"
+			}
+		],
+		"bindingRefs": [
+			"0c63cb5d2cd30ea708942e17e89fab42dfb2db3cf1e678ce96b9f15e84147e2b",
+			"1ccb39e759a07a270dee60d1b93575e0c4d192efe3cb5443957062682a6ee48b",
+			"627a8fe91e6e9f63686cd5113b766d2fada8853da67057da98fe68bd2ab5b0ba",
+			"6a0dceb721255487a04ec3371bbe4d3cdffc3350bf3b90f3ebc76872daf963f2",
+			"8598ff3587042aafd97ed0d658a6dce48ceb749168cf5f4c58ba9d69d9907dd9",
+			"a7aa3cb02a08977d7311709c44e4a7123f756532a4a6cb3c0e75771559316d68",
+			"add54c47d7e6c081a8352aad9cc6023e41e1b14452a29e2aa9e9f086d220c135",
+			"b0beed1599b7645543045f7d2a67a3b5d6dc87485606cb7d8af43868dc316883",
+			"b48f801bf57653035619add5e718a1a45687053a8b9ee5149c763fa5d969d00d",
+			"d45c77147fe93b9e8782cf6d3338ac1245b03db8c93bc1863e634e7005e77fc4",
+			"f7a6501a7db81d4576a444527d7c34ce910c375a0e829263fdfd9125e0fb0378",
+			"f7efd74335dff91d9cd8c166a83a9ca4db5d0e64b6badf7c07b0cb64e199564c"
+		],
+		"blueprint": {
+			"topologyHash": "61b8cb4bd6e2ae3bb4d1ee5553c4deb2a25ccb2975288cff8beabecb11bf6977",
+			"version": "graphrefly.blueprint.v2"
+		},
+		"coverage": {
+			"runtimeOccurrence": "absent",
+			"scope": "retained-refresh-session-required-linkage-only"
+		},
+		"id": "e94a3927f6b75b68b5943bae0fe6fe53da2bb20de52061a9b436929ed05412dc",
+		"schema": "graphrefly.stack.evidence-manifest.v1",
+		"subject": {
+			"base": "1560839a7e25a6c0733970d76714d12244e4b929",
+			"head": "ce9d4bb8a0eea299f4279354d33353c341b2c89a",
+			"repository": "git-roots:bb17b9b46d51fde491255d0f459e1bb9cd886353911aca72239770221080548c"
+		}
+	},
+	"revision": "stack-evidence-v1",
+	"schema": "graphrefly-stack/evidence-manifest-proof/v1"
+}
