@@ -3,6 +3,12 @@ name: stack-qa
 description: Perform the single GraphReFly Stack quality gate combining adversarial code review, correctness fixes, tests, deterministic semantic evidence and GateResult validation, security/privacy review, UX blockers, and product readiness. Use after implementation, before marking a product phase done, and for review or QA requests.
 ---
 
+Read `~/.codex/skills/bmad-build/references/qa.md` for the shared review lenses, five-way triage and
+repair loop. Integrate the domain checks below into that one review; retain this repository's canonical
+completion verdict. Review-only remains read-only, including documentation and authority records.
+Finish with `~/.codex/skills/bmad-checkpoint-preview/SKILL.md` in build-handoff mode unless interactive
+review was requested.
+
 # GraphReFly Stack QA
 
 Apply `D13`; do not create a second completion verdict from another review workflow.
