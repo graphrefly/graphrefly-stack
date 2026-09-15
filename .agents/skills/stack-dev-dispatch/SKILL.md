@@ -5,10 +5,10 @@ description: Implement one approved GraphReFly Stack slice from the canonical se
 
 # GraphReFly Stack dev dispatch
 
-Apply the global `repository-ownership-practice` skill unless the user explicitly invokes
-`--delivery-only`. In practice mode, pause for OWN/PREDICT before implementation and TEACH-BACK after one
-batch. `--delivery-only` skips those waits but must still produce the ownership handoff and report
-`delivered, not yet ownership-verified`.
+Use `~/.codex/skills/bmad-build/SKILL.md` inside the selected implementation slice, retaining this
+workflow's authority, sequencer and gates. Use `~/.codex/skills/bmad-checkpoint-preview/SKILL.md` for
+human review: build-handoff mode during ordinary delivery; interactive mode for explicit checkpoint
+or `--practice` requests. No prediction or teach-back is required.
 
 ## Code-intelligence routing
 
@@ -24,7 +24,7 @@ correctness evidence.
    antipatterns, and the canonical sequencer. Do not load unrelated decision history.
 2. Select the requested phase or the single `ready` phase. Require all dependencies to be `done` and
    required design decisions to be locked.
-3. Record the user's best-effort prediction, then verify named files, APIs, dependency versions, and one
+3. Verify named files, APIs, dependency versions, and one
    concrete input-to-output path before planning changes.
 4. Translate the phase gate into one Given/When/Then vertical implementation and verification plan. Freeze
    intended seams, tests, non-goals, and stopping boundary. Do not pull deferred backlog into the slice.
@@ -34,8 +34,8 @@ correctness evidence.
    build, or replay commands once they exist.
 7. Apply the `stack-qa` workflow to the resulting diff. Fix in-scope findings and rerun gates.
 8. Mark a phase `done` only when its recorded gate is actually satisfied. Then promote the earliest
-   dependency-satisfied blocked phase to `ready`, update the phase note, and run `pnpm docs:check`. In practice
-   mode, stop for TEACH-BACK before implementing that next phase.
+   dependency-satisfied blocked phase to `ready`, update the phase note, and run `pnpm docs:check`. For an explicitly requested interactive
+   checkpoint, present the preview and wait for review navigation before that next phase.
 
 Record new architectural locks in decisions before code. Record deferred work in backlog and reusable
 lessons in antipatterns; never store them in `AGENTS.md` or this skill.
